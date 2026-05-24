@@ -1,0 +1,871 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PRIME Fit — Preview das Telas</title>
+<style>
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#080808;--s1:#111114;--s2:#18181c;--s3:#222228;
+  --orange:#ff6a00;--orange2:#ff8c00;
+  --text:#fff;--muted:#888;--muted2:#444;
+  --green:#00e5aa;--red:#ff4444;--blue:#40c4ff;--purple:#b388ff;--yellow:#ffd740;
+  --border:rgba(255,255,255,0.07);
+}
+body{background:#050505;color:var(--text);font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display','Segoe UI',sans-serif;overflow-x:hidden}
+h1{text-align:center;padding:32px 0 8px;font-size:28px;font-weight:900;letter-spacing:-1px}
+h1 span{color:var(--orange)}
+.subtitle{text-align:center;color:var(--muted);font-size:14px;margin-bottom:32px}
+
+/* SCREEN SELECTOR */
+.tabs{display:flex;justify-content:center;gap:8px;margin-bottom:40px;flex-wrap:wrap;padding:0 16px}
+.tab-btn{background:var(--s2);border:1px solid var(--border);color:var(--muted);border-radius:50px;
+  padding:10px 20px;cursor:pointer;font-size:13px;font-weight:600;transition:all .2s}
+.tab-btn.active{background:var(--orange);border-color:var(--orange);color:#fff}
+
+/* PHONE FRAME */
+.phones{display:flex;justify-content:center;gap:32px;padding:0 20px 60px;flex-wrap:wrap;align-items:flex-start}
+.phone-wrap{display:flex;flex-direction:column;align-items:center;gap:12px}
+.phone-label{font-size:12px;color:var(--muted);font-weight:700;letter-spacing:1px;text-transform:uppercase}
+.phone{width:375px;min-height:812px;background:var(--bg);border-radius:50px;overflow:hidden;
+  border:10px solid #1a1a1a;box-shadow:0 40px 120px rgba(0,0,0,0.8),0 0 0 1px #333,inset 0 0 0 1px #000;
+  position:relative;flex-shrink:0}
+.notch{position:absolute;top:0;left:50%;transform:translateX(-50%);
+  width:150px;height:30px;background:#1a1a1a;border-radius:0 0 20px 20px;z-index:100}
+.screen{display:none;height:100%;overflow-y:auto;padding-top:44px;scrollbar-width:none}
+.screen::-webkit-scrollbar{display:none}
+.screen.active{display:block}
+
+/* BOTTOM NAV */
+.bottom-nav{position:sticky;bottom:0;background:rgba(8,8,8,0.97);border-top:1px solid var(--border);
+  display:flex;height:68px;z-index:50;margin-top:auto}
+.nb{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:3px;color:var(--muted2);font-size:9px;font-weight:700;letter-spacing:.3px;cursor:pointer}
+.nb.active{color:var(--orange)}
+.nb-icon{font-size:20px}
+.nb.active .nb-icon-wrap{background:rgba(255,106,0,.12);border-radius:8px;padding:4px 6px}
+
+/* HEADER */
+.hdr{padding:52px 20px 16px;background:linear-gradient(180deg,rgba(255,106,0,.08) 0%,transparent 100%);
+  border-bottom:1px solid var(--border)}
+.hdr-row{display:flex;justify-content:space-between;align-items:flex-start}
+.hdr-greeting{font-size:12px;color:var(--muted)}
+.hdr-name{font-size:24px;font-weight:800;letter-spacing:-.5px}
+.hdr-name b{color:var(--orange)}
+.hdr-date{font-size:11px;color:var(--muted);margin-top:4px;text-transform:capitalize}
+.streak-badge{background:rgba(255,106,0,.12);border:1px solid var(--orange);border-radius:50px;
+  padding:8px 14px;text-align:center}
+.streak-num{font-size:18px;font-weight:800;color:var(--orange);display:block}
+.streak-lbl{font-size:10px;color:var(--orange)}
+.settings-btn{width:38px;height:38px;background:var(--s2);border-radius:19px;border:1px solid var(--border);
+  display:flex;align-items:center;justify-content:center;font-size:16px;margin-left:8px}
+
+/* GENERIC */
+.pad{padding:14px}
+.glass{background:var(--s1);border:1px solid var(--border);border-radius:20px}
+.sec-lbl{font-size:10px;font-weight:700;letter-spacing:1.2px;text-transform:uppercase;color:var(--muted);margin:14px 0 8px}
+
+/* RINGS ROW */
+.rings-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:4px}
+.ring-card{background:var(--s1);border:1px solid var(--border);border-radius:16px;padding:12px 8px;text-align:center}
+.ring-outer{position:relative;width:56px;height:56px;margin:0 auto 8px}
+.ring-outer svg{transform:rotate(-90deg)}
+.ring-inner{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center}
+.ring-val{font-size:12px;font-weight:800;line-height:1}
+.ring-unit{font-size:7px;color:var(--muted)}
+.ring-lbl{font-size:10px;font-weight:700}
+.ring-sub{font-size:9px;color:var(--muted)}
+
+/* WORKOUT CARD */
+.workout-card{background:linear-gradient(135deg,var(--orange),var(--orange2));border-radius:20px;
+  padding:18px;margin-bottom:10px;position:relative;overflow:hidden;
+  box-shadow:0 8px 32px rgba(255,106,0,.35)}
+.wc-badge{background:rgba(255,255,255,.2);border-radius:50px;padding:3px 10px;
+  font-size:10px;font-weight:700;display:inline-block;margin-bottom:8px}
+.wc-name{font-size:20px;font-weight:800;margin-bottom:3px}
+.wc-muscle{font-size:11px;opacity:.8;margin-bottom:14px}
+.wc-footer{display:flex;gap:12px;font-size:12px;opacity:.9;font-weight:600}
+
+/* STATS ROW */
+.stats-row{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:10px}
+.stat-card{background:var(--s1);border:1px solid var(--border);border-radius:14px;
+  padding:12px;text-align:center;cursor:pointer}
+.stat-icon{font-size:16px;margin-bottom:4px}
+.stat-val{font-size:18px;font-weight:800;letter-spacing:-.5px}
+.stat-lbl{font-size:9px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.3px}
+
+/* FASTING MINI */
+.fast-mini{background:var(--s1);border:1px solid var(--green);border-radius:14px;padding:12px;margin-bottom:10px}
+.fast-mini-row{display:flex;align-items:center;gap:10px;margin-bottom:8px}
+.fast-mini-title{font-size:13px;font-weight:700;color:var(--green)}
+.fast-mini-sub{font-size:11px;color:var(--muted)}
+.fast-bar{height:4px;background:var(--s3);border-radius:2px;overflow:hidden}
+.fast-fill{height:100%;background:var(--green);border-radius:2px;width:65%}
+
+/* CHECKIN CARD */
+.checkin-card{background:var(--s1);border:1px solid var(--border);border-radius:20px;padding:14px;margin-bottom:10px}
+.checkin-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px}
+.checkin-score{background:rgba(255,106,0,.12);border-radius:50px;padding:6px 14px;display:flex;align-items:baseline;gap:2px}
+.score-num{font-size:18px;font-weight:800;color:var(--orange)}
+.score-den{font-size:12px;color:var(--orange);opacity:.7}
+.checkin-bar{height:3px;background:var(--s3);border-radius:2px;margin-bottom:12px;overflow:hidden}
+.checkin-fill{height:100%;background:var(--orange);border-radius:2px}
+.checkin-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
+.ci-item{background:var(--s2);border:1px solid var(--border);border-radius:10px;
+  padding:9px 4px;text-align:center;font-size:8px;font-weight:600;color:var(--muted);gap:3px;
+  display:flex;flex-direction:column;align-items:center}
+.ci-item.done{background:rgba(0,229,170,.1);border-color:var(--green);color:var(--green)}
+.ci-icon{font-size:16px}
+.ci-check{width:14px;height:14px;border-radius:7px;border:1.5px solid var(--muted2);margin:0 auto}
+.ci-check.done{background:var(--green);border-color:var(--green)}
+
+/* MOTIVATIONAL */
+.motiv-card{background:var(--s1);border:1px solid var(--border);border-radius:14px;
+  padding:14px;border-left:3px solid var(--orange);margin-bottom:10px}
+.motiv-text{font-size:12px;font-style:italic;line-height:1.6;color:var(--text)}
+.motiv-author{font-size:10px;color:var(--muted);margin-top:6px;font-weight:600}
+
+/* ===== TREINO SCREEN ===== */
+.treino-hdr{padding:48px 16px 12px;border-bottom:1px solid var(--border);background:rgba(255,106,0,.04)}
+.split-label{font-size:10px;color:var(--orange);font-weight:700;letter-spacing:1.2px;text-transform:uppercase}
+.split-name{font-size:20px;font-weight:800;margin-top:2px}
+.split-muscle{font-size:11px;color:var(--muted);margin-top:2px}
+.progress-bar-wrap{display:flex;align-items:center;gap:10px;padding:10px 16px}
+.prog-bar{flex:1;height:4px;background:var(--s3);border-radius:2px;overflow:hidden}
+.prog-fill{height:100%;background:var(--orange);border-radius:2px;width:45%}
+.prog-lbl{font-size:11px;color:var(--muted);font-weight:600;white-space:nowrap}
+.ex-card{background:var(--s1);border:1px solid var(--border);border-radius:16px;margin-bottom:8px;overflow:hidden}
+.ex-card.done{border-color:var(--green);background:rgba(0,229,170,.03)}
+.ex-header{display:flex;align-items:center;padding:12px;gap:10px}
+.ex-num{width:28px;height:28px;background:var(--s3);border-radius:14px;
+  display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;color:var(--muted);flex-shrink:0}
+.ex-info{flex:1}
+.ex-name{font-size:13px;font-weight:700}
+.ex-muscle{font-size:10px;color:var(--muted);margin-top:1px}
+.ex-right{text-align:right}
+.ex-stat{font-size:11px;font-weight:700;color:var(--orange)}
+.ex-w{font-size:10px;color:var(--muted)}
+.ex-prog{background:var(--s3);border-radius:50px;padding:2px 8px;font-size:10px;font-weight:700;color:var(--muted);margin-top:2px}
+.ex-body{padding:12px;padding-top:0}
+.sets-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-top:10px}
+.set-btn{background:var(--s3);border:1px solid var(--border);border-radius:10px;
+  padding:10px 4px;text-align:center}
+.set-btn.done{background:rgba(0,229,170,.12);border-color:var(--green)}
+.set-num{font-size:13px;font-weight:800;color:var(--muted2)}
+.set-num.done{color:var(--green)}
+.set-reps{font-size:9px;color:var(--muted2)}
+.rest-btn{background:rgba(255,106,0,.1);border:1px solid var(--orange);border-radius:10px;
+  padding:10px;text-align:center;font-size:12px;font-weight:700;color:var(--orange);margin-top:8px}
+.finish-btn{background:var(--orange);border-radius:18px;padding:16px;text-align:center;
+  font-size:15px;font-weight:800;color:#fff;margin:10px 16px;
+  box-shadow:0 6px 24px rgba(255,106,0,.4)}
+
+/* ===== DIETA SCREEN ===== */
+.macro-rings{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:12px}
+.macro-pills{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:12px}
+.macro-pill{background:var(--s2);border:1px solid var(--border);border-radius:10px;padding:10px;text-align:center}
+.macro-pill-lbl{font-size:9px;color:var(--muted);text-transform:uppercase;font-weight:600}
+.macro-pill-val{font-size:15px;font-weight:800;margin-top:2px}
+.water-card{background:var(--s1);border:1px solid var(--border);border-radius:18px;padding:14px;margin-bottom:10px}
+.water-row{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+.water-title{font-size:14px;font-weight:700}
+.water-val{font-size:12px;color:var(--blue);font-weight:600}
+.water-bar{height:6px;background:var(--s3);border-radius:3px;margin-bottom:10px;overflow:hidden}
+.water-fill{height:100%;background:var(--blue);border-radius:3px;width:72%}
+.water-btns{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.water-btn{background:rgba(64,196,255,.08);border:1px solid rgba(64,196,255,.2);border-radius:10px;
+  padding:9px;text-align:center;font-size:11px;font-weight:700;color:var(--blue)}
+.meal-card{background:var(--s1);border:1px solid var(--border);border-radius:14px;
+  padding:12px;margin-bottom:8px;display:flex;justify-content:space-between}
+.meal-name{font-size:13px;font-weight:700}
+.meal-time{font-size:10px;color:var(--muted);margin-top:2px}
+.meal-macros{display:flex;gap:8px;margin-top:4px}
+.meal-macro{font-size:10px;color:var(--muted2);font-weight:600}
+.meal-cal{font-size:20px;font-weight:800;color:var(--orange);text-align:right}
+.meal-cal-lbl{font-size:9px;color:var(--muted);text-transform:uppercase;text-align:right}
+
+/* ===== JEJUM SCREEN ===== */
+.jejum-hdr{padding:48px 16px 12px;border-bottom:1px solid var(--border);
+  display:flex;justify-content:space-between;align-items:center}
+.jejum-ring-wrap{display:flex;justify-content:center;margin:20px 0}
+.jejum-ring-inner{position:relative;width:220px;height:220px}
+.jejum-ring-inner svg{transform:rotate(-90deg)}
+.jejum-center{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px}
+.jejum-pct{font-size:42px;font-weight:900;color:var(--orange);letter-spacing:-2px}
+.jejum-elapsed{font-size:22px;font-weight:800}
+.jejum-lbl{font-size:11px;color:var(--muted)}
+.jejum-remaining{font-size:12px;color:var(--muted);margin-top:4px}
+.goal-btns{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:16px}
+.goal-btn{background:var(--s2);border:1px solid var(--border);border-radius:12px;
+  padding:12px 4px;text-align:center}
+.goal-btn.active{background:rgba(255,106,0,.12);border-color:var(--orange)}
+.goal-h{font-size:18px;font-weight:800}
+.goal-h.active{color:var(--orange)}
+.goal-lbl{font-size:9px;color:var(--muted);margin-top:2px}
+.start-btn{background:var(--orange);border-radius:18px;padding:18px;text-align:center;
+  font-size:16px;font-weight:800;color:#fff;
+  box-shadow:0 8px 32px rgba(255,106,0,.4)}
+.hist-item{background:var(--s1);border:1px solid var(--border);border-radius:12px;
+  padding:12px;margin-bottom:8px;display:flex;align-items:center;gap:10px}
+.hist-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.hist-info{flex:1}
+.hist-date{font-size:12px;font-weight:700}
+.hist-goal{font-size:10px;color:var(--muted)}
+.hist-dur{font-size:13px;font-weight:800}
+
+/* ===== STATS SCREEN ===== */
+.sub-tabs{display:flex;border-bottom:1px solid var(--border);background:var(--s1)}
+.sub-tab{flex:1;padding:12px;text-align:center;font-size:12px;font-weight:700;color:var(--muted)}
+.sub-tab.active{color:var(--orange);border-bottom:2px solid var(--orange)}
+.inbody-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:10px}
+.ib-cell{background:var(--s2);border:1px solid var(--border);border-radius:10px;padding:10px;text-align:center}
+.ib-lbl{font-size:9px;color:var(--muted);text-transform:uppercase;font-weight:600}
+.ib-val{font-size:16px;font-weight:800;margin-top:2px}
+.changes-row{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:10px}
+.change-card{background:var(--s2);border:1px solid var(--border);border-radius:10px;padding:10px;text-align:center}
+.change-lbl{font-size:9px;color:var(--muted);text-transform:uppercase;font-weight:600}
+.change-val{font-size:16px;font-weight:800;margin-top:2px}
+.chart-area{background:var(--s2);border-radius:10px;padding:12px;margin-top:10px;height:120px;
+  display:flex;align-items:flex-end;gap:4px}
+.chart-bar{background:var(--orange);border-radius:3px 3px 0 0;flex:1;opacity:.8;min-height:8px}
+.heatmap-wrap{margin-top:10px}
+.hm-row{display:flex;gap:3px;margin-bottom:3px}
+.hm-cell{width:11px;height:11px;border-radius:2px;flex-shrink:0}
+.stats-boxes{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:10px}
+.stat-box{background:var(--s1);border:1px solid var(--border);border-radius:14px;
+  padding:12px;text-align:center}
+.stat-box-icon{font-size:18px;margin-bottom:4px}
+.stat-box-val{font-size:20px;font-weight:800;color:var(--text)}
+.stat-box-lbl{font-size:9px;color:var(--muted);text-transform:uppercase;font-weight:600;margin-top:2px}
+.pr-row{display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--border)}
+.pr-name{font-size:13px;font-weight:600;text-transform:capitalize}
+.pr-val{font-size:14px;font-weight:800;color:var(--yellow)}
+.photo-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-top:10px}
+.photo-card{background:var(--s2);border-radius:14px;overflow:hidden;border:1px solid var(--border)}
+.photo-placeholder{height:120px;background:linear-gradient(135deg,var(--s3),var(--s2));
+  display:flex;align-items:center;justify-content:center;font-size:32px}
+.photo-info{padding:8px;display:flex;justify-content:space-between}
+.photo-date{font-size:10px;color:var(--muted)}
+.photo-type{font-size:10px;color:var(--orange);font-weight:700}
+.add-photo-btns{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:10px}
+.add-photo-btn{background:var(--s1);border:1px dashed var(--border);border-radius:14px;
+  padding:14px 4px;text-align:center}
+.add-photo-icon{font-size:20px;margin-bottom:4px}
+.add-photo-lbl{font-size:10px;color:var(--orange);font-weight:700}
+
+/* REST TIMER OVERLAY */
+.rest-overlay{position:absolute;inset:0;background:rgba(0,0,0,.88);display:flex;align-items:flex-end;z-index:200;display:none}
+.rest-overlay.show{display:flex}
+.rest-sheet{background:var(--s1);border-radius:28px 28px 0 0;padding:28px;width:100%;
+  border:1px solid var(--border);text-align:center}
+.rest-title{font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted)}
+.rest-ex{font-size:16px;font-weight:800;margin-top:4px}
+.rest-ring{margin:20px auto;position:relative;width:160px;height:160px}
+.rest-ring svg{transform:rotate(-90deg)}
+.rest-time-wrap{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center}
+.rest-time{font-size:40px;font-weight:800;letter-spacing:-2px}
+.rest-time-lbl{font-size:11px;color:var(--muted)}
+.rest-presets{display:flex;gap:6px;justify-content:center;margin-bottom:20px}
+.rest-preset{background:var(--s2);border:1px solid var(--border);border-radius:50px;
+  padding:6px 12px;font-size:12px;font-weight:700;color:var(--muted)}
+.rest-preset.active{background:rgba(255,106,0,.12);border-color:var(--orange);color:var(--orange)}
+.rest-actions{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.rest-close{background:var(--orange);border-radius:14px;padding:14px;text-align:center;
+  font-size:14px;font-weight:800;color:#fff}
+.rest-pause{background:var(--s2);border:1px solid var(--border);border-radius:14px;padding:14px;text-align:center;
+  font-size:14px;font-weight:700;color:var(--text)}
+
+/* PERFIL MODAL */
+.modal-overlay{position:absolute;inset:0;background:rgba(0,0,0,.88);display:none;z-index:200;overflow-y:auto}
+.modal-overlay.show{display:block}
+.modal-sheet{background:var(--bg);min-height:100%;padding:48px 0 40px}
+.modal-hdr{display:flex;justify-content:space-between;align-items:center;padding:0 16px 16px;
+  border-bottom:1px solid var(--border)}
+.modal-title{font-size:20px;font-weight:800}
+.modal-save{background:var(--orange);border-radius:50px;padding:9px 20px;font-size:13px;font-weight:800;color:#fff}
+.avatar-card{background:var(--s1);border:1px solid var(--border);border-radius:20px;
+  padding:16px;margin:16px;display:flex;align-items:center;gap:14px}
+.avatar{width:60px;height:60px;background:rgba(255,106,0,.12);border-radius:30px;
+  border:2px solid var(--orange);display:flex;align-items:center;justify-content:center;font-size:26px}
+.avatar-name{font-size:17px;font-weight:800}
+.avatar-stat{font-size:11px;color:var(--muted);margin-top:2px}
+.field-group{background:var(--s1);border:1px solid var(--border);border-radius:20px;margin:0 16px 12px;overflow:hidden}
+.field{padding:12px 16px;border-bottom:1px solid var(--border)}
+.field:last-child{border-bottom:none}
+.field-lbl{font-size:10px;color:var(--muted);font-weight:600;margin-bottom:4px}
+.field-val{font-size:15px;font-weight:700;color:var(--text)}
+.field-val.orange{color:var(--orange)}
+
+/* animations */
+@keyframes fadeIn{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:translateY(0)}}
+.screen.active>*{animation:fadeIn .25s ease}
+
+/* RING SVG helper */
+.r-track{fill:none;stroke:rgba(255,255,255,.06);stroke-width:7}
+.r-prog{fill:none;stroke-width:7;stroke-linecap:round}
+</style>
+</head>
+<body>
+
+<h1>PRIME <span>Fit</span></h1>
+<p class="subtitle">React Native + Expo · Preview das Telas</p>
+
+<div class="tabs">
+  <button class="tab-btn active" onclick="showScreen('hoje')">🏠 Hoje</button>
+  <button class="tab-btn" onclick="showScreen('treino')">🏋️ Treino</button>
+  <button class="tab-btn" onclick="showScreen('dieta')">🥗 Dieta</button>
+  <button class="tab-btn" onclick="showScreen('jejum')">⏱️ Jejum</button>
+  <button class="tab-btn" onclick="showScreen('stats')">📊 Stats</button>
+  <button class="tab-btn" onclick="showScreen('rest')">💤 Rest Timer</button>
+  <button class="tab-btn" onclick="showScreen('perfil')">⚙️ Perfil</button>
+</div>
+
+<div class="phones">
+<div class="phone-wrap">
+  <div class="phone" id="main-phone">
+    <div class="notch"></div>
+
+    <!-- ===== HOJE ===== -->
+    <div class="screen active" id="screen-hoje">
+      <div class="hdr">
+        <div class="hdr-row">
+          <div>
+            <div class="hdr-greeting">Bom dia,</div>
+            <div class="hdr-name">Júlio <b>Cezar</b></div>
+            <div class="hdr-date">sábado, 24 de maio</div>
+          </div>
+          <div style="display:flex;align-items:center;gap:8px">
+            <div class="streak-badge">
+              <span class="streak-num">12</span>
+              <span class="streak-lbl">🔥 dias</span>
+            </div>
+            <div class="settings-btn">⚙️</div>
+          </div>
+        </div>
+      </div>
+      <div class="pad">
+
+        <!-- RINGS -->
+        <div class="glass" style="padding:14px;margin-bottom:10px">
+          <div class="sec-lbl" style="margin-top:0">Score do Dia</div>
+          <div class="rings-grid">
+            <div class="ring-card">
+              <div class="ring-outer">
+                <svg width="56" height="56" viewBox="0 0 56 56">
+                  <circle class="r-track" cx="28" cy="28" r="21"/>
+                  <circle class="r-prog" cx="28" cy="28" r="21" stroke="url(#og)" stroke-dasharray="132" stroke-dashoffset="33"/>
+                  <defs><linearGradient id="og" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ff6a00"/><stop offset="1" stop-color="#ff8c00"/></linearGradient></defs>
+                </svg>
+                <div class="ring-inner"><span class="ring-val" style="color:#ff6a00">75</span><span class="ring-unit">%</span></div>
+              </div>
+              <div class="ring-lbl">Geral</div><div class="ring-sub">5/7</div>
+            </div>
+            <div class="ring-card">
+              <div class="ring-outer">
+                <svg width="56" height="56" viewBox="0 0 56 56">
+                  <circle class="r-track" cx="28" cy="28" r="21"/>
+                  <circle class="r-prog" cx="28" cy="28" r="21" stroke="#40c4ff" stroke-dasharray="132" stroke-dashoffset="38"/>
+                </svg>
+                <div class="ring-inner"><span class="ring-val" style="color:#40c4ff">2.1</span><span class="ring-unit">L</span></div>
+              </div>
+              <div class="ring-lbl">Água</div><div class="ring-sub">/3L</div>
+            </div>
+            <div class="ring-card">
+              <div class="ring-outer">
+                <svg width="56" height="56" viewBox="0 0 56 56">
+                  <circle class="r-track" cx="28" cy="28" r="21"/>
+                  <circle class="r-prog" cx="28" cy="28" r="21" stroke="#b388ff" stroke-dasharray="132" stroke-dashoffset="55"/>
+                </svg>
+                <div class="ring-inner"><span class="ring-val" style="color:#b388ff">1580</span><span class="ring-unit">kcal</span></div>
+              </div>
+              <div class="ring-lbl">Dieta</div><div class="ring-sub">/2200</div>
+            </div>
+            <div class="ring-card">
+              <div class="ring-outer">
+                <svg width="56" height="56" viewBox="0 0 56 56">
+                  <circle class="r-track" cx="28" cy="28" r="21"/>
+                  <circle class="r-prog" cx="28" cy="28" r="21" stroke="#00e5aa" stroke-dasharray="132" stroke-dashoffset="47"/>
+                </svg>
+                <div class="ring-inner"><span class="ring-val" style="color:#00e5aa">11h</span><span class="ring-unit">/16h</span></div>
+              </div>
+              <div class="ring-lbl">Jejum</div><div class="ring-sub">ativo</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- WORKOUT CARD -->
+        <div class="workout-card">
+          <div class="wc-badge">DIA B</div>
+          <div class="wc-name">Peito + Bíceps</div>
+          <div class="wc-muscle">Peito · Bíceps · Ombro Anterior</div>
+          <div class="wc-footer">
+            <span>8 exercícios</span>
+            <span>30 sets</span>
+          </div>
+        </div>
+
+        <!-- STATS ROW -->
+        <div class="stats-row">
+          <div class="stat-card">
+            <div class="stat-icon">⚖️</div>
+            <div class="stat-val">84.0</div>
+            <div class="stat-lbl">kg hoje</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon">🎯</div>
+            <div class="stat-val" style="color:var(--orange)">76</div>
+            <div class="stat-lbl">kg meta</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon">💪</div>
+            <div class="stat-val" style="color:var(--green)">37.0</div>
+            <div class="stat-lbl">kg músculo</div>
+          </div>
+        </div>
+
+        <!-- FASTING MINI -->
+        <div class="fast-mini">
+          <div class="fast-mini-row">
+            <span style="font-size:18px">⏱️</span>
+            <div>
+              <div class="fast-mini-title">Jejum ativo</div>
+              <div class="fast-mini-sub">11h 23min / 16h</div>
+            </div>
+          </div>
+          <div class="fast-bar"><div class="fast-fill"></div></div>
+        </div>
+
+        <!-- CHECKIN -->
+        <div class="checkin-card">
+          <div class="checkin-header">
+            <div>
+              <div style="font-size:14px;font-weight:800">Check-in Diário</div>
+              <div style="font-size:10px;color:var(--muted);margin-top:1px">Hábitos de hoje</div>
+            </div>
+            <div class="checkin-score">
+              <span class="score-num">5</span><span class="score-den">/7</span>
+            </div>
+          </div>
+          <div class="checkin-bar"><div class="checkin-fill" style="width:71%"></div></div>
+          <div class="checkin-grid">
+            <div class="ci-item done"><div class="ci-icon">🏋️</div><span>Treino</span><div class="ci-check done"></div></div>
+            <div class="ci-item done"><div class="ci-icon">🥗</div><span>Dieta</span><div class="ci-check done"></div></div>
+            <div class="ci-item done"><div class="ci-icon">💧</div><span>Água 3L</span><div class="ci-check done"></div></div>
+            <div class="ci-item done"><div class="ci-icon">⏱️</div><span>Jejum</span><div class="ci-check done"></div></div>
+            <div class="ci-item"><div class="ci-icon">🏃</div><span>Cardio</span><div class="ci-check"></div></div>
+            <div class="ci-item done"><div class="ci-icon">😴</div><span>Sono</span><div class="ci-check done"></div></div>
+            <div class="ci-item"><div class="ci-icon">💊</div><span>Suplement.</span><div class="ci-check"></div></div>
+          </div>
+        </div>
+
+        <!-- MOTIV -->
+        <div class="motiv-card">
+          <div class="motiv-text">"Disciplina é a ponte entre metas e realizações."</div>
+          <div class="motiv-author">— Jim Rohn</div>
+        </div>
+
+      </div>
+      <div class="bottom-nav">
+        <div class="nb active"><div class="nb-icon-wrap"><div class="nb-icon">🏠</div></div><span>Hoje</span></div>
+        <div class="nb"><div class="nb-icon">🏋️</div><span>Treino</span></div>
+        <div class="nb"><div class="nb-icon">🥗</div><span>Dieta</span></div>
+        <div class="nb"><div class="nb-icon">⏱️</div><span>Jejum</span></div>
+        <div class="nb"><div class="nb-icon">📊</div><span>Stats</span></div>
+      </div>
+    </div>
+
+    <!-- ===== TREINO ===== -->
+    <div class="screen" id="screen-treino">
+      <div class="treino-hdr">
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <div>
+            <div class="split-label">DIA B</div>
+            <div class="split-name">Peito + Bíceps</div>
+            <div class="split-muscle">Peito · Bíceps · Ombro Anterior</div>
+          </div>
+          <div style="display:flex;gap:6px">
+            <div style="width:32px;height:32px;background:var(--s2);border-radius:16px;border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:18px;color:var(--text)">‹</div>
+            <div style="width:32px;height:32px;background:var(--s2);border-radius:16px;border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:18px;color:var(--text)">›</div>
+          </div>
+        </div>
+      </div>
+      <div class="progress-bar-wrap">
+        <div class="prog-bar"><div class="prog-fill"></div></div>
+        <div class="prog-lbl">14/30 sets</div>
+      </div>
+      <div style="padding:0 14px">
+
+        <div class="ex-card done">
+          <div class="ex-header">
+            <div class="ex-num">1</div>
+            <div class="ex-info"><div class="ex-name">Supino Reto</div><div class="ex-muscle">Peito</div></div>
+            <div class="ex-right"><div class="ex-stat">4×8</div><div class="ex-w">70kg</div><div class="ex-prog" style="background:rgba(0,229,170,.15);color:var(--green)">4/4</div></div>
+          </div>
+        </div>
+
+        <div class="ex-card" style="border-color:var(--orange)">
+          <div class="ex-header">
+            <div class="ex-num">2</div>
+            <div class="ex-info"><div class="ex-name">Supino Inclinado (Halter)</div><div class="ex-muscle">Peito Superior</div></div>
+            <div class="ex-right"><div class="ex-stat">4×10</div><div class="ex-w">24kg</div><div class="ex-prog" style="background:rgba(255,106,0,.12);color:var(--orange)">2/4</div></div>
+          </div>
+          <div class="ex-body">
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
+              <span style="font-size:12px;color:var(--muted);font-weight:600">Peso (kg):</span>
+              <div style="flex:1;background:var(--s3);border-radius:10px;padding:10px;border:1px solid var(--orange);text-align:center;font-size:15px;font-weight:800;color:var(--text)">24</div>
+            </div>
+            <div class="sets-grid">
+              <div class="set-btn done"><div class="set-num done">✓</div><div class="set-reps" style="color:var(--green)">24kg</div></div>
+              <div class="set-btn done"><div class="set-num done">✓</div><div class="set-reps" style="color:var(--green)">24kg</div></div>
+              <div class="set-btn"><div class="set-num">S3</div><div class="set-reps">10 reps</div></div>
+              <div class="set-btn"><div class="set-num">S4</div><div class="set-reps">10 reps</div></div>
+            </div>
+            <div class="rest-btn">⏱️ Iniciar descanso (90s)</div>
+          </div>
+        </div>
+
+        <div class="ex-card">
+          <div class="ex-header">
+            <div class="ex-num">3</div>
+            <div class="ex-info"><div class="ex-name">Crucifixo</div><div class="ex-muscle">Peito</div></div>
+            <div class="ex-right"><div class="ex-stat">4×12</div><div class="ex-w">14kg</div><div class="ex-prog">0/4</div></div>
+          </div>
+        </div>
+        <div class="ex-card">
+          <div class="ex-header">
+            <div class="ex-num">4</div>
+            <div class="ex-info"><div class="ex-name">Rosca Direta (Barra)</div><div class="ex-muscle">Bíceps</div></div>
+            <div class="ex-right"><div class="ex-stat">4×10</div><div class="ex-w">30kg</div><div class="ex-prog">0/4</div></div>
+          </div>
+        </div>
+        <div class="ex-card">
+          <div class="ex-header">
+            <div class="ex-num">5</div>
+            <div class="ex-info"><div class="ex-name">Rosca Martelo</div><div class="ex-muscle">Bíceps · Braquial</div></div>
+            <div class="ex-right"><div class="ex-stat">4×12</div><div class="ex-w">14kg</div><div class="ex-prog">0/4</div></div>
+          </div>
+        </div>
+
+        <div class="finish-btn">🔥 Finalizar Treino</div>
+        <div style="height:20px"></div>
+      </div>
+      <div class="bottom-nav">
+        <div class="nb"><div class="nb-icon">🏠</div><span>Hoje</span></div>
+        <div class="nb active"><div class="nb-icon-wrap"><div class="nb-icon">🏋️</div></div><span>Treino</span></div>
+        <div class="nb"><div class="nb-icon">🥗</div><span>Dieta</span></div>
+        <div class="nb"><div class="nb-icon">⏱️</div><span>Jejum</span></div>
+        <div class="nb"><div class="nb-icon">📊</div><span>Stats</span></div>
+      </div>
+    </div>
+
+    <!-- ===== DIETA ===== -->
+    <div class="screen" id="screen-dieta">
+      <div style="padding:48px 16px 12px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center">
+        <div style="font-size:22px;font-weight:800">Nutrição</div>
+        <div style="background:var(--orange);border-radius:50px;padding:8px 16px;font-size:12px;font-weight:700;color:#fff">+ Refeição</div>
+      </div>
+      <div class="pad">
+        <div class="glass" style="padding:14px;margin-bottom:10px">
+          <div class="macro-rings">
+            <div class="ring-card">
+              <div class="ring-outer">
+                <svg width="56" height="56" viewBox="0 0 56 56"><circle class="r-track" cx="28" cy="28" r="21"/><circle class="r-prog" cx="28" cy="28" r="21" stroke="url(#og2)" stroke-dasharray="132" stroke-dashoffset="42"/><defs><linearGradient id="og2" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ff6a00"/><stop offset="1" stop-color="#ff8c00"/></linearGradient></defs></svg>
+                <div class="ring-inner"><span class="ring-val" style="color:#ff6a00">1580</span><span class="ring-unit">kcal</span></div>
+              </div>
+              <div class="ring-lbl">Calorias</div><div class="ring-sub">/2200</div>
+            </div>
+            <div class="ring-card">
+              <div class="ring-outer">
+                <svg width="56" height="56" viewBox="0 0 56 56"><circle class="r-track" cx="28" cy="28" r="21"/><circle class="r-prog" cx="28" cy="28" r="21" stroke="#40c4ff" stroke-dasharray="132" stroke-dashoffset="39"/></svg>
+                <div class="ring-inner"><span class="ring-val" style="color:#40c4ff">118g</span></div>
+              </div>
+              <div class="ring-lbl">Proteína</div><div class="ring-sub">/175g</div>
+            </div>
+            <div class="ring-card">
+              <div class="ring-outer">
+                <svg width="56" height="56" viewBox="0 0 56 56"><circle class="r-track" cx="28" cy="28" r="21"/><circle class="r-prog" cx="28" cy="28" r="21" stroke="#00e5aa" stroke-dasharray="132" stroke-dashoffset="38"/></svg>
+                <div class="ring-inner"><span class="ring-val" style="color:#00e5aa">2.1L</span></div>
+              </div>
+              <div class="ring-lbl">Água</div><div class="ring-sub">/3L</div>
+            </div>
+          </div>
+          <div class="macro-pills">
+            <div class="macro-pill"><div class="macro-pill-lbl">Carbs</div><div class="macro-pill-val">165g</div></div>
+            <div class="macro-pill"><div class="macro-pill-lbl">Gordura</div><div class="macro-pill-val">48g</div></div>
+            <div class="macro-pill" style="background:rgba(255,106,0,.08);border-color:rgba(255,106,0,.2)"><div class="macro-pill-lbl">Saldo</div><div class="macro-pill-val" style="color:var(--orange)">620 kcal</div></div>
+          </div>
+        </div>
+
+        <div class="water-card">
+          <div class="water-row"><div class="water-title">💧 Hidratação</div><div class="water-val">2.10L / 3L</div></div>
+          <div class="water-bar"><div class="water-fill"></div></div>
+          <div class="water-btns">
+            <div class="water-btn">+250ml</div>
+            <div class="water-btn">+350ml</div>
+            <div class="water-btn">+500ml</div>
+            <div class="water-btn" style="background:rgba(255,68,68,.08);border-color:rgba(255,68,68,.2);color:var(--red)">Reset</div>
+          </div>
+        </div>
+
+        <div class="sec-lbl">Refeições de Hoje (3)</div>
+        <div class="meal-card">
+          <div class="meal-left" style="flex:1">
+            <div class="meal-name">Omelete 3 ovos</div>
+            <div class="meal-time">07:30</div>
+            <div class="meal-macros"><span class="meal-macro">P 18g</span><span class="meal-macro">C 2g</span><span class="meal-macro">G 15g</span></div>
+          </div>
+          <div><div class="meal-cal">220</div><div class="meal-cal-lbl">kcal</div></div>
+        </div>
+        <div class="meal-card">
+          <div class="meal-left" style="flex:1">
+            <div class="meal-name">Frango + Arroz</div>
+            <div class="meal-time">12:00</div>
+            <div class="meal-macros"><span class="meal-macro">P 40g</span><span class="meal-macro">C 50g</span><span class="meal-macro">G 8g</span></div>
+          </div>
+          <div><div class="meal-cal">450</div><div class="meal-cal-lbl">kcal</div></div>
+        </div>
+        <div class="meal-card">
+          <div class="meal-left" style="flex:1">
+            <div class="meal-name">Whey Protein</div>
+            <div class="meal-time">16:00</div>
+            <div class="meal-macros"><span class="meal-macro">P 25g</span><span class="meal-macro">C 5g</span><span class="meal-macro">G 2g</span></div>
+          </div>
+          <div><div class="meal-cal">130</div><div class="meal-cal-lbl">kcal</div></div>
+        </div>
+      </div>
+      <div class="bottom-nav">
+        <div class="nb"><div class="nb-icon">🏠</div><span>Hoje</span></div>
+        <div class="nb"><div class="nb-icon">🏋️</div><span>Treino</span></div>
+        <div class="nb active"><div class="nb-icon-wrap"><div class="nb-icon">🥗</div></div><span>Dieta</span></div>
+        <div class="nb"><div class="nb-icon">⏱️</div><span>Jejum</span></div>
+        <div class="nb"><div class="nb-icon">📊</div><span>Stats</span></div>
+      </div>
+    </div>
+
+    <!-- ===== JEJUM ===== -->
+    <div class="screen" id="screen-jejum">
+      <div class="jejum-hdr">
+        <div style="font-size:22px;font-weight:800">Jejum Intermitente</div>
+        <div class="streak-badge"><span class="streak-num">8</span><span class="streak-lbl">🔥 sequência</span></div>
+      </div>
+      <div style="padding:0 16px">
+        <div class="jejum-ring-wrap">
+          <div class="jejum-ring-inner">
+            <svg width="220" height="220" viewBox="0 0 220 220">
+              <circle class="r-track" cx="110" cy="110" r="96" stroke-width="16"/>
+              <circle class="r-prog" cx="110" cy="110" r="96" stroke="#ff6a00" stroke-width="16"
+                stroke-dasharray="603" stroke-dashoffset="181"/>
+              <!-- glow effect -->
+            </svg>
+            <div class="jejum-center">
+              <div class="jejum-pct">70%</div>
+              <div class="jejum-elapsed">11:23:14</div>
+              <div class="jejum-lbl">tempo em jejum</div>
+              <div class="jejum-remaining">faltam 4h 36min</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="glass" style="padding:14px;margin-bottom:14px">
+          <div style="display:grid;grid-template-columns:repeat(3,1fr);text-align:center;margin-bottom:12px">
+            <div><div style="font-size:10px;color:var(--muted);text-transform:uppercase;font-weight:600">Objetivo</div><div style="font-size:17px;font-weight:800;margin-top:2px">16h</div></div>
+            <div><div style="font-size:10px;color:var(--muted);text-transform:uppercase;font-weight:600">Transcorrido</div><div style="font-size:17px;font-weight:800;margin-top:2px">11h 23m</div></div>
+            <div><div style="font-size:10px;color:var(--muted);text-transform:uppercase;font-weight:600">Restante</div><div style="font-size:17px;font-weight:800;margin-top:2px">4h 37m</div></div>
+          </div>
+          <div style="height:4px;background:var(--s3);border-radius:2px;overflow:hidden"><div style="height:100%;background:var(--orange);border-radius:2px;width:70%"></div></div>
+        </div>
+
+        <div style="background:rgba(255,68,68,.08);border:1px solid var(--red);border-radius:18px;
+          padding:16px;text-align:center;font-size:14px;font-weight:700;color:var(--red);margin-bottom:12px">
+          Quebrar Jejum
+        </div>
+
+        <div class="sec-lbl">Histórico Recente</div>
+        <div class="hist-item" style="border-color:rgba(0,229,170,.2)">
+          <div class="hist-dot" style="background:var(--green)"></div>
+          <div class="hist-info"><div class="hist-date">23 de mai</div><div class="hist-goal">Objetivo: 16h</div></div>
+          <div><div class="hist-dur" style="color:var(--green)">16h 12m</div><div style="font-size:14px">✅</div></div>
+        </div>
+        <div class="hist-item" style="border-color:rgba(0,229,170,.2)">
+          <div class="hist-dot" style="background:var(--green)"></div>
+          <div class="hist-info"><div class="hist-date">22 de mai</div><div class="hist-goal">Objetivo: 16h</div></div>
+          <div><div class="hist-dur" style="color:var(--green)">17h 5m</div><div style="font-size:14px">✅</div></div>
+        </div>
+        <div class="hist-item">
+          <div class="hist-dot" style="background:var(--red)"></div>
+          <div class="hist-info"><div class="hist-date">21 de mai</div><div class="hist-goal">Objetivo: 18h</div></div>
+          <div><div class="hist-dur" style="color:var(--red)">12h 8m</div><div style="font-size:14px">❌</div></div>
+        </div>
+        <div style="height:20px"></div>
+      </div>
+      <div class="bottom-nav">
+        <div class="nb"><div class="nb-icon">🏠</div><span>Hoje</span></div>
+        <div class="nb"><div class="nb-icon">🏋️</div><span>Treino</span></div>
+        <div class="nb"><div class="nb-icon">🥗</div><span>Dieta</span></div>
+        <div class="nb active"><div class="nb-icon-wrap"><div class="nb-icon">⏱️</div></div><span>Jejum</span></div>
+        <div class="nb"><div class="nb-icon">📊</div><span>Stats</span></div>
+      </div>
+    </div>
+
+    <!-- ===== STATS ===== -->
+    <div class="screen" id="screen-stats">
+      <div style="padding:48px 16px 12px;border-bottom:1px solid var(--border)">
+        <div style="font-size:22px;font-weight:800">Progresso</div>
+      </div>
+      <div class="sub-tabs">
+        <div class="sub-tab active">Corpo</div>
+        <div class="sub-tab">Consistência</div>
+        <div class="sub-tab">Fotos</div>
+      </div>
+      <div class="pad">
+        <div class="glass" style="padding:14px;margin-bottom:10px">
+          <div style="font-size:14px;font-weight:800">Última Avaliação</div>
+          <div style="font-size:10px;color:var(--muted);margin-top:2px;margin-bottom:12px">09/03/2026</div>
+          <div class="inbody-grid">
+            <div class="ib-cell"><div class="ib-lbl">Peso</div><div class="ib-val">84.0kg</div></div>
+            <div class="ib-cell"><div class="ib-lbl">Músculo</div><div class="ib-val" style="color:var(--green)">37.0kg</div></div>
+            <div class="ib-cell"><div class="ib-lbl">% Gordura</div><div class="ib-val" style="color:var(--orange)">23.1%</div></div>
+            <div class="ib-cell"><div class="ib-lbl">IMC</div><div class="ib-val">30.1</div></div>
+            <div class="ib-cell"><div class="ib-lbl">Gord. Visc.</div><div class="ib-val" style="color:var(--red)">8</div></div>
+          </div>
+        </div>
+
+        <div class="glass" style="padding:14px;margin-bottom:10px">
+          <div style="font-size:14px;font-weight:800">Evolução Total</div>
+          <div style="font-size:10px;color:var(--muted);margin-top:2px;margin-bottom:10px">06/01 → 09/03/2026</div>
+          <div class="changes-row">
+            <div class="change-card"><div class="change-lbl">Peso</div><div class="change-val" style="color:var(--green)">-4.7kg</div></div>
+            <div class="change-card"><div class="change-lbl">Músculo</div><div class="change-val" style="color:var(--green)">+0.9kg</div></div>
+            <div class="change-card"><div class="change-lbl">Gordura</div><div class="change-val" style="color:var(--green)">-6.1%</div></div>
+          </div>
+        </div>
+
+        <div class="glass" style="padding:14px;margin-bottom:10px">
+          <div style="font-size:14px;font-weight:800;margin-bottom:10px">Evolução do Peso</div>
+          <svg width="100%" height="100" viewBox="0 0 320 100">
+            <line x1="0" y1="90" x2="320" y2="90" stroke="rgba(255,255,255,0.07)" stroke-width="1"/>
+            <polyline points="40,70 280,30" fill="none" stroke="#ff6a00" stroke-width="2.5" stroke-linecap="round"/>
+            <circle cx="40" cy="70" r="5" fill="#ff6a00"/>
+            <text x="40" y="58" font-size="10" fill="#888" text-anchor="middle">88.7</text>
+            <circle cx="280" cy="30" r="5" fill="#ff6a00"/>
+            <text x="280" y="18" font-size="10" fill="#888" text-anchor="middle">84.0</text>
+          </svg>
+          <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--muted)">
+            <span>Jan 2026</span><span>Mar 2026</span>
+          </div>
+        </div>
+
+        <div class="glass" style="padding:14px">
+          <div style="font-size:14px;font-weight:800;margin-bottom:10px">Records Pessoais 🏆</div>
+          <div class="pr-row"><div class="pr-name">Supino Reto</div><div class="pr-val">70kg</div></div>
+          <div class="pr-row"><div class="pr-name">Agachamento</div><div class="pr-val">80kg</div></div>
+          <div class="pr-row"><div class="pr-name">Levantamento Terra</div><div class="pr-val">100kg</div></div>
+          <div class="pr-row" style="border:none"><div class="pr-name">Puxada Frontal</div><div class="pr-val">60kg</div></div>
+        </div>
+      </div>
+      <div class="bottom-nav">
+        <div class="nb"><div class="nb-icon">🏠</div><span>Hoje</span></div>
+        <div class="nb"><div class="nb-icon">🏋️</div><span>Treino</span></div>
+        <div class="nb"><div class="nb-icon">🥗</div><span>Dieta</span></div>
+        <div class="nb"><div class="nb-icon">⏱️</div><span>Jejum</span></div>
+        <div class="nb active"><div class="nb-icon-wrap"><div class="nb-icon">📊</div></div><span>Stats</span></div>
+      </div>
+    </div>
+
+    <!-- ===== REST TIMER ===== -->
+    <div class="screen" id="screen-rest" style="background:rgba(0,0,0,.3)">
+      <div style="background:var(--bg);height:200px;opacity:.5"></div>
+      <div class="rest-sheet">
+        <div class="rest-title">Descanso</div>
+        <div class="rest-ex">Supino Inclinado (Halter)</div>
+        <div class="rest-ring" style="margin:0 auto 16px">
+          <svg width="160" height="160" viewBox="0 0 160 160">
+            <circle class="r-track" cx="80" cy="80" r="68" stroke-width="12"/>
+            <circle class="r-prog" cx="80" cy="80" r="68" stroke="#ff6a00" stroke-width="12"
+              stroke-dasharray="427" stroke-dashoffset="171"/>
+          </svg>
+          <div class="rest-time-wrap">
+            <div class="rest-time">00:60</div>
+            <div class="rest-time-lbl">restando</div>
+          </div>
+        </div>
+        <div class="rest-presets">
+          <div class="rest-preset">30s</div>
+          <div class="rest-preset">45s</div>
+          <div class="rest-preset active">1m</div>
+          <div class="rest-preset">90s</div>
+          <div class="rest-preset">2m</div>
+          <div class="rest-preset">3m</div>
+        </div>
+        <div class="rest-actions">
+          <div class="rest-pause">Pausar</div>
+          <div class="rest-close">Fechar</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== PERFIL ===== -->
+    <div class="screen" id="screen-perfil">
+      <div class="modal-sheet">
+        <div class="modal-hdr">
+          <div class="modal-title">Perfil & Config.</div>
+          <div class="modal-save">Salvar</div>
+        </div>
+        <div class="avatar-card">
+          <div class="avatar">💪</div>
+          <div>
+            <div class="avatar-name">Júlio Cezar</div>
+            <div class="avatar-stat">84.0kg · 23.1% gordura</div>
+            <div class="avatar-stat">37.0kg músculo · 19.4kg gordura</div>
+          </div>
+        </div>
+        <div style="font-size:10px;font-weight:700;letter-spacing:1.2px;text-transform:uppercase;color:var(--muted);margin:0 16px 6px">Metas</div>
+        <div class="field-group">
+          <div class="field"><div class="field-lbl">Peso alvo (kg)</div><div class="field-val orange">76</div><div style="font-size:10px;color:var(--muted2);margin-top:2px;font-style:italic">Atual: 84kg → Meta: 76kg (8.0kg a perder)</div></div>
+          <div class="field"><div class="field-lbl">Calorias diárias (kcal)</div><div class="field-val">2200</div></div>
+          <div class="field"><div class="field-lbl">Proteína diária (g)</div><div class="field-val">175</div></div>
+          <div class="field"><div class="field-lbl">Água diária (L)</div><div class="field-val">3.0</div></div>
+        </div>
+        <div style="font-size:10px;font-weight:700;letter-spacing:1.2px;text-transform:uppercase;color:var(--muted);margin:0 16px 6px">Resumo Geral</div>
+        <div style="background:var(--s1);border:1px solid var(--border);border-radius:20px;margin:0 16px 12px;padding:12px">
+          <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px">
+            <div class="stat-box"><div class="stat-box-icon">🏋️</div><div class="stat-box-val" style="color:var(--orange)">12</div><div class="stat-box-lbl">Treinos</div></div>
+            <div class="stat-box"><div class="stat-box-icon">⏱️</div><div class="stat-box-val" style="color:var(--orange)">8</div><div class="stat-box-lbl">Jejuns OK</div></div>
+            <div class="stat-box"><div class="stat-box-icon">🔥</div><div class="stat-box-val" style="color:var(--orange)">12</div><div class="stat-box-lbl">Sequência</div></div>
+          </div>
+        </div>
+        <div style="background:rgba(255,68,68,.08);border:1px solid var(--red);border-radius:16px;margin:0 16px;padding:14px;text-align:center;font-size:13px;font-weight:700;color:var(--red)">
+          🗑️ Resetar todos os dados
+        </div>
+        <div style="text-align:center;font-size:11px;color:var(--muted2);margin:16px">PRIME Fit v1.0.0 · React Native + Expo</div>
+      </div>
+    </div>
+
+  </div><!-- /phone -->
+  <div class="phone-label" id="screen-label">Tela: Hoje</div>
+</div><!-- /phone-wrap -->
+</div><!-- /phones -->
+
+<script>
+const screens = {
+  hoje: 'Tela: Hoje (Dashboard)',
+  treino: 'Tela: Treino (ABAC Split)',
+  dieta: 'Tela: Dieta (Nutrição)',
+  jejum: 'Tela: Jejum (Timer 16h)',
+  stats: 'Tela: Stats (Corpo / InBody)',
+  rest: 'Componente: Rest Timer Modal',
+  perfil: 'Modal: Perfil & Configurações',
+};
+
+function showScreen(name) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('screen-' + name).classList.add('active');
+  document.querySelector(`.tab-btn[onclick="showScreen('${name}')"]`).classList.add('active');
+  document.getElementById('screen-label').textContent = screens[name];
+  document.getElementById('main-phone').scrollTo(0,0);
+}
+</script>
+</body>
+</html>
