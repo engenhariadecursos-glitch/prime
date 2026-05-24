@@ -9,16 +9,22 @@ import * as ImagePicker from 'expo-image-picker';
 import * as Haptics from 'expo-haptics';
 import { useAppStore, Store as AppStore } from '../store/useAppStore';
 import { HeatmapGrid } from '../components/HeatmapGrid';
+import { InBodyModal } from '../components/InBodyModal';
 import { colors, radius } from '../constants/theme';
-import { formatDateShort } from '../utils/dateUtils';
+import { formatDateShort, formatDate } from '../utils/dateUtils';
 import { ProgressPhoto } from '../types';
+import { SPLITS } from '../constants/splits';
 
 const W = Dimensions.get('window').width - 40;
-type Tab = 'corpo' | 'consistencia' | 'fotos';
+type Tab = 'corpo' | 'historico' | 'consistencia' | 'fotos';
+
+const EXERCISE_MAP: Record<string, string> = {};
+SPLITS.forEach((split) => split.exercises.forEach((ex) => { EXERCISE_MAP[ex.id] = ex.name; }));
 
 export function StatsScreen() {
   const store = useAppStore();
   const [tab, setTab] = useState<Tab>('corpo');
+  const [inBodyVisible, setInBodyVisible] = useState(false);
 
   return (
     <SafeAreaView style={styles.safe} edges={['top']}>
@@ -29,14 +35,14 @@ export function StatsScreen() {
 
       {/* SUB-TABS */}
       <View style={styles.subTabs}>
-        {(['corpo', 'consistencia', 'fotos'] as Tab[]).map((t) => (
+        {(['corpo', 'historico', 'consistencia', 'fotos'] as Tab[]).map((t) => (
           <TouchableOpacity
             key={t}
             style={[styles.subTab, tab === t && styles.subTabActive]}
             onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); setTab(t); }}
           >
             <Text style={[styles.subTabTxt, tab === t && styles.subTabTxtActive]}>
-              {t === 'corpo' ? 'Corpo' : t === 'consistencia' ? 'Consistência' : 'Fotos'}
+              {t === 'corpo' ? 'Corpo' : t === 'historico' ? 'Histórico' : t === 'consistencia' ? 'Consistência' : 'Fotos'}
             </Text>
           </TouchableOpacity>
         ))}
@@ -44,17 +50,20 @@ export function StatsScreen() {
 
       <ScrollView showsVerticalScrollIndicator={false} style={styles.scroll}>
         <View style={styles.pad}>
-          {tab === 'corpo' && <CorpoTab store={store} />}
+          {tab === 'corpo' && <CorpoTab store={store} onAddInBody={() => setInBodyVisible(true)} />}
+          {tab === 'historico' && <HistoricoTab store={store} />}
           {tab === 'consistencia' && <ConsistenciaTab store={store} />}
           {tab === 'fotos' && <FotosTab store={store} />}
         </View>
         <View style={{ height: 20 }} />
       </ScrollView>
+
+      <InBodyModal visible={inBodyVisible} onClose={() => setInBodyVisible(false)} />
     </SafeAreaView>
   );
 }
 
-function CorpoTab({ store }: { store: AppStore }) {
+function CorpoTab({ store, onAddInBody }: { store: AppStore; onAddInBody: () => void }) {
   const { inbody } = store;
   const latest = inbody[inbody.length - 1];
   const first = inbody[0];
@@ -151,12 +160,74 @@ function CorpoTab({ store }: { store: AppStore }) {
       </View>
 
       {/* ADD INBODY */}
-      <TouchableOpacity style={styles.addInBodyBtn} onPress={() => {
-        store.addInBody({ date: new Date().toISOString().split('T')[0], weight: 83, muscle: 37.5, fatPct: 22, bmi: 29.8, visc: 7 });
-        Alert.alert('✅ Avaliação adicionada!', 'Substitua pelos seus dados reais no código.');
-      }}>
+      <TouchableOpacity style={styles.addInBodyBtn} onPress={onAddInBody}>
         <Text style={styles.addInBodyTxt}>+ Adicionar Avaliação InBody</Text>
       </TouchableOpacity>
+    </>
+  );
+}
+
+function HistoricoTab({ store }: { store: AppStore }) {
+  const workoutDays = Object.entries(store.days)
+    .filter(([, d]) => d.workoutDone)
+    .sort(([a], [b]) => b.localeCompare(a));
+
+  if (workoutDays.length === 0) {
+    return (
+      <View style={styles.emptyPhotos}>
+        <Text style={styles.emptyPhotosIcon}>🏋️</Text>
+        <Text style={styles.emptyPhotosTxt}>Nenhum treino registrado</Text>
+        <Text style={styles.emptyPhotosSub}>Complete seu primeiro treino na aba Treino</Text>
+      </View>
+    );
+  }
+
+  return (
+    <>
+      {workoutDays.map(([date, day]) => {
+        const split = SPLITS.find((s) => s.id === day.splitId);
+        const doneSets = Object.values(day.sets).reduce((t, sets) => t + sets.filter((s) => s.done).length, 0);
+        const volume = Object.values(day.sets).reduce(
+          (t, sets) => t + sets.filter((s) => s.done).reduce((st, s) => st + s.weight * s.reps, 0), 0
+        );
+        return (
+          <View key={date} style={styles.histCard}>
+            <View style={styles.histHeader}>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.histDate}>{formatDate(date)}</Text>
+                <View style={styles.histBadgeRow}>
+                  <View style={styles.histBadge}>
+                    <Text style={styles.histBadgeTxt}>{split?.label ?? day.splitId}</Text>
+                  </View>
+                  <Text style={styles.histSplitName}>{split?.name ?? '—'}</Text>
+                </View>
+              </View>
+              <View style={styles.histStats}>
+                <View style={styles.histStat}>
+                  <Text style={styles.histStatVal}>{doneSets}</Text>
+                  <Text style={styles.histStatLbl}>sets</Text>
+                </View>
+                <View style={styles.histStat}>
+                  <Text style={styles.histStatVal}>{(volume / 1000).toFixed(1)}t</Text>
+                  <Text style={styles.histStatLbl}>volume</Text>
+                </View>
+              </View>
+            </View>
+            {Object.entries(day.sets)
+              .filter(([, sets]) => sets.some((s) => s.done))
+              .map(([exId, sets]) => {
+                const done = sets.filter((s) => s.done);
+                const maxW = Math.max(...done.map((s) => s.weight));
+                return (
+                  <View key={exId} style={styles.histExRow}>
+                    <Text style={styles.histExName}>{EXERCISE_MAP[exId] ?? exId}</Text>
+                    <Text style={styles.histExDetail}>{done.length} sets · {maxW}kg máx</Text>
+                  </View>
+                );
+              })}
+          </View>
+        );
+      })}
     </>
   );
 }
@@ -371,6 +442,30 @@ const styles = StyleSheet.create({
   statBoxVal: { fontSize: 22, fontWeight: '800', color: colors.text },
   statBoxSub: { fontSize: 13, color: colors.muted },
   statBoxLbl: { fontSize: 10, color: colors.muted, fontWeight: '600', textTransform: 'uppercase', textAlign: 'center' },
+  histCard: {
+    backgroundColor: colors.surface1, borderRadius: radius.lg, padding: 16,
+    borderWidth: 1, borderColor: colors.border, gap: 10,
+  },
+  histHeader: { flexDirection: 'row', alignItems: 'flex-start', gap: 12 },
+  histDate: { fontSize: 13, color: colors.muted, fontWeight: '600' },
+  histBadgeRow: { flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 4 },
+  histBadge: {
+    backgroundColor: colors.orangeDim, borderRadius: 50,
+    paddingHorizontal: 10, paddingVertical: 3,
+    borderWidth: 1, borderColor: colors.orange,
+  },
+  histBadgeTxt: { fontSize: 10, fontWeight: '800', color: colors.orange },
+  histSplitName: { fontSize: 15, fontWeight: '800', color: colors.text },
+  histStats: { flexDirection: 'row', gap: 12 },
+  histStat: { alignItems: 'center' },
+  histStatVal: { fontSize: 18, fontWeight: '800', color: colors.orange },
+  histStatLbl: { fontSize: 9, color: colors.muted, fontWeight: '600', textTransform: 'uppercase' },
+  histExRow: {
+    flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
+    paddingVertical: 6, borderTopWidth: 1, borderTopColor: colors.border,
+  },
+  histExName: { fontSize: 13, color: colors.text, fontWeight: '600', flex: 1 },
+  histExDetail: { fontSize: 12, color: colors.muted, fontWeight: '600' },
   addPhotoBtns: { flexDirection: 'row', gap: 8 },
   addPhotoBtn: {
     flex: 1, backgroundColor: colors.surface1, borderRadius: radius.md, padding: 14,

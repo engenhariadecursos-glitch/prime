@@ -54,6 +54,8 @@ export interface Store extends AppState {
     waterGoalMl?: number;
   }) => void;
   resetAllData: () => void;
+  setOnboardingDone: () => void;
+  updateMeal: (mealId: string, updates: Partial<Meal>) => void;
   userName: string;
 }
 
@@ -74,7 +76,7 @@ export const useAppStore = create<Store>()(
       calorieGoal: 2200,
       proteinGoal: 175,
       weightGoal: 76,
-      onboardingDone: false,
+      onboardingDone: true,
       userName: 'Júlio Cezar',
 
       getToday: () => {
@@ -227,6 +229,22 @@ export const useAppStore = create<Store>()(
         photos: [],
         prs: { benchpress: 0, squat: 0, deadlift: 0, latpull: 0 },
         currentSplitIdx: 0,
+      }),
+
+      setOnboardingDone: () => set({ onboardingDone: true }),
+
+      updateMeal: (mealId, updates) => set((s) => {
+        const d = TODAY();
+        const day = s.days[d] ?? DEFAULT_DAY(d);
+        return {
+          days: {
+            ...s.days,
+            [d]: {
+              ...day,
+              meals: day.meals.map((m) => m.id === mealId ? { ...m, ...updates } : m),
+            },
+          },
+        };
       }),
     }),
     {

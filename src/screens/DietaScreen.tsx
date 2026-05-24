@@ -25,12 +25,31 @@ export function DietaScreen() {
   const store = useAppStore();
   const today = store.getToday();
   const [addMealVisible, setAddMealVisible] = useState(false);
+  const [editingMealId, setEditingMealId] = useState<string | null>(null);
   const [mealName, setMealName] = useState('');
   const [mealCal, setMealCal] = useState('');
   const [mealProtein, setMealProtein] = useState('');
   const [mealCarbs, setMealCarbs] = useState('');
   const [mealFat, setMealFat] = useState('');
   const [isCheat, setIsCheat] = useState(false);
+
+  const openEdit = (meal: Meal) => {
+    setEditingMealId(meal.id);
+    setMealName(meal.name);
+    setMealCal(String(meal.calories));
+    setMealProtein(String(meal.protein));
+    setMealCarbs(String(meal.carbs));
+    setMealFat(String(meal.fat));
+    setIsCheat(meal.isCheat);
+    setAddMealVisible(true);
+  };
+
+  const openAdd = () => {
+    setEditingMealId(null);
+    setMealName(''); setMealCal(''); setMealProtein('');
+    setMealCarbs(''); setMealFat(''); setIsCheat(false);
+    setAddMealVisible(true);
+  };
 
   const totalCal = today.meals.reduce((s, m) => s + m.calories, 0);
   const totalProtein = today.meals.reduce((s, m) => s + m.protein, 0);
@@ -59,20 +78,32 @@ export function DietaScreen() {
       return;
     }
     if (!mealName || !mealCal) return;
-    const meal: Meal = {
-      id: Date.now().toString(),
-      name: mealName,
-      calories: parseInt(mealCal) || 0,
-      protein: parseInt(mealProtein) || 0,
-      carbs: parseInt(mealCarbs) || 0,
-      fat: parseInt(mealFat) || 0,
-      time: new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
-      isCheat,
-    };
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-    store.addMeal(meal);
+    if (editingMealId) {
+      store.updateMeal(editingMealId, {
+        name: mealName,
+        calories: parseInt(mealCal) || 0,
+        protein: parseInt(mealProtein) || 0,
+        carbs: parseInt(mealCarbs) || 0,
+        fat: parseInt(mealFat) || 0,
+        isCheat,
+      });
+    } else {
+      const meal: Meal = {
+        id: Date.now().toString(),
+        name: mealName,
+        calories: parseInt(mealCal) || 0,
+        protein: parseInt(mealProtein) || 0,
+        carbs: parseInt(mealCarbs) || 0,
+        fat: parseInt(mealFat) || 0,
+        time: new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
+        isCheat,
+      };
+      store.addMeal(meal);
+    }
     setMealName(''); setMealCal(''); setMealProtein('');
     setMealCarbs(''); setMealFat(''); setIsCheat(false);
+    setEditingMealId(null);
     setAddMealVisible(false);
   };
 
@@ -83,7 +114,7 @@ export function DietaScreen() {
 
         <View style={styles.header}>
           <Text style={styles.headerTitle}>Nutrição</Text>
-          <TouchableOpacity style={styles.addBtn} onPress={() => setAddMealVisible(true)}>
+          <TouchableOpacity style={styles.addBtn} onPress={openAdd}>
             <Text style={styles.addBtnTxt}>+ Refeição</Text>
           </TouchableOpacity>
         </View>
@@ -181,9 +212,14 @@ export function DietaScreen() {
                 <View style={styles.mealRight}>
                   <Text style={styles.mealCal}>{meal.calories}</Text>
                   <Text style={styles.mealCalLbl}>kcal</Text>
-                  <TouchableOpacity onPress={() => store.removeMeal(meal.id)}>
-                    <Text style={styles.deleteBtn}>✕</Text>
-                  </TouchableOpacity>
+                  <View style={styles.mealActions}>
+                    <TouchableOpacity onPress={() => openEdit(meal)} style={styles.editBtn}>
+                      <Text style={styles.editBtnTxt}>✏️</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity onPress={() => store.removeMeal(meal.id)}>
+                      <Text style={styles.deleteBtn}>✕</Text>
+                    </TouchableOpacity>
+                  </View>
                 </View>
               </View>
             ))
@@ -196,7 +232,7 @@ export function DietaScreen() {
       <Modal visible={addMealVisible} transparent animationType="slide">
         <View style={styles.modalOverlay}>
           <View style={styles.modalSheet}>
-            <Text style={styles.modalTitle}>Nova Refeição</Text>
+            <Text style={styles.modalTitle}>{editingMealId ? '✏️ Editar Refeição' : 'Nova Refeição'}</Text>
             <TextInput style={styles.input} placeholder="Nome da refeição" placeholderTextColor={colors.muted}
               value={mealName} onChangeText={setMealName} />
             <View style={styles.inputRow}>
@@ -218,11 +254,11 @@ export function DietaScreen() {
               </Text>
             </TouchableOpacity>
             <View style={styles.modalActions}>
-              <TouchableOpacity style={styles.btnSecondary} onPress={() => setAddMealVisible(false)}>
+              <TouchableOpacity style={styles.btnSecondary} onPress={() => { setAddMealVisible(false); setEditingMealId(null); }}>
                 <Text style={styles.btnSecondaryTxt}>Cancelar</Text>
               </TouchableOpacity>
               <TouchableOpacity style={styles.btnPrimary} onPress={() => addMeal()}>
-                <Text style={styles.btnPrimaryTxt}>Adicionar</Text>
+                <Text style={styles.btnPrimaryTxt}>{editingMealId ? 'Salvar' : 'Adicionar'}</Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -297,7 +333,10 @@ const styles = StyleSheet.create({
   mealRight: { alignItems: 'flex-end', justifyContent: 'center', gap: 2 },
   mealCal: { fontSize: 22, fontWeight: '800', color: colors.orange },
   mealCalLbl: { fontSize: 10, color: colors.muted, textTransform: 'uppercase' },
-  deleteBtn: { fontSize: 16, color: colors.muted2, marginTop: 4 },
+  mealActions: { flexDirection: 'row', gap: 8, alignItems: 'center', marginTop: 4 },
+  editBtn: { padding: 2 },
+  editBtnTxt: { fontSize: 14 },
+  deleteBtn: { fontSize: 16, color: colors.muted2 },
   modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.88)', justifyContent: 'flex-end' },
   modalSheet: {
     backgroundColor: colors.surface1, borderTopLeftRadius: 28, borderTopRightRadius: 28,
