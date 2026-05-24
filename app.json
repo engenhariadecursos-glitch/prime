@@ -52,7 +52,6 @@
       "bundler": "metro"
     },
     "plugins": [
-      "expo-router",
       [
         "expo-notifications",
         {
@@ -76,8 +75,7 @@
           "isAccessMediaLocationEnabled": true
         }
       ],
-      "expo-secure-store",
-      "expo-font"
+      "expo-secure-store"
     ],
     "extra": {
       "eas": {
