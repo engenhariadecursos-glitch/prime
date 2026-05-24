@@ -70,6 +70,7 @@ export interface ProgressPhoto {
 }
 
 export interface AppState {
+  userName: string;
   days: Record<string, DayData>;
   inbody: InBodyMeasurement[];
   currentSplitIdx: number;

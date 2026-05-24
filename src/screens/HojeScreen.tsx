@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
   View, Text, StyleSheet, ScrollView, TouchableOpacity,
   Animated, StatusBar,
@@ -7,6 +7,8 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAppStore } from '../store/useAppStore';
 import { CheckInCard } from '../components/CheckInCard';
 import { RingProgress } from '../components/RingProgress';
+import { PerfilModal } from '../components/PerfilModal';
+import { WeightLogModal } from '../components/WeightLogModal';
 import { colors, spacing, radius, typography } from '../constants/theme';
 import { SPLITS, SPLIT_ORDER } from '../constants/splits';
 import { greetingText, fastingProgress, formatHourMin } from '../utils/dateUtils';
@@ -21,10 +23,20 @@ export function HojeScreen() {
   const streak = store.computeStreak();
   const split = SPLITS.find((s) => s.id === SPLIT_ORDER[store.currentSplitIdx]) ?? SPLITS[0];
   const fadeAnim = useRef(new Animated.Value(0)).current;
+  const [now, setNow] = useState(Date.now());
+  const [perfilVisible, setPerfilVisible] = useState(false);
+  const [weightVisible, setWeightVisible] = useState(false);
 
   useEffect(() => {
     Animated.timing(fadeAnim, { toValue: 1, duration: 400, useNativeDriver: true }).start();
   }, []);
+
+  // Atualiza timer de jejum em tempo real
+  useEffect(() => {
+    if (!store.activeFasting) return;
+    const t = setInterval(() => setNow(Date.now()), 1000);
+    return () => clearInterval(t);
+  }, [store.activeFasting]);
 
   const checkinScore = Object.values(checkins).filter(Boolean).length;
   const totalCheckins = 7;
@@ -36,7 +48,7 @@ export function HojeScreen() {
 
   const fasting = store.activeFasting;
   const fastProg = fasting ? fastingProgress(fasting.startTime, fasting.goalHours) : 0;
-  const fastElapsed = fasting ? Date.now() - fasting.startTime : 0;
+  const fastElapsed = fasting ? now - fasting.startTime : 0;
 
   const lastInBody = store.inbody[store.inbody.length - 1];
   const todayDate = format(new Date(), "EEEE, d 'de' MMMM", { locale: ptBR });
@@ -50,12 +62,20 @@ export function HojeScreen() {
         <View style={styles.header}>
           <View>
             <Text style={styles.greeting}>{greetingText()},</Text>
-            <Text style={styles.name}>Júlio <Text style={{ color: colors.orange }}>Cezar</Text></Text>
+            <Text style={styles.name}>
+              {store.userName.split(' ')[0]}{' '}
+              <Text style={{ color: colors.orange }}>{store.userName.split(' ').slice(1).join(' ')}</Text>
+            </Text>
             <Text style={styles.date}>{todayDate}</Text>
           </View>
-          <View style={styles.streakBadge}>
-            <Text style={styles.streakNum}>{streak}</Text>
-            <Text style={styles.streakLbl}>🔥 dias</Text>
+          <View style={styles.headerRight}>
+            <View style={styles.streakBadge}>
+              <Text style={styles.streakNum}>{streak}</Text>
+              <Text style={styles.streakLbl}>🔥 dias</Text>
+            </View>
+            <TouchableOpacity style={styles.perfilBtn} onPress={() => setPerfilVisible(true)}>
+              <Text style={styles.perfilBtnTxt}>⚙️</Text>
+            </TouchableOpacity>
           </View>
         </View>
 
@@ -128,11 +148,11 @@ export function HojeScreen() {
 
           {/* QUICK STATS */}
           <View style={styles.statsRow}>
-            <View style={styles.statCard}>
+            <TouchableOpacity style={styles.statCard} onPress={() => setWeightVisible(true)}>
               <Text style={styles.statIcon}>⚖️</Text>
-              <Text style={styles.statVal}>{lastInBody?.weight ?? '—'}</Text>
-              <Text style={styles.statLbl}>kg atual</Text>
-            </View>
+              <Text style={styles.statVal}>{today.weight ?? lastInBody?.weight ?? '—'}</Text>
+              <Text style={styles.statLbl}>kg hoje</Text>
+            </TouchableOpacity>
             <View style={styles.statCard}>
               <Text style={styles.statIcon}>🎯</Text>
               <Text style={[styles.statVal, { color: colors.orange }]}>{store.weightGoal}</Text>
@@ -179,6 +199,9 @@ export function HojeScreen() {
 
         </View>
       </Animated.ScrollView>
+
+      <PerfilModal visible={perfilVisible} onClose={() => setPerfilVisible(false)} />
+      <WeightLogModal visible={weightVisible} onClose={() => setWeightVisible(false)} />
     </SafeAreaView>
   );
 }
@@ -199,6 +222,7 @@ const styles = StyleSheet.create({
   greeting: { fontSize: 13, color: colors.muted, fontWeight: '500' },
   name: { fontSize: 26, fontWeight: '800', letterSpacing: -0.5, color: colors.text, marginTop: 2 },
   date: { fontSize: 12, color: colors.muted, marginTop: 4, textTransform: 'capitalize' },
+  headerRight: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   streakBadge: {
     backgroundColor: colors.orangeDim,
     borderWidth: 1,
@@ -210,6 +234,16 @@ const styles = StyleSheet.create({
   },
   streakNum: { fontSize: 20, fontWeight: '800', color: colors.orange },
   streakLbl: { fontSize: 10, color: colors.orange, fontWeight: '600' },
+  perfilBtn: {
+    width: 40, height: 40,
+    backgroundColor: colors.surface2,
+    borderRadius: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  perfilBtnTxt: { fontSize: 18 },
   pad: { padding: 16, gap: 12 },
   sectionLabel: {
     fontSize: 11, fontWeight: '700', letterSpacing: 1.2,

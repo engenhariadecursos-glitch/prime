@@ -7,7 +7,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import Svg, { Polyline, Line, Circle, Text as SvgText } from 'react-native-svg';
 import * as ImagePicker from 'expo-image-picker';
 import * as Haptics from 'expo-haptics';
-import { useAppStore } from '../store/useAppStore';
+import { useAppStore, Store as AppStore } from '../store/useAppStore';
 import { HeatmapGrid } from '../components/HeatmapGrid';
 import { colors, radius } from '../constants/theme';
 import { formatDateShort } from '../utils/dateUtils';
@@ -54,7 +54,7 @@ export function StatsScreen() {
   );
 }
 
-function CorpoTab({ store }: { store: ReturnType<typeof useAppStore> }) {
+function CorpoTab({ store }: { store: AppStore }) {
   const { inbody } = store;
   const latest = inbody[inbody.length - 1];
   const first = inbody[0];
@@ -161,7 +161,7 @@ function CorpoTab({ store }: { store: ReturnType<typeof useAppStore> }) {
   );
 }
 
-function ConsistenciaTab({ store }: { store: ReturnType<typeof useAppStore> }) {
+function ConsistenciaTab({ store }: { store: AppStore }) {
   const { days, fastingSessions } = store;
   const workoutDays = Object.values(days).filter((d) => d.workoutDone).length;
   const streak = store.computeStreak();
@@ -196,7 +196,7 @@ function ConsistenciaTab({ store }: { store: ReturnType<typeof useAppStore> }) {
   );
 }
 
-function FotosTab({ store }: { store: ReturnType<typeof useAppStore> }) {
+function FotosTab({ store }: { store: AppStore }) {
   const { photos } = store;
   const [filterType, setFilterType] = useState<'all' | 'front' | 'side' | 'back'>('all');
 

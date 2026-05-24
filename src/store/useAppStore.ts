@@ -27,7 +27,7 @@ const DEFAULT_DAY = (date: string): DayData => ({
   notes: '',
 });
 
-interface Store extends AppState {
+export interface Store extends AppState {
   getToday: () => DayData;
   toggleCheckin: (key: keyof CheckIns) => void;
   logSet: (exerciseId: string, setIdx: number, log: SetLog) => void;
@@ -46,6 +46,15 @@ interface Store extends AppState {
   prevSplit: () => void;
   updatePR: (exerciseId: string, weight: number) => void;
   computeStreak: () => number;
+  updateGoals: (goals: {
+    userName?: string;
+    weightGoal?: number;
+    calorieGoal?: number;
+    proteinGoal?: number;
+    waterGoalMl?: number;
+  }) => void;
+  resetAllData: () => void;
+  userName: string;
 }
 
 export const useAppStore = create<Store>()(
@@ -66,6 +75,7 @@ export const useAppStore = create<Store>()(
       proteinGoal: 175,
       weightGoal: 76,
       onboardingDone: false,
+      userName: 'Júlio Cezar',
 
       getToday: () => {
         const d = TODAY();
@@ -207,6 +217,17 @@ export const useAppStore = create<Store>()(
         }
         return streak;
       },
+
+      updateGoals: (goals) => set((s) => ({ ...s, ...goals })),
+
+      resetAllData: () => set({
+        days: {},
+        fastingSessions: [],
+        activeFasting: null,
+        photos: [],
+        prs: { benchpress: 0, squat: 0, deadlift: 0, latpull: 0 },
+        currentSplitIdx: 0,
+      }),
     }),
     {
       name: 'prime-fit-store-v1',
