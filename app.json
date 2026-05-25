@@ -74,12 +74,6 @@
         }
       ],
       [
-        "expo-in-app-purchases",
-        {
-          "subscriptionGroupIdentifier": "prime_fasting_group"
-        }
-      ],
-      [
         "expo-splash-screen",
         {
           "backgroundColor": "#0A0A0F",
