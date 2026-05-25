@@ -57,7 +57,7 @@ export default function PremiumScreen({ navigation }: any) {
     Animated.loop(
       Animated.sequence([
         Animated.timing(shimmerAnim, { toValue: 1, duration: 2000, useNativeDriver: true }),
-        Animated.timing(shimmerAnim, { toValue: 0, duration: 0, useNativeDriver: false }),
+        Animated.timing(shimmerAnim, { toValue: 0, duration: 0, useNativeDriver: true }),
       ])
     ).start();
   };
