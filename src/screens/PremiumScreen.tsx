@@ -12,7 +12,7 @@ import {
 import { LinearGradient } from 'expo-linear-gradient';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAppStore } from '../store';
-import { getSubscriptions, purchaseSubscription, restorePurchases, PRODUCT_IDS } from '../utils/iap';
+import { getSubscriptions, purchaseSubscription, restorePurchases, PRODUCT_IDS, IAP_AVAILABLE } from '../utils/iap';
 import { savePremium } from '../utils/storage';
 import { colors, spacing, radius, fontSize, fontWeight } from '../theme';
 
@@ -79,6 +79,28 @@ export default function PremiumScreen({ navigation }: any) {
 
   const handleSubscribe = async () => {
     if (loading) return;
+
+    // Expo Go / development mode — simulate purchase for testing
+    if (!IAP_AVAILABLE) {
+      Alert.alert(
+        '🛠️ Modo de Teste',
+        'Compras in-app não estão disponíveis no Expo Go.\n\nPara testar a tela Premium, toque em "Ativar Grátis (Teste)" abaixo.',
+        [
+          { text: 'Cancelar', style: 'cancel' },
+          {
+            text: 'Ativar Grátis (Teste)',
+            onPress: () => {
+              setPremium(true, selectedPlan);
+              Alert.alert('✅ Modo Teste Ativado!', 'Prime ativado para testar. Em produção, o pagamento real será processado.', [
+                { text: 'Começar', onPress: () => navigation.goBack() },
+              ]);
+            },
+          },
+        ]
+      );
+      return;
+    }
+
     setLoading(true);
     try {
       const plan = plans.find((p) => p.id === selectedPlan)!;
@@ -93,7 +115,7 @@ export default function PremiumScreen({ navigation }: any) {
         );
       }
     } catch (e: any) {
-      Alert.alert('Erro', 'Não foi possível completar a compra. Tente novamente.');
+      Alert.alert('Erro', e?.message || 'Não foi possível completar a compra. Tente novamente.');
     } finally {
       setLoading(false);
     }
@@ -253,7 +275,11 @@ export default function PremiumScreen({ navigation }: any) {
                 style={[styles.ctaButton, loading && styles.ctaDisabled]}
               >
                 <Text style={styles.ctaText}>
-                  {loading ? 'Processando...' : `✨ Começar ${trialDaysLeft} dias grátis`}
+                  {loading
+                    ? 'Processando...'
+                    : IAP_AVAILABLE
+                      ? `✨ Começar ${trialDaysLeft} dias grátis`
+                      : '🛠️ Testar Premium (Expo Go)'}
                 </Text>
               </LinearGradient>
             </TouchableOpacity>
