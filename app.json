@@ -1,0 +1,47 @@
+{
+  "expo": {
+    "name": "Prime Jejum & Fitness",
+    "slug": "prime-fasting-app",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./src/assets/icon.png",
+    "userInterfaceStyle": "dark",
+    "splash": {
+      "resizeMode": "contain",
+      "backgroundColor": "#0A0A0F"
+    },
+    "assetBundlePatterns": ["**/*"],
+    "ios": {
+      "supportsTablet": false,
+      "bundleIdentifier": "com.prime.fastingapp",
+      "buildNumber": "1",
+      "infoPlist": {
+        "NSUserNotificationUsageDescription": "Usamos notificações para lembretes de hidratação, marcos do jejum e motivação.",
+        "SKAdNetworkItems": []
+      },
+      "entitlements": {
+        "com.apple.developer.in-app-payments": []
+      }
+    },
+    "android": {
+      "adaptiveIcon": {
+        "backgroundColor": "#0A0A0F"
+      },
+      "package": "com.prime.fastingapp"
+    },
+    "plugins": [
+      "expo-notifications",
+      [
+        "expo-in-app-purchases",
+        {
+          "subscriptionGroupIdentifier": "prime_fasting_group"
+        }
+      ]
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "prime-fasting-app"
+      }
+    }
+  }
+}
