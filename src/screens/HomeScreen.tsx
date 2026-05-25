@@ -74,6 +74,7 @@ export default function HomeScreen({ navigation }: any) {
         {/* Header */}
         <Animated.View style={[styles.header, { opacity: fadeAnim }]}>
           <View>
+            <Text style={styles.appLabel}>⚡ PRIME · Jejum & Fitness</Text>
             <Text style={styles.greeting}>Olá, {user?.name?.split(' ')[0] || 'Atleta'} 👋</Text>
             <Text style={styles.date}>
               {new Date().toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'long' })}
@@ -301,6 +302,13 @@ const styles = StyleSheet.create({
     alignItems: 'flex-start',
     paddingTop: spacing.md,
     paddingBottom: spacing.lg,
+  },
+  appLabel: {
+    fontSize: fontSize.xs,
+    fontWeight: fontWeight.bold,
+    color: colors.primary,
+    letterSpacing: 1.5,
+    marginBottom: 4,
   },
   greeting: {
     fontSize: fontSize.xxl,

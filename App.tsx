@@ -67,17 +67,23 @@ export default function App() {
   }, []);
 
   useEffect(() => {
-    // Wait for Zustand persist rehydration
+    // Safety timeout — if AsyncStorage is unavailable, hydration never fires
+    const timeout = setTimeout(() => onReady(), 3000);
+
     const unsub = useAppStore.persist.onFinishHydration(() => {
+      clearTimeout(timeout);
       onReady();
     });
 
-    // If already hydrated (e.g. fast subsequent mount)
     if (useAppStore.persist.hasHydrated()) {
+      clearTimeout(timeout);
       onReady();
     }
 
-    return unsub;
+    return () => {
+      clearTimeout(timeout);
+      unsub();
+    };
   }, [onReady]);
 
   // Global notification tap handler — deep-link to Jejum screen
