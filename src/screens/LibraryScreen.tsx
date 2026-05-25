@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback, useMemo, memo } from 'react';
 import {
   View,
   Text,
@@ -17,7 +17,7 @@ import { colors, spacing, radius, fontSize, fontWeight } from '../theme';
 
 const { width } = Dimensions.get('window');
 
-function EbookCover({ ebook, size = 'medium' }: { ebook: EbookData; size?: 'small' | 'medium' | 'large' }) {
+const EbookCover = memo(function EbookCover({ ebook, size = 'medium' }: { ebook: EbookData; size?: 'small' | 'medium' | 'large' }) {
   const dim = size === 'small' ? 80 : size === 'large' ? 140 : 100;
   return (
     <LinearGradient
@@ -31,9 +31,9 @@ function EbookCover({ ebook, size = 'medium' }: { ebook: EbookData; size?: 'smal
       </Text>
     </LinearGradient>
   );
-}
+});
 
-function EbookCard({ ebook, onPress, progress }: {
+const EbookCard = memo(function EbookCard({ ebook, onPress, progress }: {
   ebook: EbookData;
   onPress: () => void;
   progress?: { currentChapter: number; totalChapters: number; progress: number };
@@ -98,9 +98,9 @@ function EbookCard({ ebook, onPress, progress }: {
       </LinearGradient>
     </TouchableOpacity>
   );
-}
+});
 
-function ChapterRow({ chapter, index, isRead, isBookmarked, onPress, onBookmark }: {
+const ChapterRow = memo(function ChapterRow({ chapter, index, isRead, isBookmarked, onPress, onBookmark }: {
   chapter: EbookChapter;
   index: number;
   isRead: boolean;
@@ -129,7 +129,7 @@ function ChapterRow({ chapter, index, isRead, isBookmarked, onPress, onBookmark 
       </TouchableOpacity>
     </TouchableOpacity>
   );
-}
+});
 
 export default function LibraryScreen({ navigation }: any) {
   const { isPremium, isBookmarked, toggleBookmark, ebookProgress, updateEbookProgress } = useAppStore();
@@ -137,11 +137,12 @@ export default function LibraryScreen({ navigation }: any) {
   const [selectedEbook, setSelectedEbook] = useState<EbookData | null>(null);
   const [selectedChapterIndex, setSelectedChapterIndex] = useState<number | null>(null);
 
-  const filtered = activeCategory === 'todos'
-    ? EBOOKS
-    : EBOOKS.filter((e) => e.category === activeCategory);
+  const filtered = useMemo(
+    () => activeCategory === 'todos' ? EBOOKS : EBOOKS.filter((e) => e.category === activeCategory),
+    [activeCategory]
+  );
 
-  const handleEbookPress = (ebook: EbookData) => {
+  const handleEbookPress = useCallback((ebook: EbookData) => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     if (ebook.isPremium && !isPremium) {
       navigation.navigate('Premium');
@@ -149,15 +150,15 @@ export default function LibraryScreen({ navigation }: any) {
     }
     setSelectedEbook(ebook);
     setSelectedChapterIndex(null);
-  };
+  }, [isPremium, navigation]);
 
-  const handleChapterPress = (ebook: EbookData, index: number) => {
+  const handleChapterPress = useCallback((ebook: EbookData, index: number) => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     setSelectedChapterIndex(index);
     updateEbookProgress(ebook.id, index, ebook.totalChapters);
-  };
+  }, [updateEbookProgress]);
 
-  const handleNextChapter = () => {
+  const handleNextChapter = useCallback(() => {
     if (!selectedEbook || selectedChapterIndex === null) return;
     const next = selectedChapterIndex + 1;
     if (next < selectedEbook.chapters.length) {
@@ -166,22 +167,20 @@ export default function LibraryScreen({ navigation }: any) {
     } else {
       setSelectedChapterIndex(null);
     }
-  };
+  }, [selectedEbook, selectedChapterIndex, updateEbookProgress]);
 
-  const closeReader = () => {
+  const closeReader = useCallback(() => {
     setSelectedEbook(null);
     setSelectedChapterIndex(null);
-  };
+  }, []);
 
-  const totalRead = EBOOKS.filter(e => {
-    const p = ebookProgress[e.id];
-    return p && p.progress >= 100;
-  }).length;
-
-  const inProgress = EBOOKS.filter(e => {
-    const p = ebookProgress[e.id];
-    return p && p.progress > 0 && p.progress < 100;
-  }).length;
+  const { totalRead, inProgress } = useMemo(() => ({
+    totalRead: EBOOKS.filter(e => ebookProgress[e.id]?.progress >= 100).length,
+    inProgress: EBOOKS.filter(e => {
+      const p = ebookProgress[e.id]?.progress;
+      return p !== undefined && p > 0 && p < 100;
+    }).length,
+  }), [ebookProgress]);
 
   return (
     <SafeAreaView style={styles.container} edges={['top']}>

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback, useMemo, memo } from 'react';
 import {
   View,
   Text,
@@ -16,7 +16,7 @@ import { colors, spacing, radius, fontSize, fontWeight } from '../theme';
 
 const { width } = Dimensions.get('window');
 
-function MiniVideoThumb({ colors: thumbColors, emoji }: { colors: string[]; emoji: string }) {
+const MiniVideoThumb = memo(function MiniVideoThumb({ colors: thumbColors, emoji }: { colors: string[]; emoji: string }) {
   return (
     <LinearGradient
       colors={thumbColors as [string, string]}
@@ -30,9 +30,9 @@ function MiniVideoThumb({ colors: thumbColors, emoji }: { colors: string[]; emoj
       <Text style={styles.miniThumbEmoji}>{emoji}</Text>
     </LinearGradient>
   );
-}
+});
 
-function WorkoutCard({ workout, onPress }: { workout: WorkoutData; onPress: () => void }) {
+const WorkoutCard = memo(function WorkoutCard({ workout, onPress }: { workout: WorkoutData; onPress: () => void }) {
   const { isPremium } = useAppStore();
   const locked = workout.isPremium && !isPremium;
   const firstExercise = workout.exerciseList[0];
@@ -119,7 +119,7 @@ function WorkoutCard({ workout, onPress }: { workout: WorkoutData; onPress: () =
       </LinearGradient>
     </TouchableOpacity>
   );
-}
+});
 
 export default function WorkoutScreen({ navigation }: any) {
   const { isPremium, fastingHistory } = useAppStore();
@@ -131,18 +131,19 @@ export default function WorkoutScreen({ navigation }: any) {
     return diff <= 7;
   }).length;
 
-  const filtered = activeCategory === 'Todos'
-    ? WORKOUTS
-    : WORKOUTS.filter((w) => w.category === activeCategory);
+  const filtered = useMemo(
+    () => activeCategory === 'Todos' ? WORKOUTS : WORKOUTS.filter((w) => w.category === activeCategory),
+    [activeCategory]
+  );
 
-  const handleWorkoutPress = (workout: WorkoutData) => {
+  const handleWorkoutPress = useCallback((workout: WorkoutData) => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     if (workout.isPremium && !isPremium) {
       navigation.navigate('Premium');
       return;
     }
     navigation.navigate('WorkoutDetail', { workout });
-  };
+  }, [isPremium, navigation]);
 
   return (
     <SafeAreaView style={styles.container} edges={['top']}>

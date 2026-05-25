@@ -1,4 +1,6 @@
 import { create } from 'zustand';
+import { persist, createJSONStorage } from 'zustand/middleware';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export type FastingPreset = 12 | 16 | 18 | 24 | 36 | 48 | 72 | 96 | 120;
 
@@ -134,10 +136,12 @@ export interface AppState {
   updateStreak: () => void;
 
   hydrationToday: number;
+  hydrationDate: string;
   hydrationGoal: number;
   logHydration: (ml: number) => void;
 
   electrolytesToday: number;
+  electrolyteDate: string;
   logElectrolytes: () => void;
 
   isPremium: boolean;
@@ -155,110 +159,167 @@ export interface AppState {
   setSelectedTab: (tab: string) => void;
 }
 
-export const useAppStore = create<AppState>((set, get) => ({
-  hasCompletedOnboarding: false,
-  setHasCompletedOnboarding: (v) => set({ hasCompletedOnboarding: v }),
+const todayString = () => new Date().toDateString();
 
-  user: null,
-  setUser: (u) => set({ user: u }),
+export const useAppStore = create<AppState>()(
+  persist(
+    (set, get) => ({
+      hasCompletedOnboarding: false,
+      setHasCompletedOnboarding: (v) => set({ hasCompletedOnboarding: v }),
 
-  activeFasting: null,
-  fastingHistory: [],
-  startFasting: (hours) =>
-    set({
-      activeFasting: {
-        id: Date.now().toString(),
-        startTime: Date.now(),
-        targetHours: hours,
-        completed: false,
+      user: null,
+      setUser: (u) => set({ user: u }),
+
+      activeFasting: null,
+      fastingHistory: [],
+      startFasting: (hours) =>
+        set({
+          activeFasting: {
+            id: Date.now().toString(),
+            startTime: Date.now(),
+            targetHours: hours,
+            completed: false,
+          },
+        }),
+      stopFasting: () => {
+        const { activeFasting, fastingHistory } = get();
+        if (activeFasting) {
+          const elapsed = (Date.now() - activeFasting.startTime) / (1000 * 60 * 60);
+          const completed: FastingSession = {
+            ...activeFasting,
+            endTime: Date.now(),
+            completed: true,
+            elapsedHoursAtEnd: elapsed,
+          };
+          set({ activeFasting: null, fastingHistory: [completed, ...fastingHistory] });
+          setTimeout(() => get().updateStreak(), 0);
+        }
       },
+      getCurrentPhase: () => {
+        const { activeFasting } = get();
+        if (!activeFasting) return null;
+        const elapsed = (Date.now() - activeFasting.startTime) / (1000 * 60 * 60);
+        return (
+          FASTING_PHASES.find((p) => elapsed >= p.startHour && elapsed < p.endHour) ||
+          FASTING_PHASES[FASTING_PHASES.length - 1]
+        );
+      },
+      getElapsedHours: () => {
+        const { activeFasting } = get();
+        if (!activeFasting) return 0;
+        return (Date.now() - activeFasting.startTime) / (1000 * 60 * 60);
+      },
+
+      streak: { current: 0, longest: 0, lastFastDate: null, totalCompleted: 0 },
+      updateStreak: () => {
+        const { streak, fastingHistory } = get();
+        const today = todayString();
+        const yesterday = new Date(Date.now() - 86400000).toDateString();
+        let newCurrent = streak.current;
+        if (streak.lastFastDate !== today) {
+          newCurrent = streak.lastFastDate === yesterday ? streak.current + 1 : 1;
+        }
+        const newLongest = Math.max(streak.longest, newCurrent);
+        set({
+          streak: {
+            current: newCurrent,
+            longest: newLongest,
+            lastFastDate: today,
+            totalCompleted: fastingHistory.length + 1,
+          },
+        });
+      },
+
+      hydrationToday: 0,
+      hydrationDate: todayString(),
+      hydrationGoal: 2500,
+      logHydration: (ml) =>
+        set((s) => ({
+          hydrationToday: s.hydrationToday + ml,
+          hydrationDate: todayString(),
+        })),
+
+      electrolytesToday: 0,
+      electrolyteDate: todayString(),
+      logElectrolytes: () =>
+        set((s) => ({
+          electrolytesToday: s.electrolytesToday + 1,
+          electrolyteDate: todayString(),
+        })),
+
+      isPremium: false,
+      trialDaysLeft: 5,
+      setPremium: (v, type) =>
+        set((s) => ({
+          isPremium: v,
+          user: s.user ? { ...s.user, isPremium: v, subscriptionType: type } : null,
+        })),
+
+      bookmarks: [],
+      toggleBookmark: (key) =>
+        set((s) => ({
+          bookmarks: s.bookmarks.includes(key)
+            ? s.bookmarks.filter((b) => b !== key)
+            : [...s.bookmarks, key],
+        })),
+      isBookmarked: (key) => get().bookmarks.includes(key),
+
+      ebookProgress: {},
+      updateEbookProgress: (ebookId, chapterIndex, totalChapters) =>
+        set((s) => ({
+          ebookProgress: {
+            ...s.ebookProgress,
+            [ebookId]: {
+              currentChapter: chapterIndex + 1,
+              totalChapters,
+              progress: Math.round(((chapterIndex + 1) / totalChapters) * 100),
+            },
+          },
+        })),
+
+      selectedTab: 'Home',
+      setSelectedTab: (tab) => set({ selectedTab: tab }),
     }),
-  stopFasting: () => {
-    const { activeFasting, fastingHistory } = get();
-    if (activeFasting) {
-      const elapsed = (Date.now() - activeFasting.startTime) / (1000 * 60 * 60);
-      const completed: FastingSession = {
-        ...activeFasting,
-        endTime: Date.now(),
-        completed: true,
-        elapsedHoursAtEnd: elapsed,
-      };
-      set({ activeFasting: null, fastingHistory: [completed, ...fastingHistory] });
-      setTimeout(() => get().updateStreak(), 0);
-    }
-  },
-  getCurrentPhase: () => {
-    const { activeFasting } = get();
-    if (!activeFasting) return null;
-    const elapsed = (Date.now() - activeFasting.startTime) / (1000 * 60 * 60);
-    return (
-      FASTING_PHASES.find((p) => elapsed >= p.startHour && elapsed < p.endHour) ||
-      FASTING_PHASES[FASTING_PHASES.length - 1]
-    );
-  },
-  getElapsedHours: () => {
-    const { activeFasting } = get();
-    if (!activeFasting) return 0;
-    return (Date.now() - activeFasting.startTime) / (1000 * 60 * 60);
-  },
-
-  streak: { current: 0, longest: 0, lastFastDate: null, totalCompleted: 0 },
-  updateStreak: () => {
-    const { streak, fastingHistory } = get();
-    const today = new Date().toDateString();
-    const yesterday = new Date(Date.now() - 86400000).toDateString();
-    let newCurrent = streak.current;
-    if (streak.lastFastDate !== today) {
-      newCurrent = streak.lastFastDate === yesterday ? streak.current + 1 : 1;
-    }
-    const newLongest = Math.max(streak.longest, newCurrent);
-    set({
-      streak: {
-        current: newCurrent,
-        longest: newLongest,
-        lastFastDate: today,
-        totalCompleted: fastingHistory.length,
+    {
+      name: 'prime-app-v1',
+      storage: createJSONStorage(() => AsyncStorage),
+      partialize: (state) => ({
+        hasCompletedOnboarding: state.hasCompletedOnboarding,
+        user: state.user,
+        streak: state.streak,
+        fastingHistory: state.fastingHistory,
+        activeFasting: state.activeFasting,
+        isPremium: state.isPremium,
+        trialDaysLeft: state.trialDaysLeft,
+        bookmarks: state.bookmarks,
+        ebookProgress: state.ebookProgress,
+        hydrationToday: state.hydrationToday,
+        hydrationDate: state.hydrationDate,
+        hydrationGoal: state.hydrationGoal,
+        electrolytesToday: state.electrolytesToday,
+        electrolyteDate: state.electrolyteDate,
+      }),
+      onRehydrateStorage: () => (state) => {
+        if (!state) return;
+        const today = todayString();
+        // Reset daily hydration if new day
+        if (state.hydrationDate !== today) {
+          state.hydrationToday = 0;
+          state.hydrationDate = today;
+        }
+        // Reset daily electrolytes if new day
+        if (state.electrolyteDate !== today) {
+          state.electrolytesToday = 0;
+          state.electrolyteDate = today;
+        }
+        // Clear fasts that ran way past their target (safety valve)
+        if (state.activeFasting) {
+          const elapsed = (Date.now() - state.activeFasting.startTime) / (1000 * 60 * 60);
+          if (elapsed > state.activeFasting.targetHours * 2) {
+            state.activeFasting = null;
+          }
+        }
       },
-    });
-  },
-
-  hydrationToday: 0,
-  hydrationGoal: 2500,
-  logHydration: (ml) => set((s) => ({ hydrationToday: s.hydrationToday + ml })),
-
-  electrolytesToday: 0,
-  logElectrolytes: () => set((s) => ({ electrolytesToday: s.electrolytesToday + 1 })),
-
-  isPremium: false,
-  trialDaysLeft: 5,
-  setPremium: (v, type) =>
-    set((s) => ({
-      isPremium: v,
-      user: s.user ? { ...s.user, isPremium: v, subscriptionType: type } : null,
-    })),
-
-  bookmarks: [],
-  toggleBookmark: (key) =>
-    set((s) => ({
-      bookmarks: s.bookmarks.includes(key)
-        ? s.bookmarks.filter((b) => b !== key)
-        : [...s.bookmarks, key],
-    })),
-  isBookmarked: (key) => get().bookmarks.includes(key),
-
-  ebookProgress: {},
-  updateEbookProgress: (ebookId, chapterIndex, totalChapters) =>
-    set((s) => ({
-      ebookProgress: {
-        ...s.ebookProgress,
-        [ebookId]: {
-          currentChapter: chapterIndex,
-          totalChapters,
-          progress: Math.round(((chapterIndex + 1) / totalChapters) * 100),
-        },
-      },
-    })),
-
-  selectedTab: 'Home',
-  setSelectedTab: (tab) => set({ selectedTab: tab }),
-}));
+    }
+  )
+);

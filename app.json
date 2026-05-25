@@ -3,20 +3,33 @@
     "name": "Prime Jejum & Fitness",
     "slug": "prime-fasting-app",
     "version": "1.0.0",
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
     "orientation": "portrait",
-    "icon": "./src/assets/icon.png",
+    "icon": "./assets/icon.png",
     "userInterfaceStyle": "dark",
+    "backgroundColor": "#0A0A0F",
+    "primaryColor": "#C9A84C",
     "splash": {
-      "resizeMode": "contain",
+      "image": "./assets/splash.png",
+      "resizeMode": "cover",
       "backgroundColor": "#0A0A0F"
     },
-    "assetBundlePatterns": ["**/*"],
+    "assetBundlePatterns": [
+      "**/*"
+    ],
     "ios": {
       "supportsTablet": false,
       "bundleIdentifier": "com.prime.fastingapp",
       "buildNumber": "1",
+      "requireFullScreen": true,
       "infoPlist": {
-        "NSUserNotificationUsageDescription": "Usamos notificações para lembretes de hidratação, marcos do jejum e motivação.",
+        "NSUserNotificationUsageDescription": "Usamos notificações para lembretes de hidratação, marcos do jejum e motivação diária.",
+        "UIBackgroundModes": [
+          "fetch",
+          "remote-notification"
+        ],
         "SKAdNetworkItems": []
       },
       "entitlements": {
@@ -25,16 +38,56 @@
     },
     "android": {
       "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#0A0A0F"
       },
-      "package": "com.prime.fastingapp"
+      "package": "com.prime.fastingapp",
+      "versionCode": 1,
+      "compileSdkVersion": 34,
+      "targetSdkVersion": 34,
+      "minSdkVersion": 24,
+      "permissions": [
+        "android.permission.RECEIVE_BOOT_COMPLETED",
+        "android.permission.VIBRATE",
+        "android.permission.POST_NOTIFICATIONS",
+        "android.permission.SCHEDULE_EXACT_ALARM",
+        "android.permission.USE_EXACT_ALARM"
+      ],
+      "allowBackup": false,
+      "blockedPermissions": [
+        "android.permission.RECORD_AUDIO",
+        "android.permission.CAMERA"
+      ]
+    },
+    "notification": {
+      "icon": "./assets/adaptive-icon.png",
+      "color": "#C9A84C",
+      "androidMode": "default",
+      "androidCollapsedTitle": "Prime Jejum & Fitness"
     },
     "plugins": [
-      "expo-notifications",
+      "expo-font",
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/adaptive-icon.png",
+          "color": "#C9A84C",
+          "defaultChannel": "prime",
+          "sounds": []
+        }
+      ],
       [
         "expo-in-app-purchases",
         {
           "subscriptionGroupIdentifier": "prime_fasting_group"
+        }
+      ],
+      [
+        "expo-splash-screen",
+        {
+          "backgroundColor": "#0A0A0F",
+          "image": "./assets/splash.png",
+          "imageWidth": 200
         }
       ]
     ],
@@ -42,6 +95,7 @@
       "eas": {
         "projectId": "prime-fasting-app"
       }
-    }
+    },
+    "owner": "engenhariadecursos"
   }
 }
