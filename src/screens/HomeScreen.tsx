@@ -9,7 +9,7 @@ import {
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useAppStore, FASTING_PHASES } from '../store';
+import { useAppStore } from '../store';
 import { EBOOKS } from '../data/ebooks';
 import { WORKOUTS } from '../data/workouts';
 import { colors, spacing, radius, fontSize, fontWeight } from '../theme';

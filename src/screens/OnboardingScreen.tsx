@@ -15,7 +15,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAppStore } from '../store';
 import { saveOnboarding, saveUser } from '../utils/storage';
-import { requestPermissions, scheduleHydrationReminders } from '../utils/notifications';
+import { requestPermissions, scheduleAllReminders } from '../utils/notifications';
 import { colors, spacing, radius, fontSize, fontWeight } from '../theme';
 
 const { width } = Dimensions.get('window');
@@ -110,7 +110,7 @@ export default function OnboardingScreen({ navigation }: any) {
       setUser(user as any);
       await saveOnboarding(true);
       await requestPermissions();
-      await scheduleHydrationReminders();
+      await scheduleAllReminders();
       setHasCompletedOnboarding(true);
     } finally {
       setLoading(false);
