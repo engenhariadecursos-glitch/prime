@@ -9,176 +9,112 @@ import {
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import * as Haptics from 'expo-haptics';
 import { useAppStore } from '../store';
+import { WORKOUTS, WorkoutData, WORKOUT_CATEGORIES, LEVEL_COLORS } from '../data/workouts';
 import { colors, spacing, radius, fontSize, fontWeight } from '../theme';
 
 const { width } = Dimensions.get('window');
 
-interface Workout {
-  id: string;
-  title: string;
-  duration: string;
-  level: string;
-  category: string;
-  exercises: number;
-  calories: string;
-  emoji: string;
-  gradient: string[];
-  isPremium: boolean;
-  description: string;
-  tags: string[];
+function MiniVideoThumb({ colors: thumbColors, emoji }: { colors: string[]; emoji: string }) {
+  return (
+    <LinearGradient
+      colors={thumbColors as [string, string]}
+      start={{ x: 0, y: 0 }}
+      end={{ x: 1, y: 1 }}
+      style={styles.miniThumb}
+    >
+      <View style={styles.miniPlayBtn}>
+        <Text style={styles.miniPlayIcon}>▶</Text>
+      </View>
+      <Text style={styles.miniThumbEmoji}>{emoji}</Text>
+    </LinearGradient>
+  );
 }
 
-const WORKOUTS: Workout[] = [
-  {
-    id: '1',
-    title: 'Hipertrofia Upper',
-    duration: '45 min',
-    level: 'Intermediário',
-    category: 'Força',
-    exercises: 8,
-    calories: '320 kcal',
-    emoji: '💪',
-    gradient: ['#150A2A', '#2A1A4A'],
-    isPremium: false,
-    description: 'Treino focado em peito, costas e ombros para máximo ganho de massa muscular.',
-    tags: ['Peito', 'Costas', 'Ombros'],
-  },
-  {
-    id: '2',
-    title: 'HIIT Queima Total',
-    duration: '30 min',
-    level: 'Avançado',
-    category: 'Cardio',
-    exercises: 10,
-    calories: '450 kcal',
-    emoji: '🔥',
-    gradient: ['#2A0A00', '#4A1A00'],
-    isPremium: false,
-    description: 'Treino intervalado de alta intensidade para máxima queima de gordura.',
-    tags: ['Queima de Gordura', 'Resistência', 'Cardio'],
-  },
-  {
-    id: '3',
-    title: 'Lower Hipertrofia',
-    duration: '50 min',
-    level: 'Intermediário',
-    category: 'Força',
-    exercises: 9,
-    calories: '380 kcal',
-    emoji: '🦵',
-    gradient: ['#0A1A00', '#1A2A00'],
-    isPremium: false,
-    description: 'Desenvolvimento completo de glúteos, quadríceps e posteriores.',
-    tags: ['Glúteos', 'Quadríceps', 'Isquiotibiais'],
-  },
-  {
-    id: '4',
-    title: 'Força Cetogênica',
-    duration: '40 min',
-    level: 'Avançado',
-    category: 'Força',
-    exercises: 7,
-    calories: '290 kcal',
-    emoji: '⚡',
-    gradient: ['#0A0520', '#1A0A40'],
-    isPremium: true,
-    description: 'Protocolo especialmente criado para treinar durante o jejum cetogênico.',
-    tags: ['Jejum', 'Cetose', 'Força'],
-  },
-  {
-    id: '5',
-    title: 'Full Body Elite',
-    duration: '60 min',
-    level: 'Elite',
-    category: 'Força',
-    exercises: 12,
-    calories: '520 kcal',
-    emoji: '🏆',
-    gradient: ['#1A0A00', '#2A1500'],
-    isPremium: true,
-    description: 'O protocolo de treino mais avançado para atletas de alta performance.',
-    tags: ['Completo', 'Elite', 'Alta Performance'],
-  },
-  {
-    id: '6',
-    title: 'Mobilidade & Flexibilidade',
-    duration: '25 min',
-    level: 'Iniciante',
-    category: 'Mobilidade',
-    exercises: 15,
-    calories: '120 kcal',
-    emoji: '🧘',
-    gradient: ['#00151A', '#00252A'],
-    isPremium: true,
-    description: 'Rotina de mobilidade para otimizar recuperação e prevenir lesões.',
-    tags: ['Recuperação', 'Mobilidade', 'Relaxamento'],
-  },
-];
+function WorkoutCard({ workout, onPress }: { workout: WorkoutData; onPress: () => void }) {
+  const { isPremium } = useAppStore();
+  const locked = workout.isPremium && !isPremium;
+  const firstExercise = workout.exerciseList[0];
 
-const CATEGORIES = ['Todos', 'Força', 'Cardio', 'Mobilidade'];
-
-const LEVEL_COLORS: Record<string, string> = {
-  'Iniciante': colors.success,
-  'Intermediário': colors.primary,
-  'Avançado': colors.fasting,
-  'Elite': '#C9A84C',
-};
-
-function WorkoutCard({ workout, onPress, isPremiumUser }: { workout: Workout; onPress: () => void; isPremiumUser: boolean }) {
-  const locked = workout.isPremium && !isPremiumUser;
   return (
-    <TouchableOpacity onPress={onPress} activeOpacity={0.88} style={styles.card}>
+    <TouchableOpacity
+      onPress={onPress}
+      activeOpacity={0.88}
+      style={styles.card}
+    >
       <LinearGradient
         colors={workout.gradient as [string, string]}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
         style={styles.cardGradient}
       >
-        <View style={styles.cardHeader}>
-          <View style={styles.cardEmojiContainer}>
-            <Text style={styles.cardEmoji}>{locked ? '🔒' : workout.emoji}</Text>
-          </View>
-          <View style={styles.cardBadges}>
-            <View style={[styles.levelBadge, { borderColor: LEVEL_COLORS[workout.level] + '40' }]}>
-              <Text style={[styles.levelText, { color: LEVEL_COLORS[workout.level] }]}>
-                {workout.level}
-              </Text>
-            </View>
-            {workout.isPremium && (
-              <View style={styles.premiumTag}>
-                <Text style={styles.premiumTagText}>PRIME</Text>
+        {/* Top row: thumb + badges */}
+        <View style={styles.cardTop}>
+          <View style={styles.cardLeft}>
+            <View style={styles.cardBadges}>
+              <View style={[styles.levelBadge, { borderColor: (LEVEL_COLORS[workout.level] || '#fff') + '50' }]}>
+                <Text style={[styles.levelText, { color: LEVEL_COLORS[workout.level] || '#fff' }]}>
+                  {workout.level}
+                </Text>
               </View>
-            )}
+              {workout.fastingCompatible && (
+                <View style={styles.fastingBadge}>
+                  <Text style={styles.fastingBadgeText}>⚡ Jejum OK</Text>
+                </View>
+              )}
+              {workout.isPremium && (
+                <View style={styles.premiumTag}>
+                  <Text style={styles.premiumTagText}>PRIME</Text>
+                </View>
+              )}
+            </View>
+            <Text style={styles.cardTitle}>{locked ? '🔒 ' : ''}{workout.title}</Text>
+            <Text style={styles.cardSubtitle}>{workout.subtitle}</Text>
           </View>
+          {firstExercise && (
+            <MiniVideoThumb
+              colors={firstExercise.videoPlaceholderColors}
+              emoji={workout.emoji}
+            />
+          )}
         </View>
 
-        <Text style={styles.cardTitle}>{workout.title}</Text>
+        {/* Description */}
         <Text style={styles.cardDesc} numberOfLines={2}>{workout.description}</Text>
 
+        {/* Tags */}
         <View style={styles.cardTags}>
-          {workout.tags.map((tag) => (
+          {workout.tags.slice(0, 3).map((tag) => (
             <View key={tag} style={styles.tag}>
               <Text style={styles.tagText}>{tag}</Text>
             </View>
           ))}
         </View>
 
+        {/* Meta */}
         <View style={styles.cardMeta}>
           <Text style={styles.metaItem}>⏱ {workout.duration}</Text>
+          <Text style={styles.metaDot}>·</Text>
           <Text style={styles.metaItem}>🏋️ {workout.exercises} exercícios</Text>
+          <Text style={styles.metaDot}>·</Text>
           <Text style={styles.metaItem}>🔥 {workout.calories}</Text>
         </View>
 
-        {!locked && (
-          <View style={styles.startWorkoutBtn}>
-            <Text style={styles.startWorkoutText}>Iniciar Treino →</Text>
+        {/* CTA */}
+        {locked ? (
+          <View style={[styles.ctaBtn, styles.ctaLocked]}>
+            <Text style={styles.ctaLockedText}>🔒 Assinar Prime para desbloquear</Text>
           </View>
-        )}
-        {locked && (
-          <View style={[styles.startWorkoutBtn, styles.lockedBtn]}>
-            <Text style={styles.lockedBtnText}>🔒 Assinar Prime para desbloquear</Text>
-          </View>
+        ) : (
+          <LinearGradient
+            colors={['rgba(255,255,255,0.18)', 'rgba(255,255,255,0.08)']}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 0 }}
+            style={styles.ctaBtn}
+          >
+            <Text style={styles.ctaText}>Ver Treino Completo →</Text>
+          </LinearGradient>
         )}
       </LinearGradient>
     </TouchableOpacity>
@@ -186,40 +122,53 @@ function WorkoutCard({ workout, onPress, isPremiumUser }: { workout: Workout; on
 }
 
 export default function WorkoutScreen({ navigation }: any) {
-  const { isPremium } = useAppStore();
+  const { isPremium, fastingHistory } = useAppStore();
   const [activeCategory, setActiveCategory] = useState('Todos');
+
+  const thisWeek = fastingHistory.filter((s) => {
+    if (!s.endTime) return false;
+    const diff = (Date.now() - s.endTime) / (1000 * 60 * 60 * 24);
+    return diff <= 7;
+  }).length;
 
   const filtered = activeCategory === 'Todos'
     ? WORKOUTS
     : WORKOUTS.filter((w) => w.category === activeCategory);
 
-  const handleWorkoutPress = (workout: Workout) => {
+  const handleWorkoutPress = (workout: WorkoutData) => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     if (workout.isPremium && !isPremium) {
       navigation.navigate('Premium');
+      return;
     }
-    // Would navigate to workout detail screen
+    navigation.navigate('WorkoutDetail', { workout });
   };
 
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scroll}>
+        {/* Header */}
         <View style={styles.header}>
-          <Text style={styles.headerTitle}>Treinos</Text>
-          <Text style={styles.headerSub}>Programas especializados</Text>
+          <View>
+            <Text style={styles.headerTitle}>Treinos</Text>
+            <Text style={styles.headerSub}>Programas especializados</Text>
+          </View>
+          <View style={styles.headerBadge}>
+            <LinearGradient colors={['#7C4DFF', '#5B2FFF']} style={styles.headerBadgeGrad}>
+              <Text style={styles.headerBadgeText}>{WORKOUTS.length} planos</Text>
+            </LinearGradient>
+          </View>
         </View>
 
         {/* Stats */}
         <View style={styles.statsRow}>
           {[
-            { label: 'Esta semana', value: '3', unit: 'treinos' },
-            { label: 'Total', value: '47', unit: 'treinos' },
-            { label: 'Calorias', value: '12.4k', unit: 'kcal' },
+            { label: 'Esta semana', value: thisWeek.toString(), unit: 'jejuns' },
+            { label: 'Programas', value: WORKOUTS.length.toString(), unit: 'disponíveis' },
+            { label: 'Premium', value: WORKOUTS.filter(w => w.isPremium).length.toString(), unit: 'exclusivos' },
           ].map((stat) => (
             <View key={stat.label} style={styles.statCard}>
-              <LinearGradient
-                colors={['#1A1A26', '#12121A']}
-                style={styles.statGrad}
-              >
+              <LinearGradient colors={['#1A1A26', '#12121A']} style={styles.statGrad}>
                 <Text style={styles.statValue}>{stat.value}</Text>
                 <Text style={styles.statUnit}>{stat.unit}</Text>
                 <Text style={styles.statLabel}>{stat.label}</Text>
@@ -235,20 +184,20 @@ export default function WorkoutScreen({ navigation }: any) {
           style={styles.filterRow}
           contentContainerStyle={styles.filterContent}
         >
-          {CATEGORIES.map((cat) => (
+          {WORKOUT_CATEGORIES.map((cat) => (
             <TouchableOpacity
               key={cat}
               onPress={() => setActiveCategory(cat)}
               style={[styles.filterChip, activeCategory === cat && styles.filterChipActive]}
             >
-              {activeCategory === cat ? (
+              {activeCategory === cat && (
                 <LinearGradient
                   colors={['#7C4DFF', '#9C6FFF']}
                   start={{ x: 0, y: 0 }}
                   end={{ x: 1, y: 0 }}
                   style={StyleSheet.absoluteFill}
                 />
-              ) : null}
+              )}
               <Text style={[styles.filterText, activeCategory === cat && styles.filterTextActive]}>
                 {cat}
               </Text>
@@ -256,16 +205,33 @@ export default function WorkoutScreen({ navigation }: any) {
           ))}
         </ScrollView>
 
-        {/* Workouts */}
+        {/* Fasting tip */}
+        {activeCategory === 'Todos' && (
+          <View style={styles.tipCard}>
+            <LinearGradient
+              colors={['rgba(255,107,53,0.12)', 'rgba(201,168,76,0.08)']}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 0 }}
+              style={styles.tipGrad}
+            >
+              <Text style={styles.tipEmoji}>⚡</Text>
+              <Text style={styles.tipText}>
+                Treinos marcados com <Text style={styles.tipHighlight}>Jejum OK</Text> são otimizados para treinar em estado de jejum
+              </Text>
+            </LinearGradient>
+          </View>
+        )}
+
+        {/* Workout cards */}
         {filtered.map((w) => (
           <WorkoutCard
             key={w.id}
             workout={w}
             onPress={() => handleWorkoutPress(w)}
-            isPremiumUser={isPremium}
           />
         ))}
 
+        {/* Upgrade banner for non-premium */}
         {!isPremium && (
           <TouchableOpacity
             onPress={() => navigation.navigate('Premium')}
@@ -279,10 +245,13 @@ export default function WorkoutScreen({ navigation }: any) {
               style={styles.upgradeGrad}
             >
               <Text style={styles.upgradeEmoji}>🔓</Text>
-              <Text style={styles.upgradeTitle}>Desbloquear todos os treinos</Text>
+              <Text style={styles.upgradeTitle}>Desbloquear treinos exclusivos</Text>
               <Text style={styles.upgradeSub}>
-                Acesse planos exclusivos, treinos para jejum e muito mais.
+                Força em Cetose, Full Body Elite e Mobilidade Avançada. Inicie 5 dias grátis.
               </Text>
+              <View style={styles.upgradeCta}>
+                <Text style={styles.upgradeCtaText}>Assinar Prime →</Text>
+              </View>
             </LinearGradient>
           </TouchableOpacity>
         )}
@@ -293,12 +262,13 @@ export default function WorkoutScreen({ navigation }: any) {
   );
 }
 
-const CARD_WIDTH = width - spacing.md * 2;
-
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.bg },
   scroll: { paddingHorizontal: spacing.md },
   header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
     paddingTop: spacing.md,
     paddingBottom: spacing.lg,
   },
@@ -311,6 +281,16 @@ const styles = StyleSheet.create({
     fontSize: fontSize.md,
     color: colors.textSecondary,
     marginTop: 2,
+  },
+  headerBadge: { borderRadius: radius.full, overflow: 'hidden' },
+  headerBadgeGrad: {
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.xs,
+  },
+  headerBadgeText: {
+    color: '#fff',
+    fontSize: fontSize.sm,
+    fontWeight: fontWeight.bold,
   },
   statsRow: {
     flexDirection: 'row',
@@ -354,17 +334,38 @@ const styles = StyleSheet.create({
     borderColor: colors.border,
     overflow: 'hidden',
   },
-  filterChipActive: {
-    borderColor: 'transparent',
-  },
+  filterChipActive: { borderColor: 'transparent' },
   filterText: {
     color: colors.textSecondary,
     fontSize: fontSize.sm,
     fontWeight: fontWeight.medium,
   },
   filterTextActive: { color: '#fff', fontWeight: fontWeight.bold },
+  tipCard: {
+    borderRadius: radius.lg,
+    overflow: 'hidden',
+    marginBottom: spacing.md,
+    borderWidth: 1,
+    borderColor: 'rgba(255,107,53,0.2)',
+  },
+  tipGrad: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: spacing.md,
+    gap: spacing.sm,
+  },
+  tipEmoji: { fontSize: 20 },
+  tipText: {
+    flex: 1,
+    fontSize: fontSize.sm,
+    color: colors.textSecondary,
+    lineHeight: 18,
+  },
+  tipHighlight: {
+    color: colors.fasting,
+    fontWeight: fontWeight.semibold,
+  },
   card: {
-    width: CARD_WIDTH,
     borderRadius: radius.xl,
     overflow: 'hidden',
     marginBottom: spacing.md,
@@ -372,22 +373,20 @@ const styles = StyleSheet.create({
     borderColor: 'rgba(255,255,255,0.06)',
   },
   cardGradient: { padding: spacing.lg },
-  cardHeader: {
+  cardTop: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'flex-start',
     marginBottom: spacing.sm,
+    gap: spacing.md,
   },
-  cardEmojiContainer: {
-    width: 52,
-    height: 52,
-    borderRadius: radius.lg,
-    backgroundColor: 'rgba(255,255,255,0.1)',
-    alignItems: 'center',
-    justifyContent: 'center',
+  cardLeft: { flex: 1 },
+  cardBadges: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: spacing.xs,
+    marginBottom: spacing.sm,
   },
-  cardEmoji: { fontSize: 28 },
-  cardBadges: { flexDirection: 'row', gap: spacing.xs, alignItems: 'center' },
   levelBadge: {
     paddingHorizontal: spacing.sm,
     paddingVertical: 3,
@@ -396,6 +395,19 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(0,0,0,0.3)',
   },
   levelText: {
+    fontSize: fontSize.xs,
+    fontWeight: fontWeight.semibold,
+  },
+  fastingBadge: {
+    backgroundColor: 'rgba(255,107,53,0.2)',
+    paddingHorizontal: spacing.sm,
+    paddingVertical: 3,
+    borderRadius: radius.full,
+    borderWidth: 1,
+    borderColor: 'rgba(255,107,53,0.35)',
+  },
+  fastingBadgeText: {
+    color: colors.fasting,
     fontSize: fontSize.xs,
     fontWeight: fontWeight.semibold,
   },
@@ -415,7 +427,40 @@ const styles = StyleSheet.create({
     fontSize: fontSize.xl,
     fontWeight: fontWeight.black,
     color: colors.text,
-    marginBottom: spacing.xs,
+    marginBottom: 2,
+  },
+  cardSubtitle: {
+    fontSize: fontSize.sm,
+    color: 'rgba(255,255,255,0.6)',
+  },
+  miniThumb: {
+    width: 72,
+    height: 72,
+    borderRadius: radius.lg,
+    alignItems: 'center',
+    justifyContent: 'center',
+    flexShrink: 0,
+  },
+  miniPlayBtn: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'rgba(0,0,0,0.3)',
+    borderRadius: radius.lg,
+  },
+  miniPlayIcon: {
+    color: '#fff',
+    fontSize: 16,
+  },
+  miniThumbEmoji: {
+    fontSize: 28,
+    position: 'absolute',
+    bottom: 4,
+    right: 4,
   },
   cardDesc: {
     fontSize: fontSize.sm,
@@ -441,32 +486,35 @@ const styles = StyleSheet.create({
   },
   cardMeta: {
     flexDirection: 'row',
-    gap: spacing.md,
+    alignItems: 'center',
+    gap: spacing.xs,
     marginBottom: spacing.md,
-    flexWrap: 'wrap',
   },
   metaItem: {
     color: 'rgba(255,255,255,0.7)',
     fontSize: fontSize.sm,
   },
-  startWorkoutBtn: {
-    backgroundColor: 'rgba(255,255,255,0.15)',
+  metaDot: {
+    color: 'rgba(255,255,255,0.3)',
+    fontSize: fontSize.sm,
+  },
+  ctaBtn: {
     borderRadius: radius.md,
     padding: spacing.sm,
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.2)',
+    borderColor: 'rgba(255,255,255,0.15)',
   },
-  startWorkoutText: {
+  ctaText: {
     color: '#fff',
     fontSize: fontSize.md,
     fontWeight: fontWeight.bold,
   },
-  lockedBtn: {
+  ctaLocked: {
     backgroundColor: 'rgba(201,168,76,0.1)',
     borderColor: 'rgba(201,168,76,0.2)',
   },
-  lockedBtnText: {
+  ctaLockedText: {
     color: colors.primary,
     fontSize: fontSize.sm,
     fontWeight: fontWeight.semibold,
@@ -493,5 +541,19 @@ const styles = StyleSheet.create({
     color: 'rgba(255,255,255,0.8)',
     textAlign: 'center',
     lineHeight: 22,
+    marginBottom: spacing.lg,
+  },
+  upgradeCta: {
+    backgroundColor: 'rgba(255,255,255,0.2)',
+    paddingHorizontal: spacing.xl,
+    paddingVertical: spacing.sm,
+    borderRadius: radius.full,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.3)',
+  },
+  upgradeCtaText: {
+    color: '#fff',
+    fontSize: fontSize.md,
+    fontWeight: fontWeight.bold,
   },
 });

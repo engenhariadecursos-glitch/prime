@@ -10,6 +10,7 @@ import OnboardingScreen from '../screens/OnboardingScreen';
 import HomeScreen from '../screens/HomeScreen';
 import FastingScreen from '../screens/FastingScreen';
 import WorkoutScreen from '../screens/WorkoutScreen';
+import WorkoutDetailScreen from '../screens/WorkoutDetailScreen';
 import LibraryScreen from '../screens/LibraryScreen';
 import PremiumScreen from '../screens/PremiumScreen';
 import ProfileScreen from '../screens/ProfileScreen';
@@ -146,6 +147,11 @@ export default function AppNavigator() {
           ) : (
             <>
               <Stack.Screen name="Main" component={MainTabs} />
+              <Stack.Screen
+                name="WorkoutDetail"
+                component={WorkoutDetailScreen}
+                options={{ animation: 'slide_from_right' }}
+              />
               <Stack.Screen
                 name="Premium"
                 component={PremiumScreen}

@@ -6,29 +6,20 @@ import {
   ScrollView,
   TouchableOpacity,
   Animated,
-  Dimensions,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAppStore, FASTING_PHASES } from '../store';
-import { colors, spacing, radius, fontSize, fontWeight, shadow } from '../theme';
-
-const { width } = Dimensions.get('window');
+import { EBOOKS } from '../data/ebooks';
+import { WORKOUTS } from '../data/workouts';
+import { colors, spacing, radius, fontSize, fontWeight } from '../theme';
 
 const WEEKLY_CHALLENGES = [
   { id: '1', emoji: '⚡', title: 'Jejum de 16h', desc: 'Complete 3x esta semana', progress: 2, total: 3, isPremium: false },
-  { id: '2', emoji: '💧', title: 'Hidratação Total', desc: '2L de água por 7 dias', progress: 5, total: 7, isPremium: false },
+  { id: '2', emoji: '💧', title: 'Hidratação Total', desc: '2.5L de água por 7 dias', progress: 5, total: 7, isPremium: false },
   { id: '3', emoji: '🏆', title: 'Desafio 36h', desc: 'Jejum estendido avançado', progress: 0, total: 1, isPremium: true },
   { id: '4', emoji: '💪', title: 'Semana Intensa', desc: '5 treinos em 7 dias', progress: 3, total: 5, isPremium: true },
 ];
-
-const NEXT_WORKOUT = {
-  title: 'Hipertrofia Upper',
-  duration: '45 min',
-  exercises: 8,
-  level: 'Intermediário',
-  emoji: '💪',
-};
 
 function SectionHeader({ title, action, onAction }: { title: string; action?: string; onAction?: () => void }) {
   return (
@@ -44,7 +35,10 @@ function SectionHeader({ title, action, onAction }: { title: string; action?: st
 }
 
 export default function HomeScreen({ navigation }: any) {
-  const { user, activeFasting, isPremium, trialDaysLeft, getCurrentPhase, hydrationToday } = useAppStore();
+  const {
+    user, activeFasting, isPremium, trialDaysLeft,
+    getCurrentPhase, hydrationToday, hydrationGoal, streak,
+  } = useAppStore();
   const fadeAnim = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
@@ -69,15 +63,14 @@ export default function HomeScreen({ navigation }: any) {
     return `${h.toString().padStart(2, '0')}h ${m.toString().padStart(2, '0')}m`;
   };
 
-  const hydrationGoal = 2000;
   const hydrationPercent = Math.min((hydrationToday / hydrationGoal) * 100, 100);
+
+  // Pick a featured workout (first free, fasting-compatible one)
+  const nextWorkout = WORKOUTS.find(w => !w.isPremium && w.fastingCompatible) || WORKOUTS[0];
 
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
-      <ScrollView
-        showsVerticalScrollIndicator={false}
-        contentContainerStyle={styles.scroll}
-      >
+      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scroll}>
         {/* Header */}
         <Animated.View style={[styles.header, { opacity: fadeAnim }]}>
           <View>
@@ -86,40 +79,37 @@ export default function HomeScreen({ navigation }: any) {
               {new Date().toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'long' })}
             </Text>
           </View>
-          {!isPremium && (
-            <TouchableOpacity
-              onPress={() => navigation.navigate('Premium')}
-              style={styles.trialBadge}
-            >
-              <LinearGradient
-                colors={['rgba(201,168,76,0.2)', 'rgba(201,168,76,0.05)']}
-                style={styles.trialBadgeInner}
-              >
-                <Text style={styles.trialText}>✨ {trialDaysLeft}d grátis</Text>
-              </LinearGradient>
-            </TouchableOpacity>
-          )}
-          {isPremium && (
-            <View style={styles.premiumBadge}>
-              <LinearGradient
-                colors={['#C9A84C', '#E5C76B']}
-                style={styles.premiumBadgeInner}
-              >
-                <Text style={styles.premiumBadgeText}>⭐ PRIME</Text>
-              </LinearGradient>
-            </View>
-          )}
+          <View style={styles.headerRight}>
+            {streak.current > 0 && (
+              <View style={styles.streakBadge}>
+                <Text style={styles.streakText}>🔥 {streak.current}d</Text>
+              </View>
+            )}
+            {!isPremium ? (
+              <TouchableOpacity onPress={() => navigation.navigate('Premium')} style={styles.trialBadge}>
+                <LinearGradient
+                  colors={['rgba(201,168,76,0.2)', 'rgba(201,168,76,0.05)']}
+                  style={styles.trialBadgeInner}
+                >
+                  <Text style={styles.trialText}>✨ {trialDaysLeft}d grátis</Text>
+                </LinearGradient>
+              </TouchableOpacity>
+            ) : (
+              <View style={styles.premiumBadge}>
+                <LinearGradient colors={['#C9A84C', '#E5C76B']} style={styles.premiumBadgeInner}>
+                  <Text style={styles.premiumBadgeText}>⭐ PRIME</Text>
+                </LinearGradient>
+              </View>
+            )}
+          </View>
         </Animated.View>
 
         {/* Jejum Atual */}
         <SectionHeader title="Jejum Atual" action="Ver detalhes" onAction={() => navigation.navigate('Jejum')} />
-        <TouchableOpacity
-          onPress={() => navigation.navigate('Jejum')}
-          activeOpacity={0.9}
-        >
+        <TouchableOpacity onPress={() => navigation.navigate('Jejum')} activeOpacity={0.9}>
           {activeFasting ? (
             <LinearGradient
-              colors={currentPhase?.color as [string, string] || ['#FF6B35', '#C9A84C']}
+              colors={(currentPhase?.color as [string, string]) || ['#FF6B35', '#C9A84C']}
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 1 }}
               style={styles.fastingCard}
@@ -141,19 +131,19 @@ export default function HomeScreen({ navigation }: any) {
                 </View>
               )}
               <View style={styles.progressBar}>
-                <Animated.View
-                  style={[styles.progressFill, { width: `${progress * 100}%` }]}
-                />
+                <Animated.View style={[styles.progressFill, { width: `${progress * 100}%` }]} />
               </View>
             </LinearGradient>
           ) : (
-            <LinearGradient
-              colors={['#1A1A26', '#12121A']}
-              style={[styles.fastingCard, styles.fastingCardEmpty]}
-            >
+            <LinearGradient colors={['#1A1A26', '#12121A']} style={[styles.fastingCard, styles.fastingCardEmpty]}>
               <Text style={styles.fastingEmptyEmoji}>⚡</Text>
               <Text style={styles.fastingEmptyTitle}>Nenhum jejum ativo</Text>
               <Text style={styles.fastingEmptyDesc}>Toque para iniciar seu próximo jejum</Text>
+              {streak.current > 0 && (
+                <View style={styles.streakCardRow}>
+                  <Text style={styles.streakCardText}>🔥 {streak.current} dias consecutivos · Melhor: {streak.longest}d</Text>
+                </View>
+              )}
               <View style={styles.startFastingButton}>
                 <LinearGradient
                   colors={['#FF6B35', '#C9A84C']}
@@ -170,24 +160,27 @@ export default function HomeScreen({ navigation }: any) {
 
         {/* Próximo Treino */}
         <SectionHeader title="Próximo Treino" action="Ver todos" onAction={() => navigation.navigate('Treinos')} />
-        <TouchableOpacity onPress={() => navigation.navigate('Treinos')} activeOpacity={0.9}>
-          <LinearGradient
-            colors={['#150A2A', '#1A1226']}
-            style={styles.workoutCard}
-          >
+        <TouchableOpacity
+          onPress={() => navigation.navigate('Treinos')}
+          activeOpacity={0.9}
+        >
+          <LinearGradient colors={['#150A2A', '#1A1226']} style={styles.workoutCard}>
             <View style={styles.workoutCardRow}>
               <View style={styles.workoutEmoji}>
-                <Text style={{ fontSize: 32 }}>{NEXT_WORKOUT.emoji}</Text>
+                <Text style={{ fontSize: 32 }}>{nextWorkout.emoji}</Text>
               </View>
               <View style={styles.workoutInfo}>
-                <Text style={styles.workoutTitle}>{NEXT_WORKOUT.title}</Text>
+                <Text style={styles.workoutTitle}>{nextWorkout.title}</Text>
                 <Text style={styles.workoutMeta}>
-                  {NEXT_WORKOUT.duration} · {NEXT_WORKOUT.exercises} exercícios · {NEXT_WORKOUT.level}
+                  {nextWorkout.duration} · {nextWorkout.exercises} exercícios · {nextWorkout.level}
                 </Text>
+                {nextWorkout.fastingCompatible && (
+                  <View style={styles.fastingCompatTag}>
+                    <Text style={styles.fastingCompatText}>⚡ Compatível com jejum</Text>
+                  </View>
+                )}
               </View>
-              <View style={styles.workoutArrow}>
-                <Text style={styles.arrowText}>›</Text>
-              </View>
+              <Text style={styles.arrowText}>›</Text>
             </View>
           </LinearGradient>
         </TouchableOpacity>
@@ -195,25 +188,22 @@ export default function HomeScreen({ navigation }: any) {
         {/* Hidratação */}
         <SectionHeader title="Hidratação Hoje" />
         <View style={styles.hydrationCard}>
-          <LinearGradient
-            colors={['#050A1A', '#0A1525']}
-            style={styles.hydrationInner}
-          >
+          <LinearGradient colors={['#050A1A', '#0A1525']} style={styles.hydrationInner}>
             <View style={styles.hydrationRow}>
               <Text style={styles.hydrationEmoji}>💧</Text>
               <View style={styles.hydrationInfo}>
                 <Text style={styles.hydrationValue}>{hydrationToday}ml</Text>
-                <Text style={styles.hydrationGoal}>Meta: {hydrationGoal}ml</Text>
+                <Text style={styles.hydrationGoalText}>Meta: {hydrationGoal}ml</Text>
               </View>
-              <Text style={styles.hydrationPercent}>{Math.round(hydrationPercent)}%</Text>
+              <Text style={[
+                styles.hydrationPercent,
+                hydrationPercent >= 100 && styles.hydrationPercentDone,
+              ]}>
+                {Math.round(hydrationPercent)}%
+              </Text>
             </View>
             <View style={styles.hydrationBar}>
-              <View
-                style={[
-                  styles.hydrationFill,
-                  { width: `${hydrationPercent}%` },
-                ]}
-              />
+              <View style={[styles.hydrationFill, { width: `${hydrationPercent}%` }]} />
             </View>
             <View style={styles.hydrationButtons}>
               {[150, 250, 350, 500].map((ml) => (
@@ -230,39 +220,34 @@ export default function HomeScreen({ navigation }: any) {
         </View>
 
         {/* Biblioteca Premium */}
-        <SectionHeader title="Biblioteca Premium" action="Ver tudo" onAction={() => navigation.navigate('Biblioteca')} />
+        <SectionHeader title="Biblioteca" action="Ver tudo" onAction={() => navigation.navigate('Biblioteca')} />
         <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.booksRow}>
-          {[
-            { emoji: '⚡', title: 'Guia do Jejum', cat: 'Jejum', locked: false },
-            { emoji: '💪', title: 'Hipertrofia 90d', cat: 'Fitness', locked: true },
-            { emoji: '🥗', title: 'Nutrição Cetogênica', cat: 'Nutrição', locked: true },
-            { emoji: '🧠', title: 'Mindset de Campeão', cat: 'Mindset', locked: true },
-          ].map((book, i) => (
+          {EBOOKS.slice(0, 4).map((book, i) => (
             <TouchableOpacity
-              key={i}
+              key={book.id}
               onPress={() => navigation.navigate('Biblioteca')}
               style={styles.bookCard}
               activeOpacity={0.85}
             >
               <LinearGradient
-                colors={i === 0 ? ['#FF6B35', '#C9A84C'] : ['#1A1A26', '#2A2A3A']}
+                colors={book.gradientColors as [string, string]}
                 style={styles.bookCover}
               >
-                {book.locked && !isPremium && (
+                {book.isPremium && !isPremium && (
                   <View style={styles.bookLock}>
-                    <Text style={{ fontSize: 16 }}>🔒</Text>
+                    <Text style={{ fontSize: 14 }}>🔒</Text>
                   </View>
                 )}
                 <Text style={{ fontSize: 28 }}>{book.emoji}</Text>
               </LinearGradient>
               <Text style={styles.bookTitle} numberOfLines={2}>{book.title}</Text>
-              <Text style={styles.bookCat}>{book.cat}</Text>
+              <Text style={styles.bookMeta}>{book.estimatedMinutes} min</Text>
             </TouchableOpacity>
           ))}
         </ScrollView>
 
         {/* Desafios da Semana */}
-        <SectionHeader title="Desafios da Semana" action="Ver todos" />
+        <SectionHeader title="Desafios da Semana" />
         {WEEKLY_CHALLENGES.map((challenge) => {
           const isLocked = challenge.isPremium && !isPremium;
           const pct = (challenge.progress / challenge.total) * 100;
@@ -287,9 +272,7 @@ export default function HomeScreen({ navigation }: any) {
                       <View style={styles.challengeBar}>
                         <View style={[styles.challengeFill, { width: `${pct}%` }]} />
                       </View>
-                      <Text style={styles.challengeCount}>
-                        {challenge.progress}/{challenge.total}
-                      </Text>
+                      <Text style={styles.challengeCount}>{challenge.progress}/{challenge.total}</Text>
                     </View>
                   )}
                 </View>
@@ -302,34 +285,6 @@ export default function HomeScreen({ navigation }: any) {
             </TouchableOpacity>
           );
         })}
-
-        {/* Evolução Corporal */}
-        <SectionHeader title="Evolução Corporal" action="Registrar" />
-        <LinearGradient
-          colors={['#0A0A0F', '#1A1A26']}
-          style={styles.evolutionCard}
-        >
-          <Text style={styles.evolutionPlaceholder}>📊</Text>
-          <Text style={styles.evolutionTitle}>Registre sua evolução</Text>
-          <Text style={styles.evolutionDesc}>
-            Adicione peso, medidas e fotos para acompanhar sua transformação.
-          </Text>
-          <TouchableOpacity
-            onPress={() => !isPremium && navigation.navigate('Premium')}
-            style={styles.evolutionButton}
-          >
-            <LinearGradient
-              colors={isPremium ? ['#00D4AA', '#007AFF'] : ['#7C4DFF', '#9C6FFF']}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 0 }}
-              style={styles.evolutionButtonGrad}
-            >
-              <Text style={styles.evolutionButtonText}>
-                {isPremium ? '+ Registrar medidas' : '🔒 Premium'}
-              </Text>
-            </LinearGradient>
-          </TouchableOpacity>
-        </LinearGradient>
 
         <View style={{ height: spacing.xxxl }} />
       </ScrollView>
@@ -357,6 +312,24 @@ const styles = StyleSheet.create({
     color: colors.textSecondary,
     marginTop: 2,
     textTransform: 'capitalize',
+  },
+  headerRight: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
+  },
+  streakBadge: {
+    backgroundColor: 'rgba(255,107,53,0.15)',
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.xs,
+    borderRadius: radius.full,
+    borderWidth: 1,
+    borderColor: 'rgba(255,107,53,0.3)',
+  },
+  streakText: {
+    color: colors.fasting,
+    fontSize: fontSize.sm,
+    fontWeight: fontWeight.bold,
   },
   trialBadge: {
     borderRadius: radius.full,
@@ -477,7 +450,21 @@ const styles = StyleSheet.create({
   fastingEmptyDesc: {
     fontSize: fontSize.md,
     color: colors.textMuted,
-    marginBottom: spacing.lg,
+    marginBottom: spacing.md,
+  },
+  streakCardRow: {
+    backgroundColor: 'rgba(255,107,53,0.12)',
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.xs,
+    borderRadius: radius.full,
+    marginBottom: spacing.md,
+    borderWidth: 1,
+    borderColor: 'rgba(255,107,53,0.2)',
+  },
+  streakCardText: {
+    color: colors.fasting,
+    fontSize: fontSize.sm,
+    fontWeight: fontWeight.semibold,
   },
   startFastingButton: { borderRadius: radius.full, overflow: 'hidden' },
   startFastingGrad: {
@@ -508,6 +495,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: spacing.md,
+    flexShrink: 0,
   },
   workoutInfo: { flex: 1 },
   workoutTitle: {
@@ -519,11 +507,26 @@ const styles = StyleSheet.create({
   workoutMeta: {
     fontSize: fontSize.sm,
     color: colors.textSecondary,
+    marginBottom: 4,
   },
-  workoutArrow: { paddingLeft: spacing.sm },
+  fastingCompatTag: {
+    alignSelf: 'flex-start',
+    backgroundColor: 'rgba(255,107,53,0.15)',
+    paddingHorizontal: spacing.sm,
+    paddingVertical: 2,
+    borderRadius: radius.full,
+    borderWidth: 1,
+    borderColor: 'rgba(255,107,53,0.25)',
+  },
+  fastingCompatText: {
+    color: colors.fasting,
+    fontSize: fontSize.xs,
+    fontWeight: fontWeight.semibold,
+  },
   arrowText: {
     fontSize: 28,
     color: colors.textMuted,
+    paddingLeft: spacing.sm,
   },
   hydrationCard: {
     borderRadius: radius.xl,
@@ -545,7 +548,7 @@ const styles = StyleSheet.create({
     fontWeight: fontWeight.bold,
     color: colors.text,
   },
-  hydrationGoal: {
+  hydrationGoalText: {
     fontSize: fontSize.sm,
     color: colors.textSecondary,
   },
@@ -554,6 +557,7 @@ const styles = StyleSheet.create({
     fontWeight: fontWeight.bold,
     color: colors.info,
   },
+  hydrationPercentDone: { color: colors.success },
   hydrationBar: {
     height: 6,
     backgroundColor: colors.border,
@@ -601,6 +605,9 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: spacing.xs,
     right: spacing.xs,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    borderRadius: radius.full,
+    padding: 4,
   },
   bookTitle: {
     fontSize: fontSize.sm,
@@ -608,7 +615,7 @@ const styles = StyleSheet.create({
     color: colors.text,
     lineHeight: 16,
   },
-  bookCat: {
+  bookMeta: {
     fontSize: fontSize.xs,
     color: colors.textMuted,
     marginTop: 2,
@@ -634,9 +641,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     marginRight: spacing.md,
   },
-  challengeLocked: {
-    opacity: 0.5,
-  },
+  challengeLocked: { opacity: 0.5 },
   challengeInfo: { flex: 1 },
   challengeTitle: {
     fontSize: fontSize.md,
@@ -684,37 +689,5 @@ const styles = StyleSheet.create({
     fontSize: fontSize.xs,
     fontWeight: fontWeight.black,
     letterSpacing: 1,
-  },
-  evolutionCard: {
-    borderRadius: radius.xl,
-    padding: spacing.lg,
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: colors.border,
-    marginBottom: spacing.sm,
-  },
-  evolutionPlaceholder: { fontSize: 48, marginBottom: spacing.md },
-  evolutionTitle: {
-    fontSize: fontSize.xl,
-    fontWeight: fontWeight.bold,
-    color: colors.text,
-    marginBottom: spacing.xs,
-  },
-  evolutionDesc: {
-    fontSize: fontSize.md,
-    color: colors.textSecondary,
-    textAlign: 'center',
-    lineHeight: 22,
-    marginBottom: spacing.lg,
-  },
-  evolutionButton: { borderRadius: radius.full, overflow: 'hidden' },
-  evolutionButtonGrad: {
-    paddingHorizontal: spacing.xl,
-    paddingVertical: spacing.sm,
-  },
-  evolutionButtonText: {
-    color: '#fff',
-    fontSize: fontSize.md,
-    fontWeight: fontWeight.bold,
   },
 });

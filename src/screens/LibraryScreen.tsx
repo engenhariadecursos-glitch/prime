@@ -6,134 +6,200 @@ import {
   ScrollView,
   TouchableOpacity,
   Modal,
-  Alert,
+  Dimensions,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useAppStore, EbookItem } from '../store';
-import EbookCard from '../components/EbookCard';
+import * as Haptics from 'expo-haptics';
+import { useAppStore } from '../store';
+import { EBOOKS, EbookData, EbookChapter, EBOOK_CATEGORIES, CATEGORY_GRADIENTS } from '../data/ebooks';
 import { colors, spacing, radius, fontSize, fontWeight } from '../theme';
 
-const EBOOKS: EbookItem[] = [
-  {
-    id: '1',
-    title: 'Guia Completo do Jejum Intermitente',
-    description: 'Tudo que você precisa saber para começar o jejum de forma segura e eficaz.',
-    category: 'jejum',
-    cover: '',
-    isPremium: false,
-    readProgress: 45,
-    totalPages: 87,
-  },
-  {
-    id: '2',
-    title: 'Hipertrofia em 90 Dias',
-    description: 'Programa completo de musculação para ganho de massa muscular comprovado.',
-    category: 'fitness',
-    cover: '',
-    isPremium: true,
-    readProgress: 0,
-    totalPages: 142,
-  },
-  {
-    id: '3',
-    title: 'Nutrição Cetogênica para Atletas',
-    description: 'Como combinar a dieta cetogênica com alta performance física e mental.',
-    category: 'nutricao',
-    cover: '',
-    isPremium: true,
-    readProgress: 0,
-    totalPages: 95,
-  },
-  {
-    id: '4',
-    title: 'Mindset de Campeão',
-    description: 'A psicologia por trás de atletas e executivos de elite. Discipline your mind.',
-    category: 'mindset',
-    cover: '',
-    isPremium: true,
-    readProgress: 0,
-    totalPages: 118,
-  },
-  {
-    id: '5',
-    title: 'Jejum Prolongado: Guia Avançado',
-    description: 'Protocolo detalhado para jejuns de 24h a 120h com segurança máxima.',
-    category: 'jejum',
-    cover: '',
-    isPremium: true,
-    readProgress: 0,
-    totalPages: 73,
-  },
-  {
-    id: '6',
-    title: 'Plano Nutricional Anti-inflamatório',
-    description: 'Alimentação que combate inflamação, otimiza hormônios e acelera resultados.',
-    category: 'nutricao',
-    cover: '',
-    isPremium: true,
-    readProgress: 0,
-    totalPages: 110,
-  },
-  {
-    id: '7',
-    title: 'Treino em Estado de Jejum',
-    description: 'Como maximizar resultados treinando em estado de jejum e cetose.',
-    category: 'fitness',
-    cover: '',
-    isPremium: true,
-    readProgress: 0,
-    totalPages: 68,
-  },
-  {
-    id: '8',
-    title: 'Longevidade e Autofagia',
-    description: 'A ciência da renovação celular e como o jejum ativa seus mecanismos de cura.',
-    category: 'mindset',
-    cover: '',
-    isPremium: false,
-    readProgress: 12,
-    totalPages: 94,
-  },
-];
+const { width } = Dimensions.get('window');
 
-const CATEGORIES = [
-  { id: 'todos', label: 'Todos' },
-  { id: 'jejum', label: '⚡ Jejum' },
-  { id: 'fitness', label: '💪 Fitness' },
-  { id: 'nutricao', label: '🥗 Nutrição' },
-  { id: 'mindset', label: '🧠 Mindset' },
-];
+function EbookCover({ ebook, size = 'medium' }: { ebook: EbookData; size?: 'small' | 'medium' | 'large' }) {
+  const dim = size === 'small' ? 80 : size === 'large' ? 140 : 100;
+  return (
+    <LinearGradient
+      colors={ebook.gradientColors as [string, string]}
+      start={{ x: 0, y: 0 }}
+      end={{ x: 1, y: 1 }}
+      style={[styles.ebookCover, { width: dim, height: dim * 1.4 }]}
+    >
+      <Text style={[styles.ebookCoverEmoji, { fontSize: size === 'small' ? 28 : 40 }]}>
+        {ebook.emoji}
+      </Text>
+    </LinearGradient>
+  );
+}
+
+function EbookCard({ ebook, onPress, progress }: {
+  ebook: EbookData;
+  onPress: () => void;
+  progress?: { currentChapter: number; totalChapters: number; progress: number };
+}) {
+  const { isPremium } = useAppStore();
+  const locked = ebook.isPremium && !isPremium;
+  const pct = progress?.progress ?? 0;
+
+  return (
+    <TouchableOpacity onPress={onPress} activeOpacity={0.88} style={styles.card}>
+      <LinearGradient
+        colors={['#1A1A26', '#12121A']}
+        style={styles.cardInner}
+      >
+        <EbookCover ebook={ebook} size="medium" />
+        <View style={styles.cardContent}>
+          <View style={styles.cardBadgeRow}>
+            <View style={[
+              styles.categoryBadge,
+              { backgroundColor: (CATEGORY_GRADIENTS[ebook.category] || CATEGORY_GRADIENTS.default)[0] + '22' }
+            ]}>
+              <Text style={[
+                styles.categoryBadgeText,
+                { color: (CATEGORY_GRADIENTS[ebook.category] || CATEGORY_GRADIENTS.default)[0] }
+              ]}>
+                {EBOOK_CATEGORIES.find(c => c.id === ebook.category)?.emoji}{' '}
+                {EBOOK_CATEGORIES.find(c => c.id === ebook.category)?.label}
+              </Text>
+            </View>
+            {ebook.isPremium && (
+              <View style={styles.premiumBadge}>
+                <Text style={styles.premiumBadgeText}>PRIME</Text>
+              </View>
+            )}
+          </View>
+
+          <Text style={styles.cardTitle} numberOfLines={2}>{locked ? '🔒 ' : ''}{ebook.title}</Text>
+          <Text style={styles.cardSubtitle} numberOfLines={1}>{ebook.subtitle}</Text>
+          <Text style={styles.cardAuthor}>{ebook.author}</Text>
+
+          <View style={styles.cardMeta}>
+            <Text style={styles.metaItem}>📖 {ebook.totalChapters} cap.</Text>
+            <Text style={styles.metaDot}>·</Text>
+            <Text style={styles.metaItem}>⏱ {ebook.estimatedMinutes} min</Text>
+          </View>
+
+          {pct > 0 && (
+            <View style={styles.progressContainer}>
+              <View style={styles.progressBar}>
+                <View style={[styles.progressFill, { width: `${pct}%` }]} />
+              </View>
+              <Text style={styles.progressPct}>{Math.round(pct)}%</Text>
+            </View>
+          )}
+        </View>
+
+        {locked && (
+          <View style={styles.lockOverlay}>
+            <Text style={styles.lockIcon}>🔒</Text>
+          </View>
+        )}
+      </LinearGradient>
+    </TouchableOpacity>
+  );
+}
+
+function ChapterRow({ chapter, index, isRead, isBookmarked, onPress, onBookmark }: {
+  chapter: EbookChapter;
+  index: number;
+  isRead: boolean;
+  isBookmarked: boolean;
+  onPress: () => void;
+  onBookmark: () => void;
+}) {
+  return (
+    <TouchableOpacity onPress={onPress} activeOpacity={0.8} style={styles.chapterRow}>
+      <View style={[styles.chapterNum, isRead && styles.chapterNumRead]}>
+        {isRead
+          ? <Text style={styles.chapterCheck}>✓</Text>
+          : <Text style={styles.chapterNumText}>{index + 1}</Text>
+        }
+      </View>
+      <View style={styles.chapterInfo}>
+        <Text style={[styles.chapterTitle, isRead && styles.chapterTitleRead]} numberOfLines={2}>
+          {chapter.title}
+        </Text>
+        <Text style={styles.chapterMeta}>⏱ {chapter.readingMinutes} min de leitura</Text>
+      </View>
+      <TouchableOpacity onPress={onBookmark} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+        <Text style={[styles.bookmarkIcon, isBookmarked && styles.bookmarkIconActive]}>
+          {isBookmarked ? '🔖' : '○'}
+        </Text>
+      </TouchableOpacity>
+    </TouchableOpacity>
+  );
+}
 
 export default function LibraryScreen({ navigation }: any) {
-  const { isPremium } = useAppStore();
+  const { isPremium, isBookmarked, toggleBookmark, ebookProgress, updateEbookProgress } = useAppStore();
   const [activeCategory, setActiveCategory] = useState('todos');
-  const [selectedEbook, setSelectedEbook] = useState<EbookItem | null>(null);
+  const [selectedEbook, setSelectedEbook] = useState<EbookData | null>(null);
+  const [selectedChapterIndex, setSelectedChapterIndex] = useState<number | null>(null);
 
   const filtered = activeCategory === 'todos'
     ? EBOOKS
     : EBOOKS.filter((e) => e.category === activeCategory);
 
-  const freeBooks = EBOOKS.filter((e) => !e.isPremium);
-  const premiumBooks = EBOOKS.filter((e) => e.isPremium);
-
-  const handleEbookPress = (ebook: EbookItem) => {
+  const handleEbookPress = (ebook: EbookData) => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     if (ebook.isPremium && !isPremium) {
       navigation.navigate('Premium');
       return;
     }
     setSelectedEbook(ebook);
+    setSelectedChapterIndex(null);
   };
+
+  const handleChapterPress = (ebook: EbookData, index: number) => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    setSelectedChapterIndex(index);
+    updateEbookProgress(ebook.id, index, ebook.totalChapters);
+  };
+
+  const handleNextChapter = () => {
+    if (!selectedEbook || selectedChapterIndex === null) return;
+    const next = selectedChapterIndex + 1;
+    if (next < selectedEbook.chapters.length) {
+      setSelectedChapterIndex(next);
+      updateEbookProgress(selectedEbook.id, next, selectedEbook.totalChapters);
+    } else {
+      setSelectedChapterIndex(null);
+    }
+  };
+
+  const closeReader = () => {
+    setSelectedEbook(null);
+    setSelectedChapterIndex(null);
+  };
+
+  const totalRead = EBOOKS.filter(e => {
+    const p = ebookProgress[e.id];
+    return p && p.progress >= 100;
+  }).length;
+
+  const inProgress = EBOOKS.filter(e => {
+    const p = ebookProgress[e.id];
+    return p && p.progress > 0 && p.progress < 100;
+  }).length;
 
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scroll}>
+        {/* Header */}
         <View style={styles.header}>
-          <Text style={styles.headerTitle}>Biblioteca</Text>
-          <Text style={styles.headerSub}>{EBOOKS.length} guias premium</Text>
+          <View>
+            <Text style={styles.headerTitle}>Biblioteca</Text>
+            <Text style={styles.headerSub}>{EBOOKS.length} guias premium</Text>
+          </View>
+          <View style={styles.headerBadge}>
+            <LinearGradient colors={['#C9A84C', '#E5C76B']} style={styles.headerBadgeGrad}>
+              <Text style={styles.headerBadgeText}>📚 Elite</Text>
+            </LinearGradient>
+          </View>
         </View>
 
-        {/* Hero banner */}
+        {/* Upgrade banner */}
         {!isPremium && (
           <TouchableOpacity onPress={() => navigation.navigate('Premium')} activeOpacity={0.88}>
             <LinearGradient
@@ -144,9 +210,9 @@ export default function LibraryScreen({ navigation }: any) {
             >
               <Text style={styles.heroBannerEmoji}>📚</Text>
               <View style={styles.heroBannerText}>
-                <Text style={styles.heroBannerTitle}>Biblioteca Prime</Text>
+                <Text style={styles.heroBannerTitle}>Biblioteca Prime Completa</Text>
                 <Text style={styles.heroBannerSub}>
-                  Desbloqueie {premiumBooks.length} guias exclusivos
+                  Desbloqueie {EBOOKS.filter(e => e.isPremium).length} guias exclusivos
                 </Text>
               </View>
               <Text style={styles.heroBannerArrow}>›</Text>
@@ -157,9 +223,9 @@ export default function LibraryScreen({ navigation }: any) {
         {/* Stats */}
         <View style={styles.statsRow}>
           {[
-            { label: 'Lendo', value: freeBooks.filter(e => (e.readProgress || 0) > 0).length.toString(), emoji: '📖' },
-            { label: 'Disponíveis', value: isPremium ? EBOOKS.length.toString() : freeBooks.length.toString(), emoji: '📚' },
-            { label: 'Concluídos', value: '1', emoji: '✅' },
+            { label: 'Lendo', value: inProgress.toString(), emoji: '📖' },
+            { label: 'Disponíveis', value: (isPremium ? EBOOKS.length : EBOOKS.filter(e => !e.isPremium).length).toString(), emoji: '📚' },
+            { label: 'Concluídos', value: totalRead.toString(), emoji: '✅' },
           ].map((stat) => (
             <View key={stat.label} style={styles.statCard}>
               <LinearGradient colors={['#1A1A26', '#12121A']} style={styles.statGrad}>
@@ -171,14 +237,14 @@ export default function LibraryScreen({ navigation }: any) {
           ))}
         </View>
 
-        {/* Filter categories */}
+        {/* Category filter */}
         <ScrollView
           horizontal
           showsHorizontalScrollIndicator={false}
           style={styles.filterRow}
           contentContainerStyle={styles.filterContent}
         >
-          {CATEGORIES.map((cat) => (
+          {EBOOK_CATEGORIES.map((cat) => (
             <TouchableOpacity
               key={cat.id}
               onPress={() => setActiveCategory(cat.id)}
@@ -193,7 +259,7 @@ export default function LibraryScreen({ navigation }: any) {
                 />
               )}
               <Text style={[styles.filterText, activeCategory === cat.id && styles.filterTextActive]}>
-                {cat.label}
+                {cat.emoji} {cat.label}
               </Text>
             </TouchableOpacity>
           ))}
@@ -205,82 +271,191 @@ export default function LibraryScreen({ navigation }: any) {
             key={ebook.id}
             ebook={ebook}
             onPress={() => handleEbookPress(ebook)}
-            isPremiumUser={isPremium}
+            progress={ebookProgress[ebook.id]}
           />
         ))}
 
         <View style={{ height: spacing.xxxl }} />
       </ScrollView>
 
-      {/* Ebook Reader Modal */}
+      {/* Full-screen reader modal */}
       <Modal
         visible={!!selectedEbook}
         animationType="slide"
         presentationStyle="fullScreen"
+        onRequestClose={closeReader}
       >
         {selectedEbook && (
-          <LinearGradient colors={['#0A0A0F', '#0D0D1A']} style={styles.readerContainer}>
+          <LinearGradient colors={['#0A0A0F', '#0D0D1A']} style={styles.fill}>
             <SafeAreaView style={styles.fill} edges={['top', 'bottom']}>
+              {/* Reader header */}
               <View style={styles.readerHeader}>
-                <TouchableOpacity onPress={() => setSelectedEbook(null)} style={styles.closeBtn}>
-                  <Text style={styles.closeBtnText}>✕</Text>
+                <TouchableOpacity
+                  onPress={selectedChapterIndex !== null ? () => setSelectedChapterIndex(null) : closeReader}
+                  style={styles.readerBackBtn}
+                >
+                  <Text style={styles.readerBackText}>
+                    {selectedChapterIndex !== null ? '← Capítulos' : '✕'}
+                  </Text>
                 </TouchableOpacity>
-                <Text style={styles.readerTitle} numberOfLines={1}>
-                  {selectedEbook.title}
+                <Text style={styles.readerHeaderTitle} numberOfLines={1}>
+                  {selectedChapterIndex !== null
+                    ? selectedEbook.chapters[selectedChapterIndex]?.title
+                    : selectedEbook.title}
                 </Text>
-                <View style={{ width: 36 }} />
+                <View style={{ width: 60 }} />
               </View>
 
-              <ScrollView style={styles.readerContent} contentContainerStyle={styles.readerContentPad}>
-                <Text style={styles.readerCategory}>
-                  {selectedEbook.category.toUpperCase()}
-                </Text>
-                <Text style={styles.readerBookTitle}>{selectedEbook.title}</Text>
-                <Text style={styles.readerDescription}>{selectedEbook.description}</Text>
-
-                <View style={styles.readerDivider} />
-
-                <Text style={styles.readerBodyTitle}>Introdução</Text>
-                <Text style={styles.readerBody}>
-                  Este guia foi elaborado por especialistas em medicina do esporte e nutrição para
-                  fornecer um protocolo científico e seguro. Cada capítulo combina evidências
-                  clínicas com aplicações práticas para maximizar seus resultados.{'\n\n'}
-                  O jejum intermitente é muito mais do que uma dieta — é um estilo de vida que
-                  transforma não apenas o corpo, mas também a mente e a relação com a alimentação.
-                  Milhares de estudos confirmam seus benefícios para longevidade, composição
-                  corporal e performance cognitiva.{'\n\n'}
-                  Neste material, você encontrará protocolos detalhados, receitas, estratégias de
-                  implementação e ferramentas para acompanhar seu progresso. Prepare-se para uma
-                  transformação completa.
-                </Text>
-
-                <View style={styles.readerDivider} />
-
-                <Text style={styles.readerBodyTitle}>Capítulo 1: Fundamentos</Text>
-                <Text style={styles.readerBody}>
-                  A ciência por trás do jejum intermitente é fascinante. Quando você para de
-                  comer, seu corpo passa por uma série de adaptações metabólicas profundas que
-                  favorecem a queima de gordura, a regeneração celular e a longevidade.{'\n\n'}
-                  Os primeiros estudos sérios sobre jejum foram publicados na década de 1940, mas
-                  foi nas últimas duas décadas que a pesquisa explodiu. Em 2016, o cientista
-                  japonês Yoshinori Ohsumi ganhou o Prêmio Nobel por desvendar os mecanismos da
-                  autofagia — o processo de limpeza celular ativado pelo jejum.
-                </Text>
-
-                <View style={styles.readerProgressSection}>
-                  <Text style={styles.readerProgressLabel}>
-                    Progresso: {selectedEbook.readProgress || 0}% de {selectedEbook.totalPages} páginas
-                  </Text>
-                  <View style={styles.readerProgressBar}>
-                    <View
-                      style={[
-                        styles.readerProgressFill,
-                        { width: `${selectedEbook.readProgress || 12}%` },
-                      ]}
-                    />
+              {/* Chapter list view */}
+              {selectedChapterIndex === null && (
+                <ScrollView contentContainerStyle={styles.chapterListPad}>
+                  {/* Book info */}
+                  <View style={styles.readerBookInfo}>
+                    <EbookCover ebook={selectedEbook} size="large" />
+                    <View style={styles.readerBookMeta}>
+                      <Text style={styles.readerBookTitle}>{selectedEbook.title}</Text>
+                      <Text style={styles.readerBookSubtitle}>{selectedEbook.subtitle}</Text>
+                      <Text style={styles.readerBookAuthor}>{selectedEbook.author}</Text>
+                      <View style={styles.readerBookStats}>
+                        <Text style={styles.readerBookStat}>📖 {selectedEbook.totalChapters} capítulos</Text>
+                        <Text style={styles.readerBookStat}>⏱ {selectedEbook.estimatedMinutes} min</Text>
+                      </View>
+                    </View>
                   </View>
-                </View>
-              </ScrollView>
+
+                  {/* Progress bar */}
+                  {ebookProgress[selectedEbook.id] && (
+                    <View style={styles.readerProgressSection}>
+                      <View style={styles.readerProgressRow}>
+                        <Text style={styles.readerProgressLabel}>Progresso da leitura</Text>
+                        <Text style={styles.readerProgressPct}>
+                          {Math.round(ebookProgress[selectedEbook.id].progress)}%
+                        </Text>
+                      </View>
+                      <View style={styles.readerProgressBar}>
+                        <View
+                          style={[
+                            styles.readerProgressFill,
+                            { width: `${ebookProgress[selectedEbook.id].progress}%` },
+                          ]}
+                        />
+                      </View>
+                    </View>
+                  )}
+
+                  {/* Chapter list */}
+                  <Text style={styles.chaptersLabel}>CAPÍTULOS</Text>
+                  <View style={styles.chaptersList}>
+                    {selectedEbook.chapters.map((chapter, idx) => {
+                      const progress = ebookProgress[selectedEbook.id];
+                      const isRead = progress ? idx < progress.currentChapter : false;
+                      const bookmarkKey = `ebook-${selectedEbook.id}-ch-${chapter.id}`;
+                      return (
+                        <ChapterRow
+                          key={chapter.id}
+                          chapter={chapter}
+                          index={idx}
+                          isRead={isRead}
+                          isBookmarked={isBookmarked(bookmarkKey)}
+                          onPress={() => handleChapterPress(selectedEbook, idx)}
+                          onBookmark={() => {
+                            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                            toggleBookmark(bookmarkKey);
+                          }}
+                        />
+                      );
+                    })}
+                  </View>
+                </ScrollView>
+              )}
+
+              {/* Chapter content view */}
+              {selectedChapterIndex !== null && selectedEbook.chapters[selectedChapterIndex] && (
+                <ScrollView contentContainerStyle={styles.chapterContentPad}>
+                  {(() => {
+                    const chapter = selectedEbook.chapters[selectedChapterIndex];
+                    const bookmarkKey = `ebook-${selectedEbook.id}-ch-${chapter.id}`;
+                    return (
+                      <>
+                        <View style={styles.chapterContentHeader}>
+                          <Text style={styles.chapterContentNum}>
+                            Capítulo {selectedChapterIndex + 1} de {selectedEbook.totalChapters}
+                          </Text>
+                          <TouchableOpacity
+                            onPress={() => {
+                              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                              toggleBookmark(bookmarkKey);
+                            }}
+                            style={styles.chapterBookmarkBtn}
+                          >
+                            <Text style={styles.chapterBookmarkText}>
+                              {isBookmarked(bookmarkKey) ? '🔖 Salvo' : '○ Salvar'}
+                            </Text>
+                          </TouchableOpacity>
+                        </View>
+                        <Text style={styles.chapterContentTitle}>{chapter.title}</Text>
+                        <Text style={styles.chapterReadTime}>⏱ {chapter.readingMinutes} min de leitura</Text>
+
+                        <View style={styles.chapterDivider} />
+
+                        {chapter.content.map((paragraph, i) => (
+                          <Text key={i} style={styles.chapterParagraph}>{paragraph}</Text>
+                        ))}
+
+                        {chapter.keyInsights && chapter.keyInsights.length > 0 && (
+                          <View style={styles.keyInsightsCard}>
+                            <LinearGradient
+                              colors={selectedEbook.gradientColors as [string, string]}
+                              start={{ x: 0, y: 0 }}
+                              end={{ x: 1, y: 0 }}
+                              style={styles.keyInsightsHeader}
+                            >
+                              <Text style={styles.keyInsightsTitle}>⚡ Principais Insights</Text>
+                            </LinearGradient>
+                            <View style={styles.keyInsightsList}>
+                              {chapter.keyInsights.map((insight, i) => (
+                                <View key={i} style={styles.keyInsightRow}>
+                                  <Text style={styles.keyInsightDot}>•</Text>
+                                  <Text style={styles.keyInsightText}>{insight}</Text>
+                                </View>
+                              ))}
+                            </View>
+                          </View>
+                        )}
+
+                        <View style={styles.chapterNavRow}>
+                          {selectedChapterIndex < selectedEbook.chapters.length - 1 ? (
+                            <TouchableOpacity onPress={handleNextChapter} style={styles.nextChapterBtn}>
+                              <LinearGradient
+                                colors={selectedEbook.gradientColors as [string, string]}
+                                start={{ x: 0, y: 0 }}
+                                end={{ x: 1, y: 0 }}
+                                style={styles.nextChapterGrad}
+                              >
+                                <Text style={styles.nextChapterText}>Próximo capítulo →</Text>
+                              </LinearGradient>
+                            </TouchableOpacity>
+                          ) : (
+                            <TouchableOpacity
+                              onPress={() => setSelectedChapterIndex(null)}
+                              style={styles.nextChapterBtn}
+                            >
+                              <LinearGradient
+                                colors={['#00D4AA', '#007AFF']}
+                                start={{ x: 0, y: 0 }}
+                                end={{ x: 1, y: 0 }}
+                                style={styles.nextChapterGrad}
+                              >
+                                <Text style={styles.nextChapterText}>✓ Livro concluído!</Text>
+                              </LinearGradient>
+                            </TouchableOpacity>
+                          )}
+                        </View>
+                      </>
+                    );
+                  })()}
+                </ScrollView>
+              )}
             </SafeAreaView>
           </LinearGradient>
         )}
@@ -294,6 +469,9 @@ const styles = StyleSheet.create({
   fill: { flex: 1 },
   scroll: { paddingHorizontal: spacing.md },
   header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
     paddingTop: spacing.md,
     paddingBottom: spacing.lg,
   },
@@ -306,6 +484,16 @@ const styles = StyleSheet.create({
     fontSize: fontSize.md,
     color: colors.textSecondary,
     marginTop: 2,
+  },
+  headerBadge: { borderRadius: radius.full, overflow: 'hidden' },
+  headerBadgeGrad: {
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.xs,
+  },
+  headerBadgeText: {
+    color: '#000',
+    fontSize: fontSize.sm,
+    fontWeight: fontWeight.black,
   },
   heroBanner: {
     flexDirection: 'row',
@@ -326,10 +514,7 @@ const styles = StyleSheet.create({
     fontSize: fontSize.sm,
     color: 'rgba(255,255,255,0.8)',
   },
-  heroBannerArrow: {
-    fontSize: 28,
-    color: 'rgba(255,255,255,0.7)',
-  },
+  heroBannerArrow: { fontSize: 28, color: 'rgba(255,255,255,0.7)' },
   statsRow: {
     flexDirection: 'row',
     gap: spacing.sm,
@@ -342,10 +527,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: colors.border,
   },
-  statGrad: {
-    padding: spacing.md,
-    alignItems: 'center',
-  },
+  statGrad: { padding: spacing.md, alignItems: 'center' },
   statEmoji: { fontSize: 20, marginBottom: 4 },
   statValue: {
     fontSize: fontSize.xl,
@@ -375,7 +557,115 @@ const styles = StyleSheet.create({
     fontWeight: fontWeight.medium,
   },
   filterTextActive: { color: '#000', fontWeight: fontWeight.bold },
-  readerContainer: { flex: 1 },
+  card: {
+    borderRadius: radius.xl,
+    overflow: 'hidden',
+    marginBottom: spacing.md,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  cardInner: {
+    flexDirection: 'row',
+    padding: spacing.md,
+    gap: spacing.md,
+  },
+  ebookCover: {
+    borderRadius: radius.lg,
+    alignItems: 'center',
+    justifyContent: 'center',
+    flexShrink: 0,
+  },
+  ebookCoverEmoji: {},
+  cardContent: { flex: 1 },
+  cardBadgeRow: {
+    flexDirection: 'row',
+    gap: spacing.xs,
+    marginBottom: spacing.xs,
+    flexWrap: 'wrap',
+  },
+  categoryBadge: {
+    paddingHorizontal: spacing.sm,
+    paddingVertical: 2,
+    borderRadius: radius.full,
+  },
+  categoryBadgeText: {
+    fontSize: fontSize.xs,
+    fontWeight: fontWeight.semibold,
+  },
+  premiumBadge: {
+    backgroundColor: 'rgba(201,168,76,0.2)',
+    paddingHorizontal: spacing.sm,
+    paddingVertical: 2,
+    borderRadius: radius.full,
+  },
+  premiumBadgeText: {
+    color: colors.primary,
+    fontSize: fontSize.xs,
+    fontWeight: fontWeight.black,
+    letterSpacing: 1,
+  },
+  cardTitle: {
+    fontSize: fontSize.md,
+    fontWeight: fontWeight.bold,
+    color: colors.text,
+    marginBottom: 2,
+    lineHeight: 20,
+  },
+  cardSubtitle: {
+    fontSize: fontSize.xs,
+    color: colors.textSecondary,
+    marginBottom: 2,
+  },
+  cardAuthor: {
+    fontSize: fontSize.xs,
+    color: colors.textMuted,
+    marginBottom: spacing.xs,
+  },
+  cardMeta: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
+    marginBottom: spacing.xs,
+  },
+  metaItem: {
+    color: colors.textSecondary,
+    fontSize: fontSize.xs,
+  },
+  metaDot: {
+    color: colors.textMuted,
+    fontSize: fontSize.xs,
+  },
+  progressContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
+  },
+  progressBar: {
+    flex: 1,
+    height: 4,
+    backgroundColor: colors.border,
+    borderRadius: radius.full,
+    overflow: 'hidden',
+  },
+  progressFill: {
+    height: '100%',
+    backgroundColor: colors.primary,
+    borderRadius: radius.full,
+  },
+  progressPct: {
+    fontSize: fontSize.xs,
+    color: colors.primary,
+    fontWeight: fontWeight.semibold,
+    width: 30,
+    textAlign: 'right',
+  },
+  lockOverlay: {
+    position: 'absolute',
+    bottom: spacing.md,
+    right: spacing.md,
+  },
+  lockIcon: { fontSize: 20 },
+  // Reader styles
   readerHeader: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -385,81 +675,85 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: colors.border,
   },
-  closeBtn: {
-    width: 36,
-    height: 36,
-    borderRadius: radius.full,
+  readerBackBtn: {
+    paddingVertical: spacing.xs,
+    paddingHorizontal: spacing.sm,
+    borderRadius: radius.md,
     backgroundColor: colors.bgCard,
-    alignItems: 'center',
-    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: colors.border,
   },
-  closeBtnText: {
+  readerBackText: {
     color: colors.text,
-    fontSize: fontSize.md,
-    fontWeight: fontWeight.bold,
+    fontSize: fontSize.sm,
+    fontWeight: fontWeight.semibold,
   },
-  readerTitle: {
+  readerHeaderTitle: {
     flex: 1,
-    fontSize: fontSize.md,
+    fontSize: fontSize.sm,
     fontWeight: fontWeight.semibold,
     color: colors.text,
     textAlign: 'center',
     marginHorizontal: spacing.sm,
   },
-  readerContent: { flex: 1 },
-  readerContentPad: {
+  chapterListPad: {
     padding: spacing.lg,
     paddingBottom: spacing.xxxl,
   },
-  readerCategory: {
-    fontSize: fontSize.xs,
-    fontWeight: fontWeight.bold,
-    color: colors.primary,
-    letterSpacing: 2,
-    marginBottom: spacing.sm,
+  readerBookInfo: {
+    flexDirection: 'row',
+    gap: spacing.lg,
+    marginBottom: spacing.lg,
   },
+  readerBookMeta: { flex: 1 },
   readerBookTitle: {
-    fontSize: fontSize.xxxl,
+    fontSize: fontSize.xl,
     fontWeight: fontWeight.black,
     color: colors.text,
-    lineHeight: 38,
-    marginBottom: spacing.md,
-  },
-  readerDescription: {
-    fontSize: fontSize.lg,
-    color: colors.textSecondary,
+    marginBottom: spacing.xs,
     lineHeight: 26,
-    marginBottom: spacing.lg,
   },
-  readerDivider: {
-    height: 1,
-    backgroundColor: colors.border,
-    marginVertical: spacing.lg,
-  },
-  readerBodyTitle: {
-    fontSize: fontSize.xl,
-    fontWeight: fontWeight.bold,
-    color: colors.text,
-    marginBottom: spacing.md,
-  },
-  readerBody: {
-    fontSize: fontSize.md,
+  readerBookSubtitle: {
+    fontSize: fontSize.sm,
     color: colors.textSecondary,
-    lineHeight: 26,
-    marginBottom: spacing.lg,
+    marginBottom: spacing.xs,
+  },
+  readerBookAuthor: {
+    fontSize: fontSize.sm,
+    color: colors.primary,
+    fontWeight: fontWeight.semibold,
+    marginBottom: spacing.sm,
+  },
+  readerBookStats: {
+    flexDirection: 'row',
+    gap: spacing.md,
+    flexWrap: 'wrap',
+  },
+  readerBookStat: {
+    fontSize: fontSize.sm,
+    color: colors.textSecondary,
   },
   readerProgressSection: {
-    marginTop: spacing.xl,
-    padding: spacing.md,
     backgroundColor: colors.bgCard,
     borderRadius: radius.lg,
+    padding: spacing.md,
+    marginBottom: spacing.lg,
     borderWidth: 1,
     borderColor: colors.border,
+  },
+  readerProgressRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: spacing.xs,
   },
   readerProgressLabel: {
     fontSize: fontSize.sm,
     color: colors.textSecondary,
-    marginBottom: spacing.sm,
+  },
+  readerProgressPct: {
+    fontSize: fontSize.sm,
+    color: colors.primary,
+    fontWeight: fontWeight.bold,
   },
   readerProgressBar: {
     height: 6,
@@ -471,5 +765,176 @@ const styles = StyleSheet.create({
     height: '100%',
     backgroundColor: colors.primary,
     borderRadius: radius.full,
+  },
+  chaptersLabel: {
+    fontSize: fontSize.xs,
+    fontWeight: fontWeight.bold,
+    color: colors.textMuted,
+    letterSpacing: 1.5,
+    marginBottom: spacing.md,
+  },
+  chaptersList: {
+    backgroundColor: colors.bgCard,
+    borderRadius: radius.xl,
+    borderWidth: 1,
+    borderColor: colors.border,
+    overflow: 'hidden',
+  },
+  chapterRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: spacing.md,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
+    gap: spacing.md,
+  },
+  chapterNum: {
+    width: 32,
+    height: 32,
+    borderRadius: radius.full,
+    backgroundColor: colors.bgCardAlt,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: colors.border,
+    flexShrink: 0,
+  },
+  chapterNumRead: {
+    backgroundColor: 'rgba(201,168,76,0.2)',
+    borderColor: colors.primary,
+  },
+  chapterNumText: {
+    fontSize: fontSize.sm,
+    color: colors.textSecondary,
+    fontWeight: fontWeight.bold,
+  },
+  chapterCheck: {
+    fontSize: fontSize.sm,
+    color: colors.primary,
+    fontWeight: fontWeight.black,
+  },
+  chapterInfo: { flex: 1 },
+  chapterTitle: {
+    fontSize: fontSize.sm,
+    fontWeight: fontWeight.semibold,
+    color: colors.text,
+    marginBottom: 2,
+    lineHeight: 18,
+  },
+  chapterTitleRead: { color: colors.textSecondary },
+  chapterMeta: {
+    fontSize: fontSize.xs,
+    color: colors.textMuted,
+  },
+  bookmarkIcon: {
+    fontSize: 18,
+    color: colors.textMuted,
+  },
+  bookmarkIconActive: { color: colors.primary },
+  // Chapter content
+  chapterContentPad: {
+    padding: spacing.lg,
+    paddingBottom: spacing.xxxl,
+  },
+  chapterContentHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: spacing.md,
+  },
+  chapterContentNum: {
+    fontSize: fontSize.xs,
+    color: colors.textMuted,
+    fontWeight: fontWeight.semibold,
+    letterSpacing: 1,
+    textTransform: 'uppercase',
+  },
+  chapterBookmarkBtn: {
+    backgroundColor: colors.bgCard,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.xs,
+    borderRadius: radius.full,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  chapterBookmarkText: {
+    fontSize: fontSize.xs,
+    color: colors.textSecondary,
+    fontWeight: fontWeight.semibold,
+  },
+  chapterContentTitle: {
+    fontSize: fontSize.xxxl,
+    fontWeight: fontWeight.black,
+    color: colors.text,
+    lineHeight: 38,
+    marginBottom: spacing.sm,
+  },
+  chapterReadTime: {
+    fontSize: fontSize.sm,
+    color: colors.textMuted,
+    marginBottom: spacing.lg,
+  },
+  chapterDivider: {
+    height: 1,
+    backgroundColor: colors.border,
+    marginBottom: spacing.lg,
+  },
+  chapterParagraph: {
+    fontSize: fontSize.md,
+    color: colors.textSecondary,
+    lineHeight: 28,
+    marginBottom: spacing.lg,
+  },
+  keyInsightsCard: {
+    borderRadius: radius.xl,
+    overflow: 'hidden',
+    marginBottom: spacing.xl,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  keyInsightsHeader: {
+    padding: spacing.md,
+  },
+  keyInsightsTitle: {
+    fontSize: fontSize.md,
+    fontWeight: fontWeight.bold,
+    color: '#fff',
+  },
+  keyInsightsList: {
+    backgroundColor: colors.bgCard,
+    padding: spacing.md,
+    gap: spacing.sm,
+  },
+  keyInsightRow: {
+    flexDirection: 'row',
+    gap: spacing.sm,
+  },
+  keyInsightDot: {
+    color: colors.primary,
+    fontSize: fontSize.md,
+    fontWeight: fontWeight.bold,
+    marginTop: 1,
+  },
+  keyInsightText: {
+    flex: 1,
+    fontSize: fontSize.sm,
+    color: colors.text,
+    lineHeight: 20,
+  },
+  chapterNavRow: {
+    marginTop: spacing.lg,
+  },
+  nextChapterBtn: {
+    borderRadius: radius.xl,
+    overflow: 'hidden',
+  },
+  nextChapterGrad: {
+    padding: spacing.md,
+    alignItems: 'center',
+  },
+  nextChapterText: {
+    color: '#fff',
+    fontSize: fontSize.lg,
+    fontWeight: fontWeight.bold,
   },
 });

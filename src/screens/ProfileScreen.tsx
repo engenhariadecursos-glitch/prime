@@ -26,7 +26,7 @@ interface MenuItem {
 function MenuSection({ title, items }: { title: string; items: MenuItem[] }) {
   return (
     <View style={styles.menuSection}>
-      <Text style={styles.menuSectionTitle}>{title}</Text>
+      {title.length > 0 && <Text style={styles.menuSectionTitle}>{title}</Text>}
       <View style={styles.menuCard}>
         {items.map((item, i) => (
           <TouchableOpacity
@@ -51,7 +51,10 @@ function MenuSection({ title, items }: { title: string; items: MenuItem[] }) {
 }
 
 export default function ProfileScreen({ navigation }: any) {
-  const { user, isPremium, trialDaysLeft, setHasCompletedOnboarding, setUser, activeFasting, fastingHistory } = useAppStore();
+  const {
+    user, isPremium, trialDaysLeft, setHasCompletedOnboarding, setUser,
+    fastingHistory, streak,
+  } = useAppStore();
 
   const handleLogout = () => {
     Alert.alert(
@@ -81,21 +84,20 @@ export default function ProfileScreen({ navigation }: any) {
     ? new Date(user.createdAt).toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' })
     : 'Hoje';
 
-  const totalFasts = fastingHistory.length;
   const longestFast = fastingHistory.reduce((max, s) => {
     const elapsed = s.endTime ? (s.endTime - s.startTime) / (3600 * 1000) : 0;
     return elapsed > max ? elapsed : max;
   }, 0);
 
   const accountItems: MenuItem[] = [
-    { icon: '👤', label: 'Nome', value: user?.name || '—', arrow: false, onPress: () => {} },
-    { icon: '📧', label: 'E-mail', value: user?.email || '—', arrow: false, onPress: () => {} },
-    { icon: '📅', label: 'Membro desde', value: memberSince, arrow: false, onPress: () => {} },
+    { icon: '👤', label: 'Nome', value: user?.name || '—', onPress: () => {} },
+    { icon: '📧', label: 'E-mail', value: user?.email || '—', onPress: () => {} },
+    { icon: '📅', label: 'Membro desde', value: memberSince, onPress: () => {} },
   ];
 
   const subscriptionItems: MenuItem[] = isPremium
     ? [
-        { icon: '⭐', label: 'Status', value: 'Prime Ativo', arrow: false, onPress: () => {} },
+        { icon: '⭐', label: 'Status', value: 'Prime Ativo', onPress: () => {} },
         { icon: '💳', label: 'Gerenciar assinatura', arrow: true, onPress: () => navigation.navigate('Premium') },
         { icon: '🔄', label: 'Restaurar compras', arrow: true, onPress: () => navigation.navigate('Premium') },
       ]
@@ -132,9 +134,7 @@ export default function ProfileScreen({ navigation }: any) {
             colors={isPremium ? ['#C9A84C', '#E5C76B'] : ['#7C4DFF', '#9C6FFF']}
             style={styles.avatar}
           >
-            <Text style={styles.avatarText}>
-              {user?.name?.[0]?.toUpperCase() || '?'}
-            </Text>
+            <Text style={styles.avatarText}>{user?.name?.[0]?.toUpperCase() || '?'}</Text>
           </LinearGradient>
           <Text style={styles.profileName}>{user?.name || 'Atleta'}</Text>
           <Text style={styles.profileEmail}>{user?.email || ''}</Text>
@@ -151,10 +151,7 @@ export default function ProfileScreen({ navigation }: any) {
               </LinearGradient>
             </View>
           ) : (
-            <TouchableOpacity
-              onPress={() => navigation.navigate('Premium')}
-              style={styles.upgradeBadge}
-            >
+            <TouchableOpacity onPress={() => navigation.navigate('Premium')} style={styles.upgradeBadge}>
               <Text style={styles.upgradeBadgeText}>✨ Assinar Prime · {trialDaysLeft}d grátis</Text>
             </TouchableOpacity>
           )}
@@ -163,19 +160,41 @@ export default function ProfileScreen({ navigation }: any) {
         {/* Stats */}
         <View style={styles.statsRow}>
           {[
-            { label: 'Jejuns', value: totalFasts.toString(), emoji: '⚡' },
+            { label: 'Streak', value: streak.current > 0 ? `🔥 ${streak.current}d` : '—', emoji: '' },
+            { label: 'Total Jejuns', value: streak.totalCompleted.toString(), emoji: '⚡' },
             { label: 'Mais longo', value: longestFast > 0 ? `${Math.round(longestFast)}h` : '—', emoji: '🏆' },
-            { label: 'Treinos', value: '47', emoji: '💪' },
           ].map((stat) => (
             <View key={stat.label} style={styles.statCard}>
               <LinearGradient colors={['#1A1A26', '#12121A']} style={styles.statGrad}>
-                <Text style={styles.statEmoji}>{stat.emoji}</Text>
-                <Text style={styles.statValue}>{stat.value}</Text>
+                {stat.emoji ? <Text style={styles.statEmoji}>{stat.emoji}</Text> : null}
+                <Text style={[styles.statValue, !stat.emoji && styles.statValueLarge]}>{stat.value}</Text>
                 <Text style={styles.statLabel}>{stat.label}</Text>
               </LinearGradient>
             </View>
           ))}
         </View>
+
+        {/* Streak detail card */}
+        {streak.current > 0 && (
+          <View style={styles.streakCard}>
+            <LinearGradient
+              colors={['rgba(255,107,53,0.12)', 'rgba(201,168,76,0.08)']}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 0 }}
+              style={styles.streakCardInner}
+            >
+              <View style={styles.streakRow}>
+                <Text style={styles.streakEmoji}>🔥</Text>
+                <View style={styles.streakInfo}>
+                  <Text style={styles.streakTitle}>{streak.current} dias consecutivos!</Text>
+                  <Text style={styles.streakSub}>
+                    Melhor sequência: {streak.longest}d · Total de jejuns: {streak.totalCompleted}
+                  </Text>
+                </View>
+              </View>
+            </LinearGradient>
+          </View>
+        )}
 
         <MenuSection title="Minha Conta" items={accountItems} />
         <MenuSection title="Assinatura" items={subscriptionItems} />
@@ -222,10 +241,7 @@ const styles = StyleSheet.create({
     color: colors.textSecondary,
     marginBottom: spacing.md,
   },
-  premiumBadge: {
-    borderRadius: radius.full,
-    overflow: 'hidden',
-  },
+  premiumBadge: { borderRadius: radius.full, overflow: 'hidden' },
   premiumBadgeGrad: {
     paddingHorizontal: spacing.lg,
     paddingVertical: spacing.sm,
@@ -252,7 +268,7 @@ const styles = StyleSheet.create({
   statsRow: {
     flexDirection: 'row',
     gap: spacing.sm,
-    marginBottom: spacing.lg,
+    marginBottom: spacing.md,
   },
   statCard: {
     flex: 1,
@@ -271,10 +287,38 @@ const styles = StyleSheet.create({
     fontWeight: fontWeight.black,
     color: colors.text,
   },
+  statValueLarge: {
+    fontSize: fontSize.lg,
+  },
   statLabel: {
     fontSize: fontSize.xs,
     color: colors.textMuted,
     marginTop: 2,
+  },
+  streakCard: {
+    borderRadius: radius.xl,
+    overflow: 'hidden',
+    marginBottom: spacing.lg,
+    borderWidth: 1,
+    borderColor: 'rgba(255,107,53,0.2)',
+  },
+  streakCardInner: { padding: spacing.md },
+  streakRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.md,
+  },
+  streakEmoji: { fontSize: 32 },
+  streakInfo: { flex: 1 },
+  streakTitle: {
+    fontSize: fontSize.lg,
+    fontWeight: fontWeight.bold,
+    color: colors.fasting,
+    marginBottom: 2,
+  },
+  streakSub: {
+    fontSize: fontSize.sm,
+    color: colors.textSecondary,
   },
   menuSection: { marginBottom: spacing.lg },
   menuSectionTitle: {
