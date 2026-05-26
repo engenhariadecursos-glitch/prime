@@ -7,7 +7,6 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import * as SplashScreen from 'expo-splash-screen';
 import * as Notifications from 'expo-notifications';
 import { requestNotificationPermission } from '../src/utils/notifications';
-import { OnboardingScreen } from '../src/screens/OnboardingScreen';
 import { useAppStore } from '../src/store/useAppStore';
 
 SplashScreen.preventAutoHideAsync();
@@ -22,7 +21,6 @@ Notifications.setNotificationHandler({
 
 export default function RootLayout() {
   const [hydrated, setHydrated] = useState(false);
-  const onboardingDone = useAppStore((s) => s.onboardingDone);
 
   useEffect(() => {
     requestNotificationPermission();
@@ -40,22 +38,14 @@ export default function RootLayout() {
 
   if (!hydrated) return null;
 
-  if (!onboardingDone) {
-    return (
-      <GestureHandlerRootView style={{ flex: 1, backgroundColor: '#000000' }}>
-        <SafeAreaProvider>
-          <StatusBar style="light" backgroundColor="#000000" />
-          <OnboardingScreen />
-        </SafeAreaProvider>
-      </GestureHandlerRootView>
-    );
-  }
-
   return (
     <GestureHandlerRootView style={{ flex: 1, backgroundColor: '#000000' }}>
       <SafeAreaProvider>
         <StatusBar style="light" backgroundColor="#000000" />
-        <Stack screenOptions={{ headerShown: false }} />
+        <Stack screenOptions={{ headerShown: false, animation: 'fade' }}>
+          <Stack.Screen name="(tabs)" />
+          <Stack.Screen name="onboarding" options={{ gestureEnabled: false }} />
+        </Stack>
       </SafeAreaProvider>
     </GestureHandlerRootView>
   );

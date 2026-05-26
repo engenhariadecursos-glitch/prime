@@ -1,12 +1,19 @@
 import React from 'react';
-import { Tabs } from 'expo-router';
+import { Tabs, Redirect } from 'expo-router';
 import { View, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { useAppStore } from '../../src/store/useAppStore';
 import { colors } from '../../src/constants/theme';
 
 type IoniconName = React.ComponentProps<typeof Ionicons>['name'];
 
 export default function TabLayout() {
+  const onboardingDone = useAppStore((s) => s.onboardingDone);
+
+  if (!onboardingDone) {
+    return <Redirect href="/onboarding" />;
+  }
+
   return (
     <Tabs
       screenOptions={{

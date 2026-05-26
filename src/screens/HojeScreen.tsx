@@ -3,6 +3,7 @@ import {
   View, Text, StyleSheet, ScrollView, TouchableOpacity, Animated, StatusBar,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useRouter } from 'expo-router';
 import { useAppStore } from '../store/useAppStore';
 import { CheckInCard } from '../components/CheckInCard';
 import { RingProgress } from '../components/RingProgress';
@@ -26,6 +27,7 @@ const QUOTES = [
 ];
 
 export function HojeScreen() {
+  const router = useRouter();
   const store = useAppStore();
   const today = store.getToday();
   const checkins = today.checkins;
@@ -124,8 +126,12 @@ export function HojeScreen() {
             </View>
           </View>
 
-          {/* WORKOUT CARD */}
-          <View style={styles.workoutCard}>
+          {/* WORKOUT CARD — tap to open Treino tab */}
+          <TouchableOpacity
+            style={styles.workoutCard}
+            onPress={() => router.navigate('/(tabs)/treino')}
+            activeOpacity={0.85}
+          >
             <View style={styles.workoutTop}>
               <View style={styles.workoutBadge}>
                 <Text style={styles.workoutBadgeTxt}>{split.label}</Text>
@@ -135,6 +141,7 @@ export function HojeScreen() {
                   <Text style={styles.doneTxt}>✓ CONCLUÍDO</Text>
                 </View>
               )}
+              <Text style={styles.workoutArrow}>›</Text>
             </View>
             <Text style={styles.workoutName}>{split.name}</Text>
             <Text style={styles.workoutMuscle}>{split.muscle}</Text>
@@ -148,7 +155,7 @@ export function HojeScreen() {
                 </Text>
               </View>
             </View>
-          </View>
+          </TouchableOpacity>
 
           {/* METRICS ROW */}
           <View style={styles.metricsRow}>
@@ -171,24 +178,61 @@ export function HojeScreen() {
             </View>
           </View>
 
-          {/* ACTIVE FASTING CARD */}
+          {/* ACTIVE FASTING CARD — tap to open Jejum tab */}
           {fasting && (
-            <View style={styles.fastCard}>
+            <TouchableOpacity
+              style={styles.fastCard}
+              onPress={() => router.navigate('/(tabs)/jejum')}
+              activeOpacity={0.85}
+            >
               <View style={styles.fastRow}>
                 <View style={styles.fastDot} />
                 <Text style={styles.fastTitle}>
                   Jejum ativo · {formatHourMin(fastElapsed)} / {fasting.goalHours}h
                 </Text>
                 <Text style={styles.fastPct}>{Math.round(fastProg * 100)}%</Text>
+                <Text style={styles.fastArrow}>›</Text>
               </View>
               <View style={styles.fastTrack}>
                 <View style={[styles.fastFill, { width: `${Math.round(fastProg * 100)}%` as any }]} />
               </View>
-            </View>
+            </TouchableOpacity>
           )}
 
           {/* CHECK-IN */}
           <CheckInCard checkins={checkins} onToggle={(key: CheckInKey) => store.toggleCheckin(key)} />
+
+          {/* SHORTCUT BUTTONS */}
+          <View style={styles.shortcutRow}>
+            <TouchableOpacity
+              style={styles.shortcutBtn}
+              onPress={() => router.navigate('/(tabs)/dieta')}
+            >
+              <Text style={styles.shortcutIcon}>🥗</Text>
+              <Text style={styles.shortcutLabel}>Dieta</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.shortcutBtn}
+              onPress={() => router.navigate('/(tabs)/jejum')}
+            >
+              <Text style={styles.shortcutIcon}>⏱️</Text>
+              <Text style={styles.shortcutLabel}>Jejum</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.shortcutBtn}
+              onPress={() => router.navigate('/(tabs)/stats')}
+            >
+              <Text style={styles.shortcutIcon}>📊</Text>
+              <Text style={styles.shortcutLabel}>Stats</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.shortcutBtn}
+              onPress={() => router.navigate('/(tabs)/livros')}
+            >
+              <Text style={styles.shortcutIcon}>📚</Text>
+              <Text style={styles.shortcutLabel}>Livros</Text>
+            </TouchableOpacity>
+          </View>
 
           {/* QUOTE */}
           <View style={styles.quoteCard}>
@@ -265,6 +309,7 @@ const styles = StyleSheet.create({
     borderWidth: 1, borderColor: colors.green,
   },
   doneTxt: { fontSize: 9, fontWeight: '800', color: colors.green, letterSpacing: 0.5 },
+  workoutArrow: { fontSize: 22, color: colors.muted2, fontWeight: '300', marginLeft: 'auto' },
   workoutName: { fontSize: 22, fontWeight: '800', color: colors.text, letterSpacing: -0.5, marginBottom: 4 },
   workoutMuscle: { fontSize: 12, color: colors.muted, marginBottom: 14 },
   workoutPills: { flexDirection: 'row', gap: 8 },
@@ -295,8 +340,17 @@ const styles = StyleSheet.create({
   },
   fastTitle: { flex: 1, fontSize: 13, fontWeight: '700', color: colors.green },
   fastPct: { fontSize: 13, fontWeight: '800', color: colors.green },
+  fastArrow: { fontSize: 18, color: colors.green, fontWeight: '300' },
   fastTrack: { height: 3, backgroundColor: colors.surface3, borderRadius: 2, overflow: 'hidden' },
   fastFill: { height: '100%', backgroundColor: colors.green, borderRadius: 2 },
+
+  shortcutRow: { flexDirection: 'row', gap: 8 },
+  shortcutBtn: {
+    flex: 1, backgroundColor: colors.surface1, borderRadius: radius.md, padding: 14,
+    alignItems: 'center', borderWidth: 1, borderColor: colors.border, gap: 6,
+  },
+  shortcutIcon: { fontSize: 22 },
+  shortcutLabel: { fontSize: 10, fontWeight: '700', color: colors.muted, textTransform: 'uppercase', letterSpacing: 0.5 },
 
   quoteCard: {
     flexDirection: 'row', gap: 14, backgroundColor: colors.surface1,
