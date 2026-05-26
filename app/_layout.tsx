@@ -1,0 +1,62 @@
+import 'react-native-gesture-handler';
+import React, { useEffect, useState } from 'react';
+import { Stack } from 'expo-router';
+import { StatusBar } from 'expo-status-bar';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
+import * as SplashScreen from 'expo-splash-screen';
+import * as Notifications from 'expo-notifications';
+import { requestNotificationPermission } from '../src/utils/notifications';
+import { OnboardingScreen } from '../src/screens/OnboardingScreen';
+import { useAppStore } from '../src/store/useAppStore';
+
+SplashScreen.preventAutoHideAsync();
+
+Notifications.setNotificationHandler({
+  handleNotification: async () => ({
+    shouldShowAlert: true,
+    shouldPlaySound: true,
+    shouldSetBadge: false,
+  }),
+});
+
+export default function RootLayout() {
+  const [hydrated, setHydrated] = useState(false);
+  const onboardingDone = useAppStore((s) => s.onboardingDone);
+
+  useEffect(() => {
+    requestNotificationPermission();
+    if (useAppStore.persist.hasHydrated()) {
+      setHydrated(true);
+      SplashScreen.hideAsync();
+    } else {
+      const unsub = useAppStore.persist.onFinishHydration(() => {
+        setHydrated(true);
+        SplashScreen.hideAsync();
+      });
+      return unsub;
+    }
+  }, []);
+
+  if (!hydrated) return null;
+
+  if (!onboardingDone) {
+    return (
+      <GestureHandlerRootView style={{ flex: 1, backgroundColor: '#000000' }}>
+        <SafeAreaProvider>
+          <StatusBar style="light" backgroundColor="#000000" />
+          <OnboardingScreen />
+        </SafeAreaProvider>
+      </GestureHandlerRootView>
+    );
+  }
+
+  return (
+    <GestureHandlerRootView style={{ flex: 1, backgroundColor: '#000000' }}>
+      <SafeAreaProvider>
+        <StatusBar style="light" backgroundColor="#000000" />
+        <Stack screenOptions={{ headerShown: false }} />
+      </SafeAreaProvider>
+    </GestureHandlerRootView>
+  );
+}
