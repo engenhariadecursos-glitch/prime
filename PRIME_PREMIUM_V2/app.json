@@ -1,0 +1,93 @@
+{
+  "expo": {
+    "name": "PRIME Premium V2",
+    "slug": "prime-premium-v2",
+    "version": "2.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "dark",
+    "backgroundColor": "#000000",
+    "newArchEnabled": true,
+    "splash": {
+      "image": "./assets/splash.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#000000"
+    },
+    "assetBundlePatterns": ["**/*"],
+    "ios": {
+      "supportsTablet": false,
+      "bundleIdentifier": "com.primefitapp.premiumv2",
+      "buildNumber": "1",
+      "infoPlist": {
+        "NSCameraUsageDescription": "PRIME Premium usa a câmera para registrar suas fotos de progresso.",
+        "NSPhotoLibraryUsageDescription": "PRIME Premium acessa sua galeria para salvar fotos de progresso.",
+        "NSPhotoLibraryAddUsageDescription": "PRIME Premium salva suas fotos de progresso na galeria.",
+        "UIBackgroundModes": ["remote-notification"],
+        "NSUserNotificationsUsageDescription": "PRIME Premium envia lembretes de treino e avisos de jejum."
+      },
+      "associatedDomains": [],
+      "config": {
+        "usesNonExemptEncryption": false
+      }
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#000000"
+      },
+      "package": "com.primefitapp.premiumv2",
+      "versionCode": 1,
+      "permissions": [
+        "android.permission.CAMERA",
+        "android.permission.READ_EXTERNAL_STORAGE",
+        "android.permission.WRITE_EXTERNAL_STORAGE",
+        "android.permission.RECEIVE_BOOT_COMPLETED",
+        "android.permission.VIBRATE",
+        "android.permission.USE_BIOMETRIC",
+        "android.permission.USE_FINGERPRINT"
+      ]
+    },
+    "web": {
+      "favicon": "./assets/icon.png",
+      "bundler": "metro"
+    },
+    "plugins": [
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/notification-icon.png",
+          "color": "#FF7A00",
+          "sounds": []
+        }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "PRIME Premium acessa suas fotos para registrar seu progresso.",
+          "cameraPermission": "PRIME Premium usa a câmera para tirar fotos de progresso."
+        }
+      ],
+      [
+        "expo-media-library",
+        {
+          "photosPermission": "PRIME Premium salva suas fotos de progresso.",
+          "savePhotosPermission": "PRIME Premium salva fotos de progresso.",
+          "isAccessMediaLocationEnabled": true
+        }
+      ],
+      "expo-secure-store"
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "your-eas-project-id-here"
+      }
+    },
+    "owner": "primefitapp",
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
+    "updates": {
+      "url": "https://u.expo.dev/your-project-id-v2"
+    }
+  }
+}
