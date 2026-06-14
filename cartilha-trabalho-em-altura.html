@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cartilha — Trabalho em Altura (NR-35)</title>
+<style>
+  :root{
+    --ink:#1f2a37; --ink-soft:#3c4a5a; --muted:#6b7886;
+    --yellow:#ffc20e; --yellow-d:#e0a800;
+    --red:#d23b3b; --green:#2f9e6f; --blue:#2b6cb0;
+    --bg:#f4f6f8; --card:#ffffff; --line:#e3e8ee;
+    --shadow:0 6px 20px rgba(31,42,55,.08);
+    --r:14px;
+  }
+  *{box-sizing:border-box}
+  html{-webkit-text-size-adjust:100%}
+  body{
+    margin:0; background:var(--bg); color:var(--ink);
+    font-family:"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    line-height:1.55; font-size:16px;
+  }
+  .page{max-width:920px; margin:0 auto; padding:24px}
+  /* ---------- Header / hero ---------- */
+  .hero{
+    background:linear-gradient(135deg,#1f2a37 0%,#2b3a4d 100%);
+    color:#fff; border-radius:var(--r); overflow:hidden;
+    box-shadow:var(--shadow); position:relative;
+  }
+  .hazard{height:10px;background:repeating-linear-gradient(45deg,var(--yellow) 0 22px,#1f2a37 22px 44px)}
+  .hero-body{display:flex; gap:20px; align-items:center; padding:26px 28px; flex-wrap:wrap}
+  .hero-text{flex:1 1 340px; min-width:280px}
+  .hero .eyebrow{
+    display:inline-block; background:var(--yellow); color:#1f2a37;
+    font-weight:800; font-size:12px; letter-spacing:.12em; text-transform:uppercase;
+    padding:5px 12px; border-radius:999px; margin-bottom:12px;
+  }
+  .hero h1{margin:.1em 0 .15em; font-size:34px; line-height:1.1; letter-spacing:-.01em}
+  .hero p.sub{margin:0; color:#cdd7e2; font-size:16px}
+  .hero-art{flex:0 0 230px; text-align:center}
+  /* ---------- Sections ---------- */
+  .section{
+    background:var(--card); border:1px solid var(--line); border-radius:var(--r);
+    padding:22px 24px; margin-top:20px; box-shadow:var(--shadow);
+  }
+  .s-head{display:flex; align-items:center; gap:14px; margin-bottom:8px}
+  .s-num{
+    flex:0 0 auto; width:42px; height:42px; border-radius:11px;
+    display:grid; place-items:center; font-weight:800; font-size:18px;
+    background:#1f2a37; color:var(--yellow);
+  }
+  .s-head h2{margin:0; font-size:21px; line-height:1.2}
+  .s-head .tag{margin-left:auto; font-size:12px; font-weight:700; color:#fff; background:var(--blue); padding:4px 10px; border-radius:999px; white-space:nowrap}
+  .lead{color:var(--ink-soft); margin:.2em 0 1em}
+  ul.checks{list-style:none; padding:0; margin:0; display:grid; gap:10px}
+  ul.checks li{display:flex; gap:11px; align-items:flex-start}
+  ul.checks li .ic{flex:0 0 auto; margin-top:2px}
+  ul.checks b{color:var(--ink)}
+  .grid2{display:grid; grid-template-columns:1fr 1fr; gap:14px}
+  @media (max-width:640px){.grid2{grid-template-columns:1fr}}
+  .with-art{display:flex; gap:20px; align-items:center; flex-wrap:wrap}
+  .with-art .txt{flex:1 1 300px; min-width:260px}
+  .with-art .art{flex:0 0 220px; text-align:center}
+  /* ---------- 10 golden rules ---------- */
+  .gold{
+    background:linear-gradient(135deg,#fff7e0,#fffdf6);
+    border:1px solid #f3e2a8;
+  }
+  .gold .s-num{background:var(--yellow); color:#1f2a37}
+  .rules{display:grid; grid-template-columns:repeat(5,1fr); gap:12px; margin-top:14px}
+  @media (max-width:760px){.rules{grid-template-columns:repeat(2,1fr)}}
+  .rule{
+    background:#fff; border:1px solid #efe6c6; border-radius:12px; padding:12px 10px;
+    text-align:center; display:flex; flex-direction:column; align-items:center; gap:8px;
+  }
+  .rule .rn{font-size:11px; font-weight:800; color:var(--yellow-d)}
+  .rule .rl{font-size:12.5px; font-weight:600; color:var(--ink); line-height:1.25}
+  /* ---------- callout ---------- */
+  .callout{display:flex; gap:12px; background:#fff4f4; border:1px solid #f3c9c9; border-radius:12px; padding:14px 16px; margin-top:6px}
+  .callout .ic{flex:0 0 auto}
+  .callout p{margin:0; color:#7a2a2a; font-size:14.5px}
+  /* ---------- footer ---------- */
+  .foot{margin:22px 4px 8px; color:var(--muted); font-size:12.5px; display:flex; justify-content:space-between; gap:10px; flex-wrap:wrap}
+  .foot .brand{font-weight:700; color:var(--ink-soft)}
+  svg{display:block}
+  /* ---------- print ---------- */
+  @media print{
+    @page{size:A4; margin:12mm}
+    body{background:#fff; font-size:12.5px}
+    .page{max-width:none; padding:0}
+    .section,.hero{box-shadow:none}
+    .section{break-inside:avoid; page-break-inside:avoid}
+    .gold{break-inside:avoid}
+    .no-print{display:none}
+  }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <!-- ============ HERO ============ -->
+  <header class="hero">
+    <div class="hazard" role="presentation"></div>
+    <div class="hero-body">
+      <div class="hero-text">
+        <span class="eyebrow">Segurança do Trabalho · NR-35</span>
+        <h1>Cartilha de Trabalho em Altura</h1>
+        <p class="sub">Prevenção de quedas, normas, EPIs e responsabilidades — guia rápido para organizações e trabalhadores.</p>
+      </div>
+      <div class="hero-art" aria-hidden="false">
+        <!-- Worker with full-body harness anchored -->
+        <svg width="210" height="210" viewBox="0 0 210 210" role="img" aria-label="Trabalhador usando cinto de segurança tipo paraquedista, conectado por talabarte a um ponto de ancoragem">
+          <defs></defs>
+          <!-- structure beam -->
+          <rect x="20" y="34" width="170" height="12" rx="3" fill="#ffc20e"/>
+          <rect x="28" y="46" width="10" height="150" fill="#3c4a5a"/>
+          <rect x="172" y="46" width="10" height="150" fill="#3c4a5a"/>
+          <!-- anchor point -->
+          <circle cx="120" cy="40" r="7" fill="#1f2a37" stroke="#fff" stroke-width="2"/>
+          <!-- lanyard -->
+          <path d="M120 44 Q116 78 108 92" fill="none" stroke="#d23b3b" stroke-width="4" stroke-linecap="round"/>
+          <!-- worker body -->
+          <g>
+            <!-- legs -->
+            <path d="M98 150 l-6 38" stroke="#2b3a4d" stroke-width="11" stroke-linecap="round"/>
+            <path d="M112 150 l8 38" stroke="#2b3a4d" stroke-width="11" stroke-linecap="round"/>
+            <!-- boots -->
+            <path d="M86 188 h16" stroke="#1f2a37" stroke-width="8" stroke-linecap="round"/>
+            <path d="M118 188 h16" stroke="#1f2a37" stroke-width="8" stroke-linecap="round"/>
+            <!-- torso / vest -->
+            <rect x="90" y="96" width="30" height="58" rx="10" fill="#2b6cb0"/>
+            <!-- harness straps -->
+            <path d="M96 98 l16 52 M114 98 l-16 52" stroke="#ffc20e" stroke-width="4"/>
+            <rect x="100" y="120" width="10" height="9" rx="2" fill="#1f2a37"/>
+            <!-- arms -->
+            <path d="M92 104 l-16 22" stroke="#2b6cb0" stroke-width="10" stroke-linecap="round"/>
+            <path d="M118 104 l14 -10" stroke="#2b6cb0" stroke-width="10" stroke-linecap="round"/>
+            <!-- head + helmet -->
+            <circle cx="105" cy="84" r="13" fill="#f2c9a0"/>
+            <path d="M90 82 a15 15 0 0 1 30 0 z" fill="#ffc20e"/>
+            <rect x="89" y="82" width="32" height="4" rx="2" fill="#e0a800"/>
+          </g>
+        </svg>
+      </div>
+    </div>
+  </header>
+
+  <!-- ============ 1 ============ -->
+  <section class="section">
+    <div class="s-head">
+      <div class="s-num">1</div>
+      <h2>O que a norma exige das organizações</h2>
+      <span class="tag">NR-35</span>
+    </div>
+    <p class="lead">Eliminação dos riscos de quedas e redução de suas consequências. Para isso, a empresa deve elaborar procedimentos, tais como:</p>
+    <ul class="checks">
+      <li><span class="ic">✔️</span><span><b>Análise de Risco (AR):</b> avalia e assegura a tarefa antes de iniciá-la.</span></li>
+      <li><span class="ic">✔️</span><span><b>Permissão de Trabalho (PT):</b> autoriza formalmente as atividades definidas.</span></li>
+      <li><span class="ic">✔️</span><span><b>Capacitação e saúde:</b> treinamento teórico/prático mínimo de <b>8h</b> e reciclagem <b>bienal</b>; monitorar a saúde dos trabalhadores.</span></li>
+      <li><span class="ic">✔️</span><span><b>Aptidão física e mental:</b> garantir avaliação de saúde e aptidão do trabalhador.</span></li>
+      <li><span class="ic">✔️</span><span><b>Medidas de proteção:</b> Sistemas de Proteção Contra Quedas (SPCQ), Proteção Coletiva (EPC) e Proteção Individual (EPI).</span></li>
+      <li><span class="ic">✔️</span><span><b>Emergência e salvamento:</b> manter procedimentos, equipe e equipamentos disponíveis.</span></li>
+    </ul>
+  </section>
+
+  <!-- ============ 2 ============ -->
+  <section class="section">
+    <div class="s-head">
+      <div class="s-num">2</div>
+      <h2>O que a norma exige do trabalhador</h2>
+      <span class="tag">NR-35</span>
+    </div>
+    <div class="with-art">
+      <div class="txt">
+        <ul class="checks">
+          <li><span class="ic">🎓</span><span>Participar e ser aprovado em <b>treinamento teórico/prático</b> (carga de 8h).</span></li>
+          <li><span class="ic">🦺</span><span>Usar os <b>EPI</b> conforme o treinamento fornecido pela empresa.</span></li>
+          <li><span class="ic">📋</span><span>Seguir as <b>Ordens de Serviço (OS)</b>, a <b>Análise de Risco (AR)</b> e a <b>Permissão de Trabalho (PT)</b>.</span></li>
+          <li><span class="ic">🛑</span><span>Colaborar na prevenção e <b>interromper as atividades</b> em caso de risco iminente à sua segurança ou à de terceiros.</span></li>
+        </ul>
+      </div>
+      <div class="art">
+        <!-- EPI set -->
+        <svg width="200" height="150" viewBox="0 0 200 150" role="img" aria-label="Equipamentos de proteção individual: capacete, cinto de segurança e botina">
+          <!-- helmet -->
+          <g transform="translate(18,30)">
+            <path d="M5 40 a35 35 0 0 1 70 0 z" fill="#ffc20e"/>
+            <rect x="0" y="40" width="80" height="9" rx="4" fill="#e0a800"/>
+            <text x="40" y="70" text-anchor="middle" font-size="11" fill="#3c4a5a" font-family="Arial">Capacete</text>
+          </g>
+          <!-- harness -->
+          <g transform="translate(110,18)">
+            <circle cx="30" cy="14" r="11" fill="none" stroke="#2b6cb0" stroke-width="5"/>
+            <path d="M22 24 l8 30 l8 -30" fill="none" stroke="#2b6cb0" stroke-width="5"/>
+            <path d="M16 38 h28" stroke="#2b6cb0" stroke-width="5"/>
+            <rect x="26" y="34" width="8" height="7" rx="2" fill="#1f2a37"/>
+            <text x="30" y="74" text-anchor="middle" font-size="11" fill="#3c4a5a" font-family="Arial">Cinturão</text>
+          </g>
+          <!-- boot -->
+          <g transform="translate(60,96)">
+            <path d="M6 0 h16 v22 h22 v14 H6 Z" fill="#2b3a4d"/>
+            <rect x="6" y="36" width="38" height="6" rx="3" fill="#1f2a37"/>
+            <text x="25" y="54" text-anchor="middle" font-size="11" fill="#3c4a5a" font-family="Arial">Botina</text>
+          </g>
+        </svg>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ 10 GOLDEN RULES ============ -->
+  <section class="section gold">
+    <div class="s-head">
+      <div class="s-num">★</div>
+      <h2>As 10 Regras de Ouro</h2>
+    </div>
+    <p class="lead">Princípios que sustentam qualquer trabalho em altura seguro:</p>
+    <div class="rules">
+      <div class="rule"><span class="rn">01</span><span class="ic" style="font-size:22px">🗒️</span><span class="rl">Planejamento</span></div>
+      <div class="rule"><span class="rn">02</span><span class="ic" style="font-size:22px">⚠️</span><span class="rl">Avaliação de riscos</span></div>
+      <div class="rule"><span class="rn">03</span><span class="ic" style="font-size:22px">🦺</span><span class="rl">Uso de EPIs</span></div>
+      <div class="rule"><span class="rn">04</span><span class="ic" style="font-size:22px">🔍</span><span class="rl">Inspeção de equipamentos</span></div>
+      <div class="rule"><span class="rn">05</span><span class="ic" style="font-size:22px">🎓</span><span class="rl">Treinamento</span></div>
+      <div class="rule"><span class="rn">06</span><span class="ic" style="font-size:22px">🚧</span><span class="rl">Sinalização</span></div>
+      <div class="rule"><span class="rn">07</span><span class="ic" style="font-size:22px">⛔</span><span class="rl">Isolamento da área</span></div>
+      <div class="rule"><span class="rn">08</span><span class="ic" style="font-size:22px">🚑</span><span class="rl">Equipe de emergência</span></div>
+      <div class="rule"><span class="rn">09</span><span class="ic" style="font-size:22px">👷</span><span class="rl">Supervisão</span></div>
+      <div class="rule"><span class="rn">10</span><span class="ic" style="font-size:22px">📑</span><span class="rl">Procedimentos de trabalho</span></div>
+    </div>
+  </section>
+
+  <!-- ============ 3 ============ -->
+  <section class="section">
+    <div class="s-head">
+      <div class="s-num">3</div>
+      <h2>Medidas de proteção coletiva</h2>
+      <span class="tag">NR-18</span>
+    </div>
+    <div class="with-art">
+      <div class="txt">
+        <ul class="checks">
+          <li><span class="ic">📏</span><span><b>Proteção periférica (guarda-corpo):</b> travessão superior a <b>1,20 m</b> e intermediário a <b>0,70 m</b>.</span></li>
+          <li><span class="ic">🏗️</span><span><b>Plataforma de segurança:</b> instalada na altura da primeira laje (mínimo um pé-direito acima do terreno).</span></li>
+          <li><span class="ic">🕸️</span><span><b>Redes de segurança:</b> distância máxima de <b>6 m</b> entre a superfície de trabalho e a rede; a extremidade superior deve superar a área de trabalho em no mínimo <b>1 m</b>.</span></li>
+          <li><span class="ic">⛏️</span><span><b>Tubulões:</b> profundidade máxima de <b>15 m</b> para escavação manual.</span></li>
+          <li><span class="ic">🛗</span><span><b>Elevadores:</b> obrigatórios para passageiros em obras com <b>≥ 24 m</b>, instalados a partir de <b>15 m</b> de deslocamento vertical.</span></li>
+          <li><span class="ic">🪜</span><span><b>Escadas:</b> devem ultrapassar em no mínimo <b>1 m</b> o nível superior de acesso.</span></li>
+        </ul>
+      </div>
+      <div class="art">
+        <!-- guardrail + dimensions -->
+        <svg width="220" height="200" viewBox="0 0 220 200" role="img" aria-label="Guarda-corpo com travessão superior a 1,20 metros e intermediário a 0,70 metros, e escada ultrapassando 1 metro o nível de acesso">
+          <!-- floor -->
+          <rect x="10" y="160" width="200" height="10" fill="#3c4a5a"/>
+          <!-- posts -->
+          <rect x="36" y="44" width="8" height="116" fill="#1f2a37"/>
+          <rect x="120" y="44" width="8" height="116" fill="#1f2a37"/>
+          <!-- top rail 1.20 -->
+          <rect x="36" y="44" width="92" height="8" rx="3" fill="#ffc20e"/>
+          <!-- mid rail 0.70 -->
+          <rect x="36" y="104" width="92" height="7" rx="3" fill="#ffc20e"/>
+          <!-- toe board -->
+          <rect x="36" y="146" width="92" height="12" fill="#e0a800"/>
+          <!-- dim labels -->
+          <text x="60" y="40" font-size="12" fill="#2b6cb0" font-family="Arial" font-weight="bold">1,20 m</text>
+          <text x="62" y="100" font-size="12" fill="#2b6cb0" font-family="Arial" font-weight="bold">0,70 m</text>
+          <!-- ladder exceeding 1m -->
+          <g stroke="#2b3a4d" stroke-width="5">
+            <line x1="165" y1="30" x2="180" y2="160"/>
+            <line x1="185" y1="30" x2="200" y2="160"/>
+          </g>
+          <g stroke="#2b3a4d" stroke-width="4">
+            <line x1="170" y1="60" x2="192" y2="60"/>
+            <line x1="172" y1="90" x2="194" y2="90"/>
+            <line x1="175" y1="120" x2="197" y2="120"/>
+          </g>
+          <line x1="150" y1="70" x2="150" y2="40" stroke="#d23b3b" stroke-width="2" stroke-dasharray="4 3"/>
+          <text x="118" y="26" font-size="11" fill="#d23b3b" font-family="Arial" font-weight="bold">+1 m</text>
+        </svg>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ 4 & 5 ============ -->
+  <div class="grid2">
+    <section class="section" style="margin-top:0">
+      <div class="s-head">
+        <div class="s-num">4</div>
+        <h2>Fiscalização</h2>
+      </div>
+      <p class="lead">Segurança e saúde no trabalho — quem fiscaliza o quê:</p>
+      <ul class="checks">
+        <li><span class="ic">🏛️</span><span><b>CREA-MG:</b> fiscaliza as atividades de <b>engenharia</b>.</span></li>
+        <li><span class="ic">⚖️</span><span><b>MTE:</b> fiscaliza <b>segurança/saúde</b> e questões trabalhistas.</span></li>
+      </ul>
+    </section>
+    <section class="section" style="margin-top:0">
+      <div class="s-head">
+        <div class="s-num">5</div>
+        <h2>Habilitação & ART</h2>
+      </div>
+      <p class="lead">Competência fiscalizatória e responsabilidade técnica:</p>
+      <ul class="checks">
+        <li><span class="ic">📝</span><span><b>CREA-MG:</b> emissão da <b>Anotação de Responsabilidade Técnica (ART)</b>.</span></li>
+        <li><span class="ic">🗂️</span><span><b>MTE:</b> documentação geral da empresa e dos trabalhadores.</span></li>
+      </ul>
+    </section>
+  </div>
+
+  <!-- ============ 6 ============ -->
+  <section class="section">
+    <div class="s-head">
+      <div class="s-num">6</div>
+      <h2>Penalidades e consequências do descumprimento</h2>
+    </div>
+    <div class="grid2">
+      <ul class="checks">
+        <li><span class="ic">💸</span><span><b>Multas administrativas</b> pelo descumprimento da legislação.</span></li>
+        <li><span class="ic">🚫</span><span><b>Interdição/embargo</b> da obra e/ou equipamentos até a correção das irregularidades.</span></li>
+      </ul>
+      <ul class="checks">
+        <li><span class="ic">⚖️</span><span><b>Indenizações</b> por danos materiais e morais, inclusive <b>pensões vitalícias</b> em casos de invalidez ou morte.</span></li>
+        <li><span class="ic">🔗</span><span><b>Responsabilidade criminal</b> e ações regressivas no ressarcimento ao <b>INSS</b> pelos benefícios.</span></li>
+      </ul>
+    </div>
+    <div class="callout">
+      <span class="ic">❗</span>
+      <p><b>Trabalho em altura é toda atividade acima de 2 m do nível inferior, com risco de queda.</b> Planejar, proteger e capacitar não é opcional — é o que mantém vidas e a obra em conformidade.</p>
+    </div>
+  </section>
+
+  <!-- ============ FOOTER ============ -->
+  <div class="foot">
+    <span class="brand">PRIME · Engenharia de Segurança do Trabalho</span>
+    <span>Cartilha de Trabalho em Altura — NR-35 / NR-18 · Conteúdo: Sérgio · Material informativo, não substitui as normas oficiais.</span>
+  </div>
+
+</div>
+</body>
+</html>
