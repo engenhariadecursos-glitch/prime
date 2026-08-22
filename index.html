@@ -3,7 +3,10 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>PRIME • CRM de Notificações AVCB (CBMMG)</title>
+<title>PRIME • CRM Fiscalização CBMMG</title>
+<link rel="manifest" href="/manifest.webmanifest" />
+<meta name="theme-color" content="#ff5a1f" />
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
   :root {
     --bg: #0f1216;
@@ -61,6 +64,7 @@
   nav .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--muted); }
   nav button.active .dot { background: var(--accent); }
   .sidebar-footer { position: absolute; bottom: 14px; left: 14px; right: 14px; color: var(--muted); font-size: 11px; }
+  .user-tag { padding: 6px 8px; margin-bottom: 8px; background: var(--panel); border: 1px solid var(--border); border-radius: 8px; font-size: 11px; color: var(--muted); word-break: break-all; }
 
   main { padding: 22px 26px 60px; max-width: 1500px; width: 100%; }
   .topbar { display: flex; align-items: center; gap: 12px; margin-bottom: 18px; }
@@ -88,17 +92,12 @@
   @media (max-width: 1100px) { .grid.k-4 { grid-template-columns: repeat(2,1fr); } .grid.k-3 { grid-template-columns: repeat(2,1fr); } }
   @media (max-width: 720px) { .grid.k-4, .grid.k-3, .grid.k-2 { grid-template-columns: 1fr; } .app { grid-template-columns: 1fr; } aside { position: static; height: auto; } }
 
-  .card {
-    background: var(--panel); border: 1px solid var(--border);
-    border-radius: 12px; padding: 14px; box-shadow: var(--shadow);
-  }
+  .card { background: var(--panel); border: 1px solid var(--border); border-radius: 12px; padding: 14px; box-shadow: var(--shadow); }
   .card h3 { margin: 0 0 6px; font-size: 13px; color: var(--muted); font-weight: 600; letter-spacing: .3px; text-transform: uppercase; }
   .stat { font-size: 26px; font-weight: 800; }
   .stat small { font-size: 12px; color: var(--muted); font-weight: 500; margin-left: 6px; }
 
-  .toolbar {
-    display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-bottom: 12px;
-  }
+  .toolbar { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-bottom: 12px; }
   .toolbar input[type="search"], .toolbar select {
     background: var(--panel); color: var(--text); border: 1px solid var(--border);
     padding: 8px 10px; border-radius: 8px; font-size: 13px; min-width: 180px;
@@ -132,6 +131,7 @@
     box-shadow: 0 30px 60px rgba(0,0,0,.5);
   }
   .modal.wide { width: min(1100px, 100%); }
+  .modal.narrow { width: min(420px, 100%); }
   .modal-header { padding: 14px 18px; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 10px; position: sticky; top: 0; background: var(--panel); z-index: 2; }
   .modal-header h2 { margin: 0; font-size: 16px; flex: 1; }
   .modal-body { padding: 16px 18px; }
@@ -184,13 +184,14 @@
   .tl-body .when { font-size: 11px; color: var(--muted); }
 
   .row-actions { display: flex; gap: 4px; }
-  .icon-btn { background: transparent; border: 0; color: var(--muted); cursor: pointer; padding: 4px 6px; border-radius: 6px; font-size: 13px; }
+  .icon-btn { background: transparent; border: 0; color: var(--muted); cursor: pointer; padding: 4px 6px; border-radius: 6px; font-size: 13px; text-decoration: none; display: inline-block; }
   .icon-btn:hover { color: var(--text); background: var(--panel-2); }
 
   .divider { height: 1px; background: var(--border); margin: 10px 0; }
   .hint { color: var(--muted); font-size: 12px; }
   .warn-box { border-left: 3px solid var(--warn); background: rgba(245,158,11,.08); padding: 8px 10px; border-radius: 6px; font-size: 12px; color: #fcd34d; margin-bottom: 8px; }
   .danger-box { border-left: 3px solid var(--danger); background: rgba(239,68,68,.08); padding: 8px 10px; border-radius: 6px; font-size: 12px; color: #fca5a5; margin-bottom: 8px; }
+  .ok-box { border-left: 3px solid var(--ok); background: rgba(34,197,94,.08); padding: 8px 10px; border-radius: 6px; font-size: 12px; color: #86efac; margin-bottom: 8px; }
 
   .anexo-item {
     display: flex; align-items: center; gap: 10px;
@@ -200,15 +201,69 @@
   .anexo-item .name { flex: 1; font-size: 13px; }
   .anexo-item .size { font-size: 11px; color: var(--muted); }
 
+  /* Auth screen */
+  .auth-screen {
+    min-height: 100vh; display: grid; place-items: center; padding: 20px;
+  }
+  .auth-card {
+    width: min(400px, 100%);
+    background: var(--panel); border: 1px solid var(--border);
+    border-radius: 14px; padding: 24px;
+    box-shadow: 0 30px 60px rgba(0,0,0,.5);
+  }
+  .auth-card .brand-mark { width: 42px; height: 42px; font-size: 20px; }
+  .sync-badge {
+    position: fixed; bottom: 16px; right: 16px;
+    background: var(--panel); border: 1px solid var(--border);
+    border-radius: 999px; padding: 6px 12px; font-size: 11px; color: var(--muted);
+    display: flex; align-items: center; gap: 6px; z-index: 20; opacity: 0; transition: opacity .3s;
+  }
+  .sync-badge.show { opacity: 1; }
+  .sync-badge .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--ok); }
+  .sync-badge.busy .dot { background: var(--warn); animation: pulse 1s infinite; }
+  .sync-badge.err .dot { background: var(--danger); }
+  @keyframes pulse { 0%,100%{opacity:.4}50%{opacity:1} }
+
   @media print {
-    aside, .topbar .actions, .toolbar, .modal-back { display: none !important; }
+    aside, .topbar .actions, .toolbar, .modal-back, .sync-badge { display: none !important; }
     body { background: white; color: black; }
     .card, .modal, .col, .kcard { background: white !important; border-color: #ddd !important; color: black !important; }
   }
 </style>
 </head>
 <body>
-<div class="app">
+
+<!-- Auth screen -->
+<div id="authScreen" class="auth-screen" style="display:none">
+  <div class="auth-card">
+    <div style="display:flex; align-items:center; gap:12px; margin-bottom:16px">
+      <div class="brand-mark">P</div>
+      <div>
+        <div style="font-weight:800; font-size:18px">PRIME</div>
+        <div class="hint">CRM Fiscalização CBMMG</div>
+      </div>
+    </div>
+    <div id="authMsg"></div>
+    <form id="authForm" onsubmit="doAuth(event)">
+      <div class="form-grid" style="grid-template-columns:1fr">
+        <label class="field"><span>E-mail</span>
+          <input name="email" type="email" required autocomplete="email" />
+        </label>
+        <label class="field"><span>Senha</span>
+          <input name="password" type="password" required minlength="6" autocomplete="current-password" />
+        </label>
+      </div>
+      <div style="display:flex; gap:8px; margin-top:16px">
+        <button class="btn primary" type="submit" id="btnLogin" data-mode="login">Entrar</button>
+        <button class="btn" type="button" onclick="toggleAuthMode()">Criar conta</button>
+      </div>
+      <p class="hint" style="margin-top:12px; text-align:center">Seus dados ficam privados por RLS — só o seu login vê os seus processos.</p>
+    </form>
+  </div>
+</div>
+
+<!-- App -->
+<div class="app" id="appRoot" style="display:none">
   <aside>
     <div class="brand">
       <div class="brand-mark">P</div>
@@ -217,6 +272,7 @@
         <div class="brand-sub">CRM Fiscalização CBMMG</div>
       </div>
     </div>
+    <div class="user-tag" id="userTag">—</div>
     <nav id="nav">
       <button data-view="dashboard" class="active"><span class="dot"></span> Dashboard</button>
       <button data-view="prazos"><span class="dot"></span> Prazos</button>
@@ -228,7 +284,7 @@
     </nav>
     <div class="sidebar-footer">
       Alinhado à IT 45 CBMMG (Portaria 78/2025).<br/>
-      Dados salvos neste navegador.
+      <a href="#" onclick="signOut(); return false;">Sair</a>
     </div>
   </aside>
 
@@ -244,6 +300,8 @@
   </main>
 </div>
 
+<div class="sync-badge" id="syncBadge"><span class="dot"></span><span id="syncMsg">sincronizado</span></div>
+
 <!-- Client Modal -->
 <div class="modal-back" id="clientModalBack">
   <div class="modal">
@@ -255,9 +313,7 @@
       <form id="clientForm" onsubmit="saveClient(event)">
         <input type="hidden" name="id" />
         <div class="form-grid">
-          <label class="field full"><span class="req">Nome / Razão social</span>
-            <input name="nome" required />
-          </label>
+          <label class="field full"><span class="req">Nome / Razão social</span><input name="nome" required /></label>
           <label class="field"><span>Nome fantasia</span><input name="fantasia" /></label>
           <label class="field"><span>CNPJ / CPF</span><input name="documento" /></label>
           <label class="field"><span>Telefone / WhatsApp</span><input name="telefone" placeholder="(31) 9 9999-9999" /></label>
@@ -340,7 +396,7 @@
               <input name="processo" placeholder="AAAA-FIS######" />
             </label>
             <label class="field"><span>Atividade atual</span>
-              <select name="status" onchange="autoPrazoRecurso(this.form)">
+              <select name="status">
                 <option>Autuação</option>
                 <option>Notificação inicial</option>
                 <option>Advertência Escrita aplicada</option>
@@ -372,7 +428,7 @@
               </select>
             </label>
             <label class="field"><span>Unidade CBMMG</span>
-              <input name="unidade" placeholder="Ex.: 1BBM (BH), 2BBM (Uberlândia)..." />
+              <input name="unidade" placeholder="Ex.: 1BBM (BH), 2BBM..." />
             </label>
             <label class="field"><span>Natureza da vistoria</span>
               <select name="natureza">
@@ -404,46 +460,36 @@
               <select name="progredeMulta"><option>—</option><option>Sim</option><option>Não</option></select>
             </label>
             <label class="field"><span>E-mail principal do processo</span>
-              <input name="emailProc" type="email" placeholder="e-mail cadastrado no Infoscip" />
+              <input name="emailProc" type="email" />
             </label>
             <label class="field"><span>E-mail secundário</span>
               <input name="emailProcSec" type="email" />
             </label>
             <label class="field full"><span>Dados complementares (Infoscip)</span>
-              <textarea name="complementares" rows="2" placeholder="Ex.: Alerta vermelho do dia dd/mm/aaaa"></textarea>
+              <textarea name="complementares" rows="2"></textarea>
             </label>
           </div>
         </div>
 
         <div data-tabpane="edif" style="display:none">
           <div class="form-grid">
-            <label class="field full"><span>Endereço de correspondência (se diferente do cadastro)</span>
-              <input name="enderecoCorresp" />
-            </label>
-            <label class="field"><span>Nome fantasia / estabelecimento</span>
-              <input name="estabelecimento" />
-            </label>
-            <label class="field"><span>Nº de representantes cadastrados</span>
-              <input name="representantes" type="number" min="0" />
-            </label>
+            <label class="field full"><span>Endereço de correspondência</span><input name="enderecoCorresp" /></label>
+            <label class="field"><span>Nome fantasia / estabelecimento</span><input name="estabelecimento" /></label>
+            <label class="field"><span>Nº representantes cadastrados</span><input name="representantes" type="number" min="0" /></label>
             <label class="field full"><span>Irregularidades apontadas</span>
-              <textarea name="exigencias" rows="4" placeholder="Liste, de forma resumida, o(s) fato(s) constitutivo(s) da infração..."></textarea>
+              <textarea name="exigencias" rows="4"></textarea>
             </label>
           </div>
         </div>
 
         <div data-tabpane="prazos" style="display:none">
-          <div class="warn-box">Prazos são contados em <b>dias corridos</b> (IT 45 item 14.3). O prazo de defesa e o de recurso são de <b>10 dias</b> a partir da efetiva comunicação do ato (IT 45 itens 6.3.1 e 13.1).</div>
+          <div class="warn-box">Prazos em <b>dias corridos</b> (IT 45 item 14.3). Defesa e recurso: <b>10 dias</b> da ciência (IT 45 itens 6.3.1 e 13.1).</div>
           <div class="form-grid k-3">
             <label class="field"><span class="req">Data da ciência / notificação</span>
               <input name="dataNotificacao" type="date" required onchange="autoPrazoRecurso(this.form)" />
             </label>
-            <label class="field"><span>Prazo final (defesa/vistoria)</span>
-              <input name="prazo" type="date" />
-            </label>
-            <label class="field"><span>Prazo para recurso</span>
-              <input name="prazoRecurso" type="date" />
-            </label>
+            <label class="field"><span>Prazo final (defesa/vistoria)</span><input name="prazo" type="date" /></label>
+            <label class="field"><span>Prazo para recurso</span><input name="prazoRecurso" type="date" /></label>
             <label class="field"><span>Recurso interposto?</span>
               <select name="recursoStatus">
                 <option value="">Não</option>
@@ -453,9 +499,7 @@
                 <option>Indeferido</option>
               </select>
             </label>
-            <label class="field"><span>Data protocolo do recurso</span>
-              <input name="dataRecurso" type="date" />
-            </label>
+            <label class="field"><span>Data protocolo do recurso</span><input name="dataRecurso" type="date" /></label>
             <label class="field"><span>Prorrogação de prazo</span>
               <select name="prorrogacao">
                 <option value="">—</option>
@@ -464,15 +508,11 @@
                 <option>Indeferida</option>
               </select>
             </label>
-            <label class="field"><span>Nova data limite (prorrogação)</span>
-              <input name="dataProrrogacao" type="date" />
-            </label>
+            <label class="field"><span>Nova data limite (prorrogação)</span><input name="dataProrrogacao" type="date" /></label>
             <label class="field"><span>Vistoria acessória em aberto?</span>
               <select name="vistoriaAcessoria"><option>Não</option><option>Sim</option></select>
             </label>
-            <label class="field"><span>Data da vistoria</span>
-              <input name="dataVistoria" type="date" />
-            </label>
+            <label class="field"><span>Data da vistoria</span><input name="dataVistoria" type="date" /></label>
           </div>
         </div>
 
@@ -539,7 +579,7 @@
       <button class="icon-btn" onclick="closeModal('recursoModalBack')">✕</button>
     </div>
     <div class="modal-body">
-      <div class="hint" style="margin-bottom:8px">Modelo com base na IT 45/2025 do CBMMG. Ajuste antes de protocolar no Infoscip.</div>
+      <div class="hint" style="margin-bottom:8px">Modelo com base na IT 45/2025 do CBMMG.</div>
       <textarea id="recursoText" rows="24" style="font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 12px;"></textarea>
     </div>
     <div class="modal-footer">
@@ -551,37 +591,137 @@
 </div>
 
 <script>
-/* -------------------- Storage -------------------- */
-const KEY = "prime.avcb.v2";
-const state = load();
+/* -------------------- Supabase client -------------------- */
+const SB_URL = "https://txapacoiwdmxamvgyrbf.supabase.co";
+const SB_KEY = "sb_publishable_j1bqLbIDGGTKUzilp5djEg_scUWCUMv";
+const sb = window.supabase.createClient(SB_URL, SB_KEY);
 
-function load() {
+/* -------------------- State -------------------- */
+const state = { clientes: [], notificacoes: [], eventos: [], anexos: {}, escritorio: {}, currentView: "dashboard", user: null };
+
+/* -------------------- Sync badge -------------------- */
+const badge = document.getElementById("syncBadge");
+const badgeMsg = document.getElementById("syncMsg");
+let syncTimer = null;
+function setSync(text, kind) {
+  badge.classList.remove("busy","err");
+  if (kind) badge.classList.add(kind);
+  badgeMsg.textContent = text;
+  badge.classList.add("show");
+  clearTimeout(syncTimer);
+  if (kind !== "busy") syncTimer = setTimeout(() => badge.classList.remove("show"), 1500);
+}
+
+/* -------------------- Auth -------------------- */
+let authMode = "login";
+function toggleAuthMode() {
+  authMode = authMode === "login" ? "signup" : "login";
+  document.getElementById("btnLogin").textContent = authMode === "login" ? "Entrar" : "Criar conta";
+  document.getElementById("btnLogin").dataset.mode = authMode;
+  document.querySelector("#authForm [type=button]").textContent = authMode === "login" ? "Criar conta" : "Já tenho conta";
+  document.getElementById("authMsg").innerHTML = "";
+}
+async function doAuth(ev) {
+  ev.preventDefault();
+  const data = Object.fromEntries(new FormData(ev.target));
+  const msg = document.getElementById("authMsg");
+  msg.innerHTML = "";
+  const fn = authMode === "login" ? sb.auth.signInWithPassword.bind(sb.auth) : sb.auth.signUp.bind(sb.auth);
+  const { data: res, error } = await fn({ email: data.email, password: data.password });
+  if (error) { msg.innerHTML = `<div class="danger-box">${escapeHtml(error.message)}</div>`; return; }
+  if (authMode === "signup" && !res.session) {
+    msg.innerHTML = `<div class="ok-box">Conta criada. Confirme seu e-mail (se solicitado) e entre.</div>`;
+    return;
+  }
+  await onLoggedIn(res.session?.user || res.user);
+}
+async function signOut() {
+  if (!confirm("Sair da conta?")) return;
+  await sb.auth.signOut();
+  location.reload();
+}
+async function onLoggedIn(user) {
+  state.user = user;
+  document.getElementById("authScreen").style.display = "none";
+  document.getElementById("appRoot").style.display = "grid";
+  document.getElementById("userTag").textContent = user.email || "logado";
+  await hydrate();
+  render();
+}
+
+/* -------------------- Mappers (JS camelCase <-> DB snake_case) -------------------- */
+const cliente_dbFields = ["id","nome","fantasia","documento","telefone","email","endereco","ocupacao","risco","area","altura","pavimentos","gestao","obs"];
+function clienteToDb(c) {
+  const o = {};
+  for (const k of cliente_dbFields) if (c[k] !== undefined) o[k] = c[k] === "" ? null : c[k];
+  ["area","altura"].forEach(k => { if (o[k] !== undefined && o[k] !== null) o[k] = Number(o[k]); });
+  if (o.pavimentos !== undefined && o.pavimentos !== null && o.pavimentos !== "") o.pavimentos = parseInt(o.pavimentos, 10);
+  else if (o.pavimentos === "") o.pavimentos = null;
+  return o;
+}
+function clienteFromDb(c) { return { ...c, criadoEm: c.created_at }; }
+
+const notifMap = [
+  ["id","id"], ["clienteId","cliente_id"], ["processo","processo"], ["status","status"],
+  ["origem","origem"], ["unidade","unidade"], ["natureza","natureza"], ["risco","risco"],
+  ["dataCriacao","data_criacao"], ["necessitaResposta","necessita_resposta"],
+  ["respondido","respondido"], ["progredeMulta","progrede_multa"],
+  ["emailProc","email_proc"], ["emailProcSec","email_proc_sec"],
+  ["complementares","complementares"], ["enderecoCorresp","endereco_corresp"],
+  ["estabelecimento","estabelecimento"], ["representantes","representantes"],
+  ["exigencias","exigencias"], ["dataNotificacao","data_notificacao"],
+  ["prazo","prazo"], ["prazoRecurso","prazo_recurso"], ["recursoStatus","recurso_status"],
+  ["dataRecurso","data_recurso"], ["prorrogacao","prorrogacao"],
+  ["dataProrrogacao","data_prorrogacao"], ["vistoriaAcessoria","vistoria_acessoria"],
+  ["dataVistoria","data_vistoria"], ["honorarios","honorarios"], ["pagamento","pagamento"],
+  ["valorMulta","valor_multa"], ["multaStatus","multa_status"], ["anotacoes","anotacoes"],
+];
+const dateCols = new Set(["data_criacao","data_notificacao","prazo","prazo_recurso","data_recurso","data_prorrogacao","data_vistoria"]);
+const numCols = new Set(["representantes","honorarios","valor_multa"]);
+function notifToDb(n) {
+  const o = {};
+  for (const [js, db] of notifMap) if (n[js] !== undefined) {
+    let v = n[js];
+    if (v === "") v = null;
+    if (v !== null && numCols.has(db)) v = Number(v);
+    o[db] = v;
+  }
+  return o;
+}
+function notifFromDb(n) {
+  const o = {};
+  for (const [js, db] of notifMap) o[js] = n[db];
+  o.criadoEm = n.created_at;
+  return o;
+}
+
+/* -------------------- Hydrate from Supabase -------------------- */
+async function hydrate() {
+  setSync("carregando...", "busy");
   try {
-    const raw = localStorage.getItem(KEY);
-    if (raw) {
-      const s = JSON.parse(raw);
-      s.anexos = s.anexos || {};
-      s.escritorio = s.escritorio || {};
-      s.eventos = s.eventos || [];
-      return s;
-    }
-    // migrate from v1 if exists
-    const rawV1 = localStorage.getItem("prime.avcb.v1");
-    if (rawV1) {
-      const s = JSON.parse(rawV1);
-      s.anexos = s.anexos || {};
-      s.escritorio = s.escritorio || {};
-      s.eventos = s.eventos || [];
-      return s;
-    }
-  } catch (e) {}
-  return { clientes: [], notificacoes: [], eventos: [], anexos: {}, escritorio: {} };
+    const [clientesR, notifsR, eventosR, anexosR, escritorioR] = await Promise.all([
+      sb.from("avcb_clientes").select("*"),
+      sb.from("avcb_notificacoes").select("*"),
+      sb.from("avcb_eventos").select("*").order("data", { ascending: false }),
+      sb.from("avcb_anexos").select("id,name,type,size,data,notificacao_id,added_at"),
+      sb.from("avcb_escritorio").select("*").maybeSingle(),
+    ]);
+    for (const r of [clientesR, notifsR, eventosR, anexosR, escritorioR]) if (r.error) throw r.error;
+    state.clientes = (clientesR.data||[]).map(clienteFromDb);
+    state.notificacoes = (notifsR.data||[]).map(notifFromDb);
+    state.eventos = (eventosR.data||[]).map(e => ({ id: e.id, refId: e.notificacao_id, texto: e.texto, data: e.data }));
+    state.anexos = {};
+    (anexosR.data||[]).forEach(a => {
+      state.anexos[a.notificacao_id] = state.anexos[a.notificacao_id] || [];
+      state.anexos[a.notificacao_id].push({ id: a.id, name: a.name, type: a.type, size: a.size, data: a.data, addedAt: a.added_at });
+    });
+    state.escritorio = escritorioR.data || {};
+    setSync("sincronizado", "ok");
+  } catch (e) {
+    setSync("erro ao carregar", "err");
+    alert("Erro ao carregar dados: " + e.message);
+  }
 }
-function save() {
-  try { localStorage.setItem(KEY, JSON.stringify(state)); }
-  catch (e) { alert("Erro ao salvar: armazenamento cheio. Exclua anexos ou faça backup e limpe."); }
-}
-function uid() { return Math.random().toString(36).slice(2, 10); }
 
 /* -------------------- Helpers -------------------- */
 const fmtBRL = v => (Number(v||0)).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
@@ -622,9 +762,7 @@ function statusChip(s) {
 }
 function clienteById(id) { return state.clientes.find(c => c.id === id); }
 function notifsByCliente(id) { return state.notificacoes.filter(n => n.clienteId === id); }
-function logEvento(refId, texto) {
-  state.eventos.push({ id: uid(), refId, texto, data: new Date().toISOString() });
-}
+function isAberto(n) { return !["Regularizado (AVCB/CLCB emitido)","PAF encerrado"].includes(n.status); }
 
 /* -------------------- Modals -------------------- */
 function openModal(id) { document.getElementById(id).classList.add("open"); }
@@ -632,7 +770,6 @@ function closeModal(id) { document.getElementById(id).classList.remove("open"); 
 document.querySelectorAll(".modal-back").forEach(el => {
   el.addEventListener("click", e => { if (e.target === el) el.classList.remove("open"); });
 });
-// Tabs in notif modal
 document.querySelectorAll("#notifTabs button").forEach(b => {
   b.addEventListener("click", () => {
     document.querySelectorAll("#notifTabs button").forEach(x => x.classList.remove("active"));
@@ -645,7 +782,6 @@ document.querySelectorAll("#notifTabs button").forEach(b => {
 function autoPrazoRecurso(form) {
   const dn = form.dataNotificacao.value;
   if (!dn) return;
-  // Defesa/Recurso: 10 dias corridos após ciência
   if (!form.prazo.value) form.prazo.value = addDays(dn, 10);
   if (!form.prazoRecurso.value) form.prazoRecurso.value = addDays(dn, 10);
 }
@@ -663,27 +799,38 @@ function openClientModal(id) {
   }
   openModal("clientModalBack");
 }
-function saveClient(ev) {
+async function saveClient(ev) {
   ev.preventDefault();
   const form = ev.target;
   const data = Object.fromEntries(new FormData(form));
-  if (data.id) {
-    const idx = state.clientes.findIndex(c => c.id === data.id);
-    state.clientes[idx] = { ...state.clientes[idx], ...data };
+  const editing = !!data.id;
+  const payload = clienteToDb(data);
+  if (!editing) delete payload.id;
+  setSync("salvando...", "busy");
+  const q = editing
+    ? sb.from("avcb_clientes").update(payload).eq("id", data.id).select().single()
+    : sb.from("avcb_clientes").insert(payload).select().single();
+  const { data: row, error } = await q;
+  if (error) { setSync("erro", "err"); alert("Erro ao salvar cliente: " + error.message); return; }
+  const mapped = clienteFromDb(row);
+  if (editing) {
+    const idx = state.clientes.findIndex(c => c.id === row.id);
+    state.clientes[idx] = mapped;
   } else {
-    data.id = uid();
-    data.criadoEm = new Date().toISOString();
-    state.clientes.push(data);
+    state.clientes.push(mapped);
   }
-  save(); closeModal("clientModalBack"); render();
+  setSync("sincronizado", "ok");
+  closeModal("clientModalBack"); render();
 }
-function deleteClient(id) {
+async function deleteClient(id) {
   if (!confirm("Excluir este cliente e todos os seus processos?")) return;
+  setSync("excluindo...", "busy");
+  const { error } = await sb.from("avcb_clientes").delete().eq("id", id);
+  if (error) { setSync("erro", "err"); alert("Erro: " + error.message); return; }
   state.clientes = state.clientes.filter(c => c.id !== id);
-  const removed = state.notificacoes.filter(n => n.clienteId === id).map(n => n.id);
   state.notificacoes = state.notificacoes.filter(n => n.clienteId !== id);
-  removed.forEach(nid => { delete state.anexos[nid]; state.eventos = state.eventos.filter(e => e.refId !== nid); });
-  save(); render();
+  setSync("sincronizado", "ok");
+  render();
 }
 
 /* -------------------- Notif CRUD -------------------- */
@@ -700,7 +847,6 @@ function openNotifModal(id, presetClienteId) {
     return;
   }
   refreshClienteSelect();
-  // reset to first tab
   document.querySelector('#notifTabs button[data-tab="proc"]').click();
   const form = document.getElementById("notifForm");
   form.reset();
@@ -717,50 +863,84 @@ function openNotifModal(id, presetClienteId) {
   }
   openModal("notifModalBack");
 }
-function saveNotif(ev) {
+async function saveNotif(ev) {
   ev.preventDefault();
   const form = ev.target;
   const data = Object.fromEntries(new FormData(form));
-  if (data.id) {
-    const idx = state.notificacoes.findIndex(n => n.id === data.id);
-    const prev = state.notificacoes[idx];
-    state.notificacoes[idx] = { ...prev, ...data };
-    if (prev.status !== data.status) logEvento(data.id, `Atividade alterada: ${prev.status||"—"} → ${data.status}`);
+  const editing = !!data.id;
+  const prev = editing ? state.notificacoes.find(n => n.id === data.id) : null;
+  const payload = notifToDb(data);
+  if (!editing) delete payload.id;
+  setSync("salvando...", "busy");
+  const q = editing
+    ? sb.from("avcb_notificacoes").update(payload).eq("id", data.id).select().single()
+    : sb.from("avcb_notificacoes").insert(payload).select().single();
+  const { data: row, error } = await q;
+  if (error) { setSync("erro", "err"); alert("Erro ao salvar processo: " + error.message); return; }
+  const mapped = notifFromDb(row);
+  if (editing) {
+    const idx = state.notificacoes.findIndex(n => n.id === row.id);
+    state.notificacoes[idx] = mapped;
+    if (prev && prev.status !== mapped.status) await logEvento(mapped.id, `Atividade alterada: ${prev.status||"—"} → ${mapped.status}`);
   } else {
-    data.id = uid();
-    data.criadoEm = new Date().toISOString();
-    state.notificacoes.push(data);
-    logEvento(data.id, `Processo cadastrado (${data.status||"Autuação"})`);
+    state.notificacoes.push(mapped);
+    await logEvento(mapped.id, `Processo cadastrado (${mapped.status||"Autuação"})`);
   }
-  save(); closeModal("notifModalBack"); render();
+  setSync("sincronizado", "ok");
+  closeModal("notifModalBack"); render();
 }
-function deleteNotif(id) {
+async function deleteNotif(id) {
   if (!confirm("Excluir este processo?")) return;
+  setSync("excluindo...", "busy");
+  const { error } = await sb.from("avcb_notificacoes").delete().eq("id", id);
+  if (error) { setSync("erro", "err"); alert("Erro: " + error.message); return; }
   state.notificacoes = state.notificacoes.filter(n => n.id !== id);
   state.eventos = state.eventos.filter(e => e.refId !== id);
   delete state.anexos[id];
-  save(); render();
+  setSync("sincronizado", "ok");
+  render();
+}
+
+/* -------------------- Eventos / histórico -------------------- */
+async function logEvento(refId, texto) {
+  const { data, error } = await sb.from("avcb_eventos").insert({ notificacao_id: refId, texto }).select().single();
+  if (error) { console.warn(error); return; }
+  state.eventos.unshift({ id: data.id, refId: data.notificacao_id, texto: data.texto, data: data.data });
+}
+async function addEvento(ev, id) {
+  ev.preventDefault();
+  const txt = ev.target.txt.value.trim();
+  if (!txt) return;
+  await logEvento(id, txt);
+  openNotifDetail(id);
 }
 
 /* -------------------- Anexos -------------------- */
-function attachFile(id, file) {
+async function attachFile(id, file) {
   if (!file) return;
   if (file.size > 3 * 1024 * 1024) {
-    if (!confirm(`Arquivo grande (${(file.size/1024/1024).toFixed(1)}MB). O navegador tem limite total (~5-10MB). Continuar?`)) return;
+    if (!confirm(`Arquivo grande (${(file.size/1024/1024).toFixed(1)}MB). Continuar?`)) return;
   }
+  setSync("enviando anexo...", "busy");
   const reader = new FileReader();
-  reader.onload = () => {
+  reader.onload = async () => {
+    const payload = { notificacao_id: id, name: file.name, type: file.type, size: file.size, data: reader.result, storage_path: "inline" };
+    const { data: row, error } = await sb.from("avcb_anexos").insert(payload).select().single();
+    if (error) { setSync("erro", "err"); alert("Erro ao anexar: " + error.message); return; }
     state.anexos[id] = state.anexos[id] || [];
-    state.anexos[id].push({ id: uid(), name: file.name, type: file.type, size: file.size, data: reader.result, addedAt: new Date().toISOString() });
-    logEvento(id, `Anexo adicionado: ${file.name}`);
-    save(); openNotifDetail(id);
+    state.anexos[id].push({ id: row.id, name: row.name, type: row.type, size: row.size, data: row.data, addedAt: row.added_at });
+    await logEvento(id, `Anexo adicionado: ${file.name}`);
+    setSync("sincronizado", "ok");
+    openNotifDetail(id);
   };
   reader.readAsDataURL(file);
 }
-function removeAnexo(notifId, anexoId) {
+async function removeAnexo(notifId, anexoId) {
   if (!confirm("Remover este anexo?")) return;
+  const { error } = await sb.from("avcb_anexos").delete().eq("id", anexoId);
+  if (error) { alert("Erro: " + error.message); return; }
   state.anexos[notifId] = (state.anexos[notifId]||[]).filter(a => a.id !== anexoId);
-  save(); openNotifDetail(notifId);
+  openNotifDetail(notifId);
 }
 function downloadAnexo(notifId, anexoId) {
   const a = (state.anexos[notifId]||[]).find(x => x.id === anexoId);
@@ -792,7 +972,7 @@ function openWhats(n) {
   if (link) window.open(link, "_blank");
 }
 
-/* -------------------- Recurso/Defesa generator -------------------- */
+/* -------------------- Recurso generator -------------------- */
 function gerarRecurso(n) {
   const c = clienteById(n.clienteId) || {};
   const e = state.escritorio || {};
@@ -940,7 +1120,6 @@ function openNotifDetail(id) {
             <dt>Altura</dt><dd>${c.altura? c.altura+" m":"—"}</dd>
           </dl>
         ` : `<div class="hint">Cliente removido.</div>`}
-
         <div class="divider"></div>
         <h4 style="margin:0 0 8px">Anexos</h4>
         <div id="anexosList">
@@ -957,7 +1136,6 @@ function openNotifDetail(id) {
           + Anexar arquivo (PDF, imagem)
           <input type="file" style="display:none" accept="application/pdf,image/*" onchange="attachFile('${id}', this.files[0])" />
         </label>
-
         <div class="divider"></div>
         <h4 style="margin:0 0 8px">Histórico</h4>
         <div class="timeline">
@@ -983,14 +1161,6 @@ function openNotifDetail(id) {
   document.getElementById("detailRecursoBtn").onclick = () => openRecurso(n);
   openModal("detailModalBack");
 }
-function addEvento(ev, id) {
-  ev.preventDefault();
-  const txt = ev.target.txt.value.trim();
-  if (!txt) return;
-  logEvento(id, txt);
-  save();
-  openNotifDetail(id);
-}
 
 /* -------------------- Views -------------------- */
 function render() {
@@ -1008,8 +1178,6 @@ function bindAfterRender() {
   document.querySelectorAll("[data-delete-client]").forEach(el => el.addEventListener("click", (e) => { e.stopPropagation(); deleteClient(el.dataset.deleteClient); }));
   document.querySelectorAll("[data-new-notif]").forEach(el => el.addEventListener("click", (e) => { e.stopPropagation(); openNotifModal(null, el.dataset.newNotif); }));
 }
-
-function isAberto(n) { return !["Regularizado (AVCB/CLCB emitido)","PAF encerrado"].includes(n.status); }
 
 function viewDashboard() {
   const total = state.notificacoes.length;
@@ -1113,8 +1281,8 @@ function viewNotificacoes() {
   return `
     <div class="card">
       <div class="toolbar">
-        <input type="search" id="fSearch" placeholder="Buscar cliente, cód. processo, unidade..." value="${escapeAttr(state.q||"")}" oninput="state.q = this.value; render();" />
-        <select id="fStatus" onchange="state.statusFilter = this.value; render();">
+        <input type="search" placeholder="Buscar cliente, cód. processo, unidade..." value="${escapeAttr(state.q||"")}" oninput="state.q = this.value; render();" />
+        <select onchange="state.statusFilter = this.value; render();">
           <option value="">Todas as atividades</option>
           ${statusOptions.map(s => `<option ${state.statusFilter===s?"selected":""}>${s}</option>`).join("")}
         </select>
@@ -1161,7 +1329,7 @@ function viewKanban() {
         </div>`;
       }).join("")}
     </div>
-    <div class="hint" style="margin-top:8px">Para mover um processo, abra-o e altere a <em>atividade atual</em>. Etapas intermediárias (defesa/recurso em preparação) aparecem no dashboard e na aba Processos.</div>
+    <div class="hint" style="margin-top:8px">Para mover um processo, abra-o e altere a <em>atividade atual</em>.</div>
   `;
 }
 
@@ -1211,7 +1379,7 @@ function viewEscritorio() {
             <input name="nome" value="${escapeAttr(e.nome||"")}" />
           </label>
           <label class="field"><span>Registro (CREA/CAU)</span>
-            <input name="registro" value="${escapeAttr(e.registro||"")}" placeholder="Ex.: CREA-MG 000000/D" />
+            <input name="registro" value="${escapeAttr(e.registro||"")}" />
           </label>
           <label class="field"><span>Telefone</span>
             <input name="telefone" value="${escapeAttr(e.telefone||"")}" />
@@ -1234,11 +1402,15 @@ function viewEscritorio() {
   `;
 }
 
-function saveEscritorio(ev) {
+async function saveEscritorio(ev) {
   ev.preventDefault();
   const data = Object.fromEntries(new FormData(ev.target));
-  state.escritorio = data;
-  save();
+  setSync("salvando...", "busy");
+  const payload = { ...data, user_id: state.user.id };
+  const { data: row, error } = await sb.from("avcb_escritorio").upsert(payload).select().single();
+  if (error) { setSync("erro", "err"); alert("Erro: " + error.message); return; }
+  state.escritorio = row;
+  setSync("sincronizado", "ok");
   alert("Dados do escritório salvos.");
 }
 
@@ -1247,30 +1419,26 @@ function viewConfig() {
     <div class="grid k-2">
       <div class="card">
         <h3>Backup</h3>
-        <p class="hint">Exporte um arquivo JSON com todos os dados (clientes, processos, anexos e histórico).</p>
+        <p class="hint">Seus dados já estão sincronizados no Supabase (nuvem). Você também pode baixar um backup local.</p>
         <div style="display:flex; gap:8px; flex-wrap:wrap">
           <button class="btn primary" onclick="exportData()">Baixar backup (.json)</button>
           <button class="btn" onclick="exportCSV()">Exportar processos (.csv)</button>
-          <label class="btn">
-            Importar backup
-            <input type="file" accept="application/json" style="display:none" onchange="importData(event)" />
-          </label>
         </div>
       </div>
       <div class="card">
-        <h3>Zona de risco</h3>
-        <p class="hint">Apagar todos os dados deste navegador. Ação irreversível.</p>
-        <button class="btn danger" onclick="wipeAll()">Apagar tudo</button>
+        <h3>Sessão</h3>
+        <p class="hint">Logado como <b>${escapeHtml(state.user?.email||"—")}</b>.</p>
+        <button class="btn" onclick="signOut()">Sair da conta</button>
       </div>
       <div class="card full" style="grid-column:1/-1">
         <h3>Sobre</h3>
-        <p class="hint">PRIME · CRM de fiscalização CBMMG. Estrutura de campos alinhada ao Infoscip (fiscalizacaobombeiros.mg.gov.br) e à IT 45/2025 (Portaria n. 78/2025).<br/>Todos os dados ficam no navegador (localStorage) — não são enviados a nenhum servidor. Faça backups periódicos.</p>
+        <p class="hint">PRIME · CRM de fiscalização CBMMG. Estrutura alinhada ao Infoscip (fiscalizacaobombeiros.mg.gov.br) e à IT 45/2025 (Portaria n. 78/2025).<br/>Backend: Supabase com RLS (cada usuário só vê os próprios dados).</p>
       </div>
     </div>
   `;
 }
 
-/* -------------------- CSV export -------------------- */
+/* -------------------- CSV / Backup export -------------------- */
 function csvEscape(v) {
   const s = String(v ?? "");
   if (/[",;\n]/.test(s)) return '"' + s.replace(/"/g, '""') + '"';
@@ -1289,42 +1457,13 @@ function exportCSV() {
   a.download = `prime-processos-${todayISO()}.csv`;
   a.click();
 }
-
-/* -------------------- Backup -------------------- */
 function exportData() {
-  const blob = new Blob([JSON.stringify(state, null, 2)], { type: "application/json" });
+  const dump = { clientes: state.clientes, notificacoes: state.notificacoes, eventos: state.eventos, anexos: state.anexos, escritorio: state.escritorio };
+  const blob = new Blob([JSON.stringify(dump, null, 2)], { type: "application/json" });
   const a = document.createElement("a");
   a.href = URL.createObjectURL(blob);
   a.download = `prime-avcb-backup-${todayISO()}.json`;
   a.click();
-}
-function importData(ev) {
-  const f = ev.target.files[0];
-  if (!f) return;
-  const reader = new FileReader();
-  reader.onload = () => {
-    try {
-      const data = JSON.parse(reader.result);
-      if (!data.clientes || !data.notificacoes) throw new Error("Formato inválido");
-      if (!confirm("Isso substituirá os dados atuais. Continuar?")) return;
-      state.clientes = data.clientes;
-      state.notificacoes = data.notificacoes;
-      state.eventos = data.eventos || [];
-      state.anexos = data.anexos || {};
-      state.escritorio = data.escritorio || {};
-      save(); render();
-      alert("Backup importado.");
-    } catch (e) {
-      alert("Arquivo inválido.");
-    }
-  };
-  reader.readAsText(f);
-}
-function wipeAll() {
-  if (!confirm("Apagar TODOS os dados? Essa ação não pode ser desfeita.")) return;
-  if (!confirm("Tem certeza mesmo? Faça um backup antes.")) return;
-  state.clientes = []; state.notificacoes = []; state.eventos = []; state.anexos = {};
-  save(); render();
 }
 
 /* -------------------- Utilities -------------------- */
@@ -1335,8 +1474,19 @@ function escapeAttr(s) { return escapeHtml(s); }
 document.querySelectorAll("#nav button").forEach(btn => {
   btn.addEventListener("click", () => { state.currentView = btn.dataset.view; render(); });
 });
-if (!state.currentView) state.currentView = "dashboard";
-render();
+
+(async () => {
+  const { data: { session } } = await sb.auth.getSession();
+  if (session) {
+    await onLoggedIn(session.user);
+  } else {
+    document.getElementById("authScreen").style.display = "grid";
+  }
+})();
+
+sb.auth.onAuthStateChange((_ev, session) => {
+  if (!session) location.reload();
+});
 </script>
 </body>
 </html>
