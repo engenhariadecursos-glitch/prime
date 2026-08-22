@@ -1,1 +1,1492 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>PRIME • CRM Fiscalização CBMMG</title>
+<link rel="manifest" href="/manifest.webmanifest" />
+<meta name="theme-color" content="#ff5a1f" />
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+  :root {
+    --bg: #0f1216;
+    --panel: #171c22;
+    --panel-2: #1e252d;
+    --border: #2a323c;
+    --text: #e6ebf1;
+    --muted: #8a95a3;
+    --accent: #ff5a1f;
+    --accent-2: #ff8a4a;
+    --ok: #22c55e;
+    --warn: #f59e0b;
+    --danger: #ef4444;
+    --info: #3b82f6;
+    --chip: #232b34;
+    --shadow: 0 6px 20px rgba(0,0,0,.35);
+  }
+  * { box-sizing: border-box; }
+  html, body { height: 100%; }
+  body {
+    margin: 0;
+    background: radial-gradient(1200px 800px at 90% -10%, rgba(255,90,31,.10), transparent 60%),
+                radial-gradient(900px 700px at -10% 110%, rgba(59,130,246,.10), transparent 60%),
+                var(--bg);
+    color: var(--text);
+    font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+  a { color: var(--accent-2); text-decoration: none; }
 
+  .app { display: grid; grid-template-columns: 240px 1fr; min-height: 100vh; }
+  aside {
+    background: linear-gradient(180deg, #12171d 0%, #0f1216 100%);
+    border-right: 1px solid var(--border);
+    padding: 18px 14px;
+    position: sticky; top: 0; height: 100vh;
+  }
+  .brand { display: flex; align-items: center; gap: 10px; padding: 6px 6px 18px; }
+  .brand-mark {
+    width: 32px; height: 32px; border-radius: 8px;
+    background: linear-gradient(135deg, var(--accent), var(--accent-2));
+    display: grid; place-items: center; color: white; font-weight: 800;
+    box-shadow: 0 4px 14px rgba(255,90,31,.35);
+  }
+  .brand-name { font-weight: 800; letter-spacing: .3px; }
+  .brand-sub { font-size: 11px; color: var(--muted); }
+  nav { display: flex; flex-direction: column; gap: 2px; margin-top: 6px; }
+  nav button {
+    background: transparent; color: var(--text); border: 0; text-align: left;
+    padding: 10px 12px; border-radius: 8px; cursor: pointer; font-size: 14px;
+    display: flex; align-items: center; gap: 10px;
+  }
+  nav button:hover { background: var(--panel); }
+  nav button.active { background: var(--panel-2); box-shadow: inset 0 0 0 1px var(--border); }
+  nav .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--muted); }
+  nav button.active .dot { background: var(--accent); }
+  .sidebar-footer { position: absolute; bottom: 14px; left: 14px; right: 14px; color: var(--muted); font-size: 11px; }
+  .user-tag { padding: 6px 8px; margin-bottom: 8px; background: var(--panel); border: 1px solid var(--border); border-radius: 8px; font-size: 11px; color: var(--muted); word-break: break-all; }
+
+  main { padding: 22px 26px 60px; max-width: 1500px; width: 100%; }
+  .topbar { display: flex; align-items: center; gap: 12px; margin-bottom: 18px; }
+  .topbar h1 { font-size: 20px; margin: 0; flex: 1; }
+  .topbar .actions { display: flex; gap: 8px; }
+
+  .btn {
+    background: var(--panel); color: var(--text);
+    border: 1px solid var(--border);
+    padding: 8px 12px; border-radius: 8px; cursor: pointer; font-size: 13px;
+    display: inline-flex; align-items: center; gap: 6px;
+  }
+  .btn:hover { background: var(--panel-2); }
+  .btn.primary { background: linear-gradient(135deg, var(--accent), var(--accent-2)); border-color: transparent; color: white; font-weight: 600; }
+  .btn.primary:hover { filter: brightness(1.05); }
+  .btn.ghost { background: transparent; }
+  .btn.danger { background: transparent; color: var(--danger); border-color: rgba(239,68,68,.35); }
+  .btn.danger:hover { background: rgba(239,68,68,.08); }
+  .btn.sm { padding: 6px 10px; font-size: 12px; }
+
+  .grid { display: grid; gap: 14px; }
+  .grid.k-4 { grid-template-columns: repeat(4, 1fr); }
+  .grid.k-3 { grid-template-columns: repeat(3, 1fr); }
+  .grid.k-2 { grid-template-columns: repeat(2, 1fr); }
+  @media (max-width: 1100px) { .grid.k-4 { grid-template-columns: repeat(2,1fr); } .grid.k-3 { grid-template-columns: repeat(2,1fr); } }
+  @media (max-width: 720px) { .grid.k-4, .grid.k-3, .grid.k-2 { grid-template-columns: 1fr; } .app { grid-template-columns: 1fr; } aside { position: static; height: auto; } }
+
+  .card { background: var(--panel); border: 1px solid var(--border); border-radius: 12px; padding: 14px; box-shadow: var(--shadow); }
+  .card h3 { margin: 0 0 6px; font-size: 13px; color: var(--muted); font-weight: 600; letter-spacing: .3px; text-transform: uppercase; }
+  .stat { font-size: 26px; font-weight: 800; }
+  .stat small { font-size: 12px; color: var(--muted); font-weight: 500; margin-left: 6px; }
+
+  .toolbar { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-bottom: 12px; }
+  .toolbar input[type="search"], .toolbar select {
+    background: var(--panel); color: var(--text); border: 1px solid var(--border);
+    padding: 8px 10px; border-radius: 8px; font-size: 13px; min-width: 180px;
+  }
+  .toolbar .spacer { flex: 1; }
+
+  table.data { width: 100%; border-collapse: collapse; }
+  table.data th, table.data td { text-align: left; padding: 10px 10px; border-bottom: 1px solid var(--border); font-size: 13px; vertical-align: top; }
+  table.data th { color: var(--muted); font-weight: 600; font-size: 11px; text-transform: uppercase; letter-spacing: .3px; }
+  table.data tr:hover td { background: rgba(255,255,255,.02); }
+  table.data td .subline { color: var(--muted); font-size: 12px; }
+  .empty { color: var(--muted); text-align: center; padding: 40px 12px; border: 1px dashed var(--border); border-radius: 12px; }
+
+  .chip {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 3px 8px; border-radius: 999px; background: var(--chip);
+    font-size: 11px; color: var(--muted); border: 1px solid var(--border);
+  }
+  .chip.ok { color: #86efac; border-color: rgba(34,197,94,.3); background: rgba(34,197,94,.08); }
+  .chip.warn { color: #fcd34d; border-color: rgba(245,158,11,.3); background: rgba(245,158,11,.08); }
+  .chip.danger { color: #fca5a5; border-color: rgba(239,68,68,.35); background: rgba(239,68,68,.08); }
+  .chip.info { color: #93c5fd; border-color: rgba(59,130,246,.3); background: rgba(59,130,246,.08); }
+  .chip.accent { color: #ffb997; border-color: rgba(255,90,31,.35); background: rgba(255,90,31,.08); }
+
+  .modal-back { position: fixed; inset: 0; background: rgba(0,0,0,.55); backdrop-filter: blur(4px); display: none; z-index: 40; }
+  .modal-back.open { display: grid; place-items: center; padding: 20px; }
+  .modal {
+    background: var(--panel); border: 1px solid var(--border);
+    border-radius: 14px; width: min(860px, 100%);
+    max-height: 92vh; overflow: auto;
+    box-shadow: 0 30px 60px rgba(0,0,0,.5);
+  }
+  .modal.wide { width: min(1100px, 100%); }
+  .modal.narrow { width: min(420px, 100%); }
+  .modal-header { padding: 14px 18px; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 10px; position: sticky; top: 0; background: var(--panel); z-index: 2; }
+  .modal-header h2 { margin: 0; font-size: 16px; flex: 1; }
+  .modal-body { padding: 16px 18px; }
+  .modal-footer { padding: 12px 18px; border-top: 1px solid var(--border); display: flex; gap: 8px; justify-content: flex-end; position: sticky; bottom: 0; background: var(--panel); flex-wrap: wrap; }
+
+  .tabs { display: flex; gap: 4px; border-bottom: 1px solid var(--border); margin-bottom: 12px; overflow-x: auto; }
+  .tabs button {
+    background: transparent; border: 0; color: var(--muted);
+    padding: 8px 12px; border-radius: 8px 8px 0 0; cursor: pointer;
+    font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: .3px;
+    border-bottom: 2px solid transparent; white-space: nowrap;
+  }
+  .tabs button.active { color: var(--accent-2); border-bottom-color: var(--accent); }
+
+  .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .form-grid.k-3 { grid-template-columns: 1fr 1fr 1fr; }
+  .form-grid .full { grid-column: 1 / -1; }
+  .form-grid .col-2 { grid-column: span 2; }
+  label.field { display: flex; flex-direction: column; gap: 6px; font-size: 12px; color: var(--muted); }
+  label.field > span.req::after { content: " *"; color: var(--accent); }
+  input, select, textarea {
+    background: var(--panel-2); color: var(--text); border: 1px solid var(--border);
+    padding: 9px 10px; border-radius: 8px; font-size: 13px; font-family: inherit; width: 100%;
+  }
+  textarea { resize: vertical; min-height: 80px; }
+  input:focus, select:focus, textarea:focus { outline: 2px solid rgba(255,90,31,.5); outline-offset: 1px; border-color: transparent; }
+
+  .kanban { display: grid; grid-template-columns: repeat(6, minmax(220px, 1fr)); gap: 12px; overflow-x: auto; padding-bottom: 8px; }
+  .col {
+    background: var(--panel); border: 1px solid var(--border); border-radius: 12px;
+    padding: 10px; display: flex; flex-direction: column; gap: 8px; min-height: 300px;
+  }
+  .col header { display: flex; align-items: center; justify-content: space-between; padding: 4px 6px 8px; border-bottom: 1px dashed var(--border); }
+  .col h4 { margin: 0; font-size: 12px; text-transform: uppercase; letter-spacing: .4px; color: var(--muted); }
+  .count { font-size: 11px; padding: 2px 6px; border-radius: 999px; background: var(--panel-2); color: var(--muted); }
+  .kcard {
+    background: var(--panel-2); border: 1px solid var(--border); border-radius: 10px;
+    padding: 10px; cursor: pointer; display: flex; flex-direction: column; gap: 6px;
+  }
+  .kcard:hover { border-color: rgba(255,90,31,.4); }
+  .kcard .name { font-weight: 700; font-size: 13px; }
+  .kcard .meta { font-size: 11px; color: var(--muted); display: flex; gap: 8px; flex-wrap: wrap; }
+
+  .kv { display: grid; grid-template-columns: 170px 1fr; gap: 6px 12px; font-size: 13px; }
+  .kv dt { color: var(--muted); }
+  .timeline { display: flex; flex-direction: column; gap: 10px; }
+  .tl-item { display: grid; grid-template-columns: 20px 1fr; gap: 10px; }
+  .tl-dot { width: 10px; height: 10px; border-radius: 50%; background: var(--accent); margin-top: 6px; box-shadow: 0 0 0 3px rgba(255,90,31,.15); }
+  .tl-body { background: var(--panel-2); border: 1px solid var(--border); border-radius: 8px; padding: 8px 10px; }
+  .tl-body .when { font-size: 11px; color: var(--muted); }
+
+  .row-actions { display: flex; gap: 4px; }
+  .icon-btn { background: transparent; border: 0; color: var(--muted); cursor: pointer; padding: 4px 6px; border-radius: 6px; font-size: 13px; text-decoration: none; display: inline-block; }
+  .icon-btn:hover { color: var(--text); background: var(--panel-2); }
+
+  .divider { height: 1px; background: var(--border); margin: 10px 0; }
+  .hint { color: var(--muted); font-size: 12px; }
+  .warn-box { border-left: 3px solid var(--warn); background: rgba(245,158,11,.08); padding: 8px 10px; border-radius: 6px; font-size: 12px; color: #fcd34d; margin-bottom: 8px; }
+  .danger-box { border-left: 3px solid var(--danger); background: rgba(239,68,68,.08); padding: 8px 10px; border-radius: 6px; font-size: 12px; color: #fca5a5; margin-bottom: 8px; }
+  .ok-box { border-left: 3px solid var(--ok); background: rgba(34,197,94,.08); padding: 8px 10px; border-radius: 6px; font-size: 12px; color: #86efac; margin-bottom: 8px; }
+
+  .anexo-item {
+    display: flex; align-items: center; gap: 10px;
+    background: var(--panel-2); border: 1px solid var(--border);
+    padding: 8px 10px; border-radius: 8px; margin-bottom: 6px;
+  }
+  .anexo-item .name { flex: 1; font-size: 13px; }
+  .anexo-item .size { font-size: 11px; color: var(--muted); }
+
+  /* Auth screen */
+  .auth-screen {
+    min-height: 100vh; display: grid; place-items: center; padding: 20px;
+  }
+  .auth-card {
+    width: min(400px, 100%);
+    background: var(--panel); border: 1px solid var(--border);
+    border-radius: 14px; padding: 24px;
+    box-shadow: 0 30px 60px rgba(0,0,0,.5);
+  }
+  .auth-card .brand-mark { width: 42px; height: 42px; font-size: 20px; }
+  .sync-badge {
+    position: fixed; bottom: 16px; right: 16px;
+    background: var(--panel); border: 1px solid var(--border);
+    border-radius: 999px; padding: 6px 12px; font-size: 11px; color: var(--muted);
+    display: flex; align-items: center; gap: 6px; z-index: 20; opacity: 0; transition: opacity .3s;
+  }
+  .sync-badge.show { opacity: 1; }
+  .sync-badge .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--ok); }
+  .sync-badge.busy .dot { background: var(--warn); animation: pulse 1s infinite; }
+  .sync-badge.err .dot { background: var(--danger); }
+  @keyframes pulse { 0%,100%{opacity:.4}50%{opacity:1} }
+
+  @media print {
+    aside, .topbar .actions, .toolbar, .modal-back, .sync-badge { display: none !important; }
+    body { background: white; color: black; }
+    .card, .modal, .col, .kcard { background: white !important; border-color: #ddd !important; color: black !important; }
+  }
+</style>
+</head>
+<body>
+
+<!-- Auth screen -->
+<div id="authScreen" class="auth-screen" style="display:none">
+  <div class="auth-card">
+    <div style="display:flex; align-items:center; gap:12px; margin-bottom:16px">
+      <div class="brand-mark">P</div>
+      <div>
+        <div style="font-weight:800; font-size:18px">PRIME</div>
+        <div class="hint">CRM Fiscalização CBMMG</div>
+      </div>
+    </div>
+    <div id="authMsg"></div>
+    <form id="authForm" onsubmit="doAuth(event)">
+      <div class="form-grid" style="grid-template-columns:1fr">
+        <label class="field"><span>E-mail</span>
+          <input name="email" type="email" required autocomplete="email" />
+        </label>
+        <label class="field"><span>Senha</span>
+          <input name="password" type="password" required minlength="6" autocomplete="current-password" />
+        </label>
+      </div>
+      <div style="display:flex; gap:8px; margin-top:16px">
+        <button class="btn primary" type="submit" id="btnLogin" data-mode="login">Entrar</button>
+        <button class="btn" type="button" onclick="toggleAuthMode()">Criar conta</button>
+      </div>
+      <p class="hint" style="margin-top:12px; text-align:center">Seus dados ficam privados por RLS — só o seu login vê os seus processos.</p>
+    </form>
+  </div>
+</div>
+
+<!-- App -->
+<div class="app" id="appRoot" style="display:none">
+  <aside>
+    <div class="brand">
+      <div class="brand-mark">P</div>
+      <div>
+        <div class="brand-name">PRIME</div>
+        <div class="brand-sub">CRM Fiscalização CBMMG</div>
+      </div>
+    </div>
+    <div class="user-tag" id="userTag">—</div>
+    <nav id="nav">
+      <button data-view="dashboard" class="active"><span class="dot"></span> Dashboard</button>
+      <button data-view="prazos"><span class="dot"></span> Prazos</button>
+      <button data-view="notificacoes"><span class="dot"></span> Processos (PAF)</button>
+      <button data-view="kanban"><span class="dot"></span> Pipeline</button>
+      <button data-view="clientes"><span class="dot"></span> Clientes</button>
+      <button data-view="escritorio"><span class="dot"></span> Meu escritório</button>
+      <button data-view="config"><span class="dot"></span> Backup / Config</button>
+    </nav>
+    <div class="sidebar-footer">
+      Alinhado à IT 45 CBMMG (Portaria 78/2025).<br/>
+      <a href="#" onclick="signOut(); return false;">Sair</a>
+    </div>
+  </aside>
+
+  <main>
+    <div class="topbar">
+      <h1 id="viewTitle">Dashboard</h1>
+      <div class="actions">
+        <button class="btn" onclick="openClientModal()">+ Cliente</button>
+        <button class="btn primary" onclick="openNotifModal()">+ Processo</button>
+      </div>
+    </div>
+    <div id="view"></div>
+  </main>
+</div>
+
+<div class="sync-badge" id="syncBadge"><span class="dot"></span><span id="syncMsg">sincronizado</span></div>
+
+<!-- Client Modal -->
+<div class="modal-back" id="clientModalBack">
+  <div class="modal">
+    <div class="modal-header">
+      <h2 id="clientModalTitle">Novo cliente</h2>
+      <button class="icon-btn" onclick="closeModal('clientModalBack')">✕</button>
+    </div>
+    <div class="modal-body">
+      <form id="clientForm" onsubmit="saveClient(event)">
+        <input type="hidden" name="id" />
+        <div class="form-grid">
+          <label class="field full"><span class="req">Nome / Razão social</span><input name="nome" required /></label>
+          <label class="field"><span>Nome fantasia</span><input name="fantasia" /></label>
+          <label class="field"><span>CNPJ / CPF</span><input name="documento" /></label>
+          <label class="field"><span>Telefone / WhatsApp</span><input name="telefone" placeholder="(31) 9 9999-9999" /></label>
+          <label class="field"><span>E-mail</span><input name="email" type="email" /></label>
+          <label class="field full"><span>Endereço da edificação</span>
+            <input name="endereco" placeholder="Rua, nº, bairro, cidade/UF" />
+          </label>
+          <label class="field"><span>Ocupação (IT 01)</span>
+            <select name="ocupacao">
+              <option value="">—</option>
+              <option>A - Residencial</option>
+              <option>B - Serviço de hospedagem</option>
+              <option>C - Comercial</option>
+              <option>D - Serviço profissional</option>
+              <option>E - Educacional</option>
+              <option>F - Reunião de público</option>
+              <option>G - Serviço automotivo</option>
+              <option>H - Serviço de saúde</option>
+              <option>I - Industrial</option>
+              <option>J - Depósito</option>
+              <option>L - Explosivos</option>
+              <option>M - Especial</option>
+            </select>
+          </label>
+          <label class="field"><span>Classificação de risco</span>
+            <select name="risco">
+              <option value="">—</option>
+              <option>Nível I</option>
+              <option>Nível II</option>
+              <option>Nível III</option>
+            </select>
+          </label>
+          <label class="field"><span>Área construída (m²)</span><input name="area" type="number" step="0.01" /></label>
+          <label class="field"><span>Altura (m)</span><input name="altura" type="number" step="0.01" /></label>
+          <label class="field"><span>Nº pavimentos</span><input name="pavimentos" type="number" /></label>
+          <label class="field"><span>Tipo de gestão</span>
+            <select name="gestao">
+              <option value="">—</option>
+              <option>Com convenção de condomínio</option>
+              <option>Sem convenção de condomínio</option>
+              <option>Unipessoal</option>
+              <option>Órgão público</option>
+              <option>Outro</option>
+            </select>
+          </label>
+          <label class="field full"><span>Observações</span><textarea name="obs"></textarea></label>
+        </div>
+      </form>
+    </div>
+    <div class="modal-footer">
+      <button class="btn ghost" onclick="closeModal('clientModalBack')">Cancelar</button>
+      <button class="btn primary" onclick="document.getElementById('clientForm').requestSubmit()">Salvar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Notification Modal (Processo PAF) -->
+<div class="modal-back" id="notifModalBack">
+  <div class="modal wide">
+    <div class="modal-header">
+      <h2 id="notifModalTitle">Novo processo (PAF)</h2>
+      <button class="icon-btn" onclick="closeModal('notifModalBack')">✕</button>
+    </div>
+    <div class="modal-body">
+      <form id="notifForm" onsubmit="saveNotif(event)">
+        <input type="hidden" name="id" />
+        <div class="tabs" id="notifTabs">
+          <button type="button" class="active" data-tab="proc">Processo</button>
+          <button type="button" data-tab="edif">Edificação/Estabelec.</button>
+          <button type="button" data-tab="prazos">Prazos e recurso</button>
+          <button type="button" data-tab="fin">Financeiro e anotações</button>
+        </div>
+
+        <div data-tabpane="proc">
+          <div class="form-grid k-3">
+            <label class="field col-2"><span class="req">Cliente</span>
+              <select name="clienteId" required id="notifClienteSelect"></select>
+            </label>
+            <label class="field"><span>Cód. processo (Infoscip)</span>
+              <input name="processo" placeholder="AAAA-FIS######" />
+            </label>
+            <label class="field"><span>Atividade atual</span>
+              <select name="status">
+                <option>Autuação</option>
+                <option>Notificação inicial</option>
+                <option>Advertência Escrita aplicada</option>
+                <option>1ª Multa aplicada</option>
+                <option>2ª Multa aplicada</option>
+                <option>Cassação AVCB/CLCB aplicada</option>
+                <option>Embargo aplicado</option>
+                <option>Interdição aplicada</option>
+                <option>Defesa em elaboração</option>
+                <option>Defesa protocolada</option>
+                <option>Recurso em elaboração</option>
+                <option>Recurso protocolado</option>
+                <option>Prorrogação de prazo solicitada</option>
+                <option>Prorrogação deferida</option>
+                <option>Comunicação de correção enviada</option>
+                <option>Aguardando vistoria acessória</option>
+                <option>Regularizado (AVCB/CLCB emitido)</option>
+                <option>PAF encerrado</option>
+              </select>
+            </label>
+            <label class="field"><span>Origem</span>
+              <select name="origem">
+                <option>Alerta Vermelho</option>
+                <option>Denúncia</option>
+                <option>Fiscalização programada</option>
+                <option>Vistoria acessória</option>
+                <option>Ordem judicial</option>
+                <option>Outra</option>
+              </select>
+            </label>
+            <label class="field"><span>Unidade CBMMG</span>
+              <input name="unidade" placeholder="Ex.: 1BBM (BH), 2BBM..." />
+            </label>
+            <label class="field"><span>Natureza da vistoria</span>
+              <select name="natureza">
+                <option>P01001 - Vistoria de fiscalização</option>
+                <option>P01002 - Vistoria acessória</option>
+                <option>P01003 - Vistoria técnica</option>
+                <option>Vistoria para renovação</option>
+                <option>Outra</option>
+              </select>
+            </label>
+            <label class="field"><span>Classificação de risco</span>
+              <select name="risco">
+                <option value="">—</option>
+                <option>Nível I</option>
+                <option>Nível II</option>
+                <option>Nível III</option>
+              </select>
+            </label>
+            <label class="field"><span>Data de criação (Infoscip)</span>
+              <input name="dataCriacao" type="date" />
+            </label>
+            <label class="field"><span>Necessita de resposta?</span>
+              <select name="necessitaResposta"><option>Sim</option><option>Não</option></select>
+            </label>
+            <label class="field"><span>Processo respondido?</span>
+              <select name="respondido"><option>Não</option><option>Sim</option></select>
+            </label>
+            <label class="field"><span>Progredirá para multa?</span>
+              <select name="progredeMulta"><option>—</option><option>Sim</option><option>Não</option></select>
+            </label>
+            <label class="field"><span>E-mail principal do processo</span>
+              <input name="emailProc" type="email" />
+            </label>
+            <label class="field"><span>E-mail secundário</span>
+              <input name="emailProcSec" type="email" />
+            </label>
+            <label class="field full"><span>Dados complementares (Infoscip)</span>
+              <textarea name="complementares" rows="2"></textarea>
+            </label>
+          </div>
+        </div>
+
+        <div data-tabpane="edif" style="display:none">
+          <div class="form-grid">
+            <label class="field full"><span>Endereço de correspondência</span><input name="enderecoCorresp" /></label>
+            <label class="field"><span>Nome fantasia / estabelecimento</span><input name="estabelecimento" /></label>
+            <label class="field"><span>Nº representantes cadastrados</span><input name="representantes" type="number" min="0" /></label>
+            <label class="field full"><span>Irregularidades apontadas</span>
+              <textarea name="exigencias" rows="4"></textarea>
+            </label>
+          </div>
+        </div>
+
+        <div data-tabpane="prazos" style="display:none">
+          <div class="warn-box">Prazos em <b>dias corridos</b> (IT 45 item 14.3). Defesa e recurso: <b>10 dias</b> da ciência (IT 45 itens 6.3.1 e 13.1).</div>
+          <div class="form-grid k-3">
+            <label class="field"><span class="req">Data da ciência / notificação</span>
+              <input name="dataNotificacao" type="date" required onchange="autoPrazoRecurso(this.form)" />
+            </label>
+            <label class="field"><span>Prazo final (defesa/vistoria)</span><input name="prazo" type="date" /></label>
+            <label class="field"><span>Prazo para recurso</span><input name="prazoRecurso" type="date" /></label>
+            <label class="field"><span>Recurso interposto?</span>
+              <select name="recursoStatus">
+                <option value="">Não</option>
+                <option>Em preparação</option>
+                <option>Protocolado</option>
+                <option>Deferido</option>
+                <option>Indeferido</option>
+              </select>
+            </label>
+            <label class="field"><span>Data protocolo do recurso</span><input name="dataRecurso" type="date" /></label>
+            <label class="field"><span>Prorrogação de prazo</span>
+              <select name="prorrogacao">
+                <option value="">—</option>
+                <option>Solicitada</option>
+                <option>Deferida</option>
+                <option>Indeferida</option>
+              </select>
+            </label>
+            <label class="field"><span>Nova data limite (prorrogação)</span><input name="dataProrrogacao" type="date" /></label>
+            <label class="field"><span>Vistoria acessória em aberto?</span>
+              <select name="vistoriaAcessoria"><option>Não</option><option>Sim</option></select>
+            </label>
+            <label class="field"><span>Data da vistoria</span><input name="dataVistoria" type="date" /></label>
+          </div>
+        </div>
+
+        <div data-tabpane="fin" style="display:none">
+          <div class="form-grid">
+            <label class="field"><span>Valor honorários (R$)</span><input name="honorarios" type="number" step="0.01" /></label>
+            <label class="field"><span>Pagamento</span>
+              <select name="pagamento">
+                <option>Pendente</option>
+                <option>Sinal recebido</option>
+                <option>Parcial</option>
+                <option>Quitado</option>
+              </select>
+            </label>
+            <label class="field"><span>Valor da multa (R$)</span><input name="valorMulta" type="number" step="0.01" /></label>
+            <label class="field"><span>Multa: situação</span>
+              <select name="multaStatus">
+                <option value="">—</option>
+                <option>Não aplicada</option>
+                <option>Pendente pagamento</option>
+                <option>Paga</option>
+                <option>Parcelada</option>
+                <option>Em dívida ativa</option>
+              </select>
+            </label>
+            <label class="field full"><span>Anotações internas</span>
+              <textarea name="anotacoes" rows="4"></textarea>
+            </label>
+          </div>
+        </div>
+      </form>
+    </div>
+    <div class="modal-footer">
+      <button class="btn ghost" onclick="closeModal('notifModalBack')">Cancelar</button>
+      <button class="btn primary" onclick="document.getElementById('notifForm').requestSubmit()">Salvar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Detail Modal -->
+<div class="modal-back" id="detailModalBack">
+  <div class="modal wide">
+    <div class="modal-header">
+      <h2 id="detailTitle">Detalhes</h2>
+      <button class="icon-btn" onclick="closeModal('detailModalBack')">✕</button>
+    </div>
+    <div class="modal-body" id="detailBody"></div>
+    <div class="modal-footer">
+      <button class="btn danger" id="detailDeleteBtn">Excluir</button>
+      <div style="flex:1"></div>
+      <button class="btn" id="detailWhatsBtn">WhatsApp</button>
+      <button class="btn" id="detailRecursoBtn">Gerar defesa/recurso</button>
+      <button class="btn" onclick="window.print()">Imprimir</button>
+      <button class="btn primary" id="detailEditBtn">Editar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Recurso Modal -->
+<div class="modal-back" id="recursoModalBack">
+  <div class="modal wide">
+    <div class="modal-header">
+      <h2>Minuta de defesa/recurso</h2>
+      <button class="icon-btn" onclick="closeModal('recursoModalBack')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="hint" style="margin-bottom:8px">Modelo com base na IT 45/2025 do CBMMG.</div>
+      <textarea id="recursoText" rows="24" style="font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 12px;"></textarea>
+    </div>
+    <div class="modal-footer">
+      <button class="btn" onclick="closeModal('recursoModalBack')">Fechar</button>
+      <button class="btn" onclick="copyRecurso()">Copiar</button>
+      <button class="btn primary" onclick="downloadRecurso()">Baixar .txt</button>
+    </div>
+  </div>
+</div>
+
+<script>
+/* -------------------- Supabase client -------------------- */
+const SB_URL = "https://txapacoiwdmxamvgyrbf.supabase.co";
+const SB_KEY = "sb_publishable_j1bqLbIDGGTKUzilp5djEg_scUWCUMv";
+const sb = window.supabase.createClient(SB_URL, SB_KEY);
+
+/* -------------------- State -------------------- */
+const state = { clientes: [], notificacoes: [], eventos: [], anexos: {}, escritorio: {}, currentView: "dashboard", user: null };
+
+/* -------------------- Sync badge -------------------- */
+const badge = document.getElementById("syncBadge");
+const badgeMsg = document.getElementById("syncMsg");
+let syncTimer = null;
+function setSync(text, kind) {
+  badge.classList.remove("busy","err");
+  if (kind) badge.classList.add(kind);
+  badgeMsg.textContent = text;
+  badge.classList.add("show");
+  clearTimeout(syncTimer);
+  if (kind !== "busy") syncTimer = setTimeout(() => badge.classList.remove("show"), 1500);
+}
+
+/* -------------------- Auth -------------------- */
+let authMode = "login";
+function toggleAuthMode() {
+  authMode = authMode === "login" ? "signup" : "login";
+  document.getElementById("btnLogin").textContent = authMode === "login" ? "Entrar" : "Criar conta";
+  document.getElementById("btnLogin").dataset.mode = authMode;
+  document.querySelector("#authForm [type=button]").textContent = authMode === "login" ? "Criar conta" : "Já tenho conta";
+  document.getElementById("authMsg").innerHTML = "";
+}
+async function doAuth(ev) {
+  ev.preventDefault();
+  const data = Object.fromEntries(new FormData(ev.target));
+  const msg = document.getElementById("authMsg");
+  msg.innerHTML = "";
+  const fn = authMode === "login" ? sb.auth.signInWithPassword.bind(sb.auth) : sb.auth.signUp.bind(sb.auth);
+  const { data: res, error } = await fn({ email: data.email, password: data.password });
+  if (error) { msg.innerHTML = `<div class="danger-box">${escapeHtml(error.message)}</div>`; return; }
+  if (authMode === "signup" && !res.session) {
+    msg.innerHTML = `<div class="ok-box">Conta criada. Confirme seu e-mail (se solicitado) e entre.</div>`;
+    return;
+  }
+  await onLoggedIn(res.session?.user || res.user);
+}
+async function signOut() {
+  if (!confirm("Sair da conta?")) return;
+  await sb.auth.signOut();
+  location.reload();
+}
+async function onLoggedIn(user) {
+  state.user = user;
+  document.getElementById("authScreen").style.display = "none";
+  document.getElementById("appRoot").style.display = "grid";
+  document.getElementById("userTag").textContent = user.email || "logado";
+  await hydrate();
+  render();
+}
+
+/* -------------------- Mappers (JS camelCase <-> DB snake_case) -------------------- */
+const cliente_dbFields = ["id","nome","fantasia","documento","telefone","email","endereco","ocupacao","risco","area","altura","pavimentos","gestao","obs"];
+function clienteToDb(c) {
+  const o = {};
+  for (const k of cliente_dbFields) if (c[k] !== undefined) o[k] = c[k] === "" ? null : c[k];
+  ["area","altura"].forEach(k => { if (o[k] !== undefined && o[k] !== null) o[k] = Number(o[k]); });
+  if (o.pavimentos !== undefined && o.pavimentos !== null && o.pavimentos !== "") o.pavimentos = parseInt(o.pavimentos, 10);
+  else if (o.pavimentos === "") o.pavimentos = null;
+  return o;
+}
+function clienteFromDb(c) { return { ...c, criadoEm: c.created_at }; }
+
+const notifMap = [
+  ["id","id"], ["clienteId","cliente_id"], ["processo","processo"], ["status","status"],
+  ["origem","origem"], ["unidade","unidade"], ["natureza","natureza"], ["risco","risco"],
+  ["dataCriacao","data_criacao"], ["necessitaResposta","necessita_resposta"],
+  ["respondido","respondido"], ["progredeMulta","progrede_multa"],
+  ["emailProc","email_proc"], ["emailProcSec","email_proc_sec"],
+  ["complementares","complementares"], ["enderecoCorresp","endereco_corresp"],
+  ["estabelecimento","estabelecimento"], ["representantes","representantes"],
+  ["exigencias","exigencias"], ["dataNotificacao","data_notificacao"],
+  ["prazo","prazo"], ["prazoRecurso","prazo_recurso"], ["recursoStatus","recurso_status"],
+  ["dataRecurso","data_recurso"], ["prorrogacao","prorrogacao"],
+  ["dataProrrogacao","data_prorrogacao"], ["vistoriaAcessoria","vistoria_acessoria"],
+  ["dataVistoria","data_vistoria"], ["honorarios","honorarios"], ["pagamento","pagamento"],
+  ["valorMulta","valor_multa"], ["multaStatus","multa_status"], ["anotacoes","anotacoes"],
+];
+const dateCols = new Set(["data_criacao","data_notificacao","prazo","prazo_recurso","data_recurso","data_prorrogacao","data_vistoria"]);
+const numCols = new Set(["representantes","honorarios","valor_multa"]);
+function notifToDb(n) {
+  const o = {};
+  for (const [js, db] of notifMap) if (n[js] !== undefined) {
+    let v = n[js];
+    if (v === "") v = null;
+    if (v !== null && numCols.has(db)) v = Number(v);
+    o[db] = v;
+  }
+  return o;
+}
+function notifFromDb(n) {
+  const o = {};
+  for (const [js, db] of notifMap) o[js] = n[db];
+  o.criadoEm = n.created_at;
+  return o;
+}
+
+/* -------------------- Hydrate from Supabase -------------------- */
+async function hydrate() {
+  setSync("carregando...", "busy");
+  try {
+    const [clientesR, notifsR, eventosR, anexosR, escritorioR] = await Promise.all([
+      sb.from("avcb_clientes").select("*"),
+      sb.from("avcb_notificacoes").select("*"),
+      sb.from("avcb_eventos").select("*").order("data", { ascending: false }),
+      sb.from("avcb_anexos").select("id,name,type,size,data,notificacao_id,added_at"),
+      sb.from("avcb_escritorio").select("*").maybeSingle(),
+    ]);
+    for (const r of [clientesR, notifsR, eventosR, anexosR, escritorioR]) if (r.error) throw r.error;
+    state.clientes = (clientesR.data||[]).map(clienteFromDb);
+    state.notificacoes = (notifsR.data||[]).map(notifFromDb);
+    state.eventos = (eventosR.data||[]).map(e => ({ id: e.id, refId: e.notificacao_id, texto: e.texto, data: e.data }));
+    state.anexos = {};
+    (anexosR.data||[]).forEach(a => {
+      state.anexos[a.notificacao_id] = state.anexos[a.notificacao_id] || [];
+      state.anexos[a.notificacao_id].push({ id: a.id, name: a.name, type: a.type, size: a.size, data: a.data, addedAt: a.added_at });
+    });
+    state.escritorio = escritorioR.data || {};
+    setSync("sincronizado", "ok");
+  } catch (e) {
+    setSync("erro ao carregar", "err");
+    alert("Erro ao carregar dados: " + e.message);
+  }
+}
+
+/* -------------------- Helpers -------------------- */
+const fmtBRL = v => (Number(v||0)).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+const fmtDate = d => d ? new Date(d + "T00:00:00").toLocaleDateString("pt-BR") : "—";
+const todayISO = () => new Date().toISOString().slice(0,10);
+function addDays(iso, n) {
+  if (!iso) return "";
+  const d = new Date(iso + "T00:00:00");
+  d.setDate(d.getDate() + n);
+  return d.toISOString().slice(0,10);
+}
+function diffDays(d) {
+  if (!d) return null;
+  const a = new Date(d + "T00:00:00");
+  const b = new Date(todayISO() + "T00:00:00");
+  return Math.round((a - b) / 86400000);
+}
+function urgency(d) {
+  const n = diffDays(d);
+  if (n === null) return { cls: "", label: "—" };
+  if (n < 0) return { cls: "danger", label: `Vencido há ${Math.abs(n)}d` };
+  if (n === 0) return { cls: "danger", label: "Vence hoje" };
+  if (n <= 3) return { cls: "danger", label: `${n}d restantes` };
+  if (n <= 10) return { cls: "warn", label: `${n}d restantes` };
+  return { cls: "ok", label: `${n}d restantes` };
+}
+function statusChip(s) {
+  const danger = ["Autuação","Advertência Escrita aplicada","1ª Multa aplicada","2ª Multa aplicada","Cassação AVCB/CLCB aplicada","Embargo aplicado","Interdição aplicada"];
+  const info = ["Defesa em elaboração","Defesa protocolada","Recurso em elaboração","Recurso protocolado","Prorrogação de prazo solicitada","Comunicação de correção enviada"];
+  const warn = ["Notificação inicial","Aguardando vistoria acessória","Prorrogação deferida"];
+  const ok = ["Regularizado (AVCB/CLCB emitido)","PAF encerrado"];
+  let cls = "";
+  if (danger.includes(s)) cls = "danger";
+  else if (info.includes(s)) cls = "info";
+  else if (warn.includes(s)) cls = "warn";
+  else if (ok.includes(s)) cls = "ok";
+  return `<span class="chip ${cls}">${escapeHtml(s||"—")}</span>`;
+}
+function clienteById(id) { return state.clientes.find(c => c.id === id); }
+function notifsByCliente(id) { return state.notificacoes.filter(n => n.clienteId === id); }
+function isAberto(n) { return !["Regularizado (AVCB/CLCB emitido)","PAF encerrado"].includes(n.status); }
+
+/* -------------------- Modals -------------------- */
+function openModal(id) { document.getElementById(id).classList.add("open"); }
+function closeModal(id) { document.getElementById(id).classList.remove("open"); }
+document.querySelectorAll(".modal-back").forEach(el => {
+  el.addEventListener("click", e => { if (e.target === el) el.classList.remove("open"); });
+});
+document.querySelectorAll("#notifTabs button").forEach(b => {
+  b.addEventListener("click", () => {
+    document.querySelectorAll("#notifTabs button").forEach(x => x.classList.remove("active"));
+    b.classList.add("active");
+    document.querySelectorAll("[data-tabpane]").forEach(p => { p.style.display = p.dataset.tabpane === b.dataset.tab ? "" : "none"; });
+  });
+});
+
+/* -------------------- Auto compute prazo -------------------- */
+function autoPrazoRecurso(form) {
+  const dn = form.dataNotificacao.value;
+  if (!dn) return;
+  if (!form.prazo.value) form.prazo.value = addDays(dn, 10);
+  if (!form.prazoRecurso.value) form.prazoRecurso.value = addDays(dn, 10);
+}
+
+/* -------------------- Client CRUD -------------------- */
+function openClientModal(id) {
+  const form = document.getElementById("clientForm");
+  form.reset();
+  document.getElementById("clientModalTitle").textContent = id ? "Editar cliente" : "Novo cliente";
+  if (id) {
+    const c = clienteById(id);
+    if (c) for (const k in c) if (form.elements[k]) form.elements[k].value = c[k] ?? "";
+  } else {
+    form.elements.id.value = "";
+  }
+  openModal("clientModalBack");
+}
+async function saveClient(ev) {
+  ev.preventDefault();
+  const form = ev.target;
+  const data = Object.fromEntries(new FormData(form));
+  const editing = !!data.id;
+  const payload = clienteToDb(data);
+  if (!editing) delete payload.id;
+  setSync("salvando...", "busy");
+  const q = editing
+    ? sb.from("avcb_clientes").update(payload).eq("id", data.id).select().single()
+    : sb.from("avcb_clientes").insert(payload).select().single();
+  const { data: row, error } = await q;
+  if (error) { setSync("erro", "err"); alert("Erro ao salvar cliente: " + error.message); return; }
+  const mapped = clienteFromDb(row);
+  if (editing) {
+    const idx = state.clientes.findIndex(c => c.id === row.id);
+    state.clientes[idx] = mapped;
+  } else {
+    state.clientes.push(mapped);
+  }
+  setSync("sincronizado", "ok");
+  closeModal("clientModalBack"); render();
+}
+async function deleteClient(id) {
+  if (!confirm("Excluir este cliente e todos os seus processos?")) return;
+  setSync("excluindo...", "busy");
+  const { error } = await sb.from("avcb_clientes").delete().eq("id", id);
+  if (error) { setSync("erro", "err"); alert("Erro: " + error.message); return; }
+  state.clientes = state.clientes.filter(c => c.id !== id);
+  state.notificacoes = state.notificacoes.filter(n => n.clienteId !== id);
+  setSync("sincronizado", "ok");
+  render();
+}
+
+/* -------------------- Notif CRUD -------------------- */
+function refreshClienteSelect() {
+  const sel = document.getElementById("notifClienteSelect");
+  sel.innerHTML = state.clientes.length
+    ? state.clientes.map(c => `<option value="${c.id}">${escapeHtml(c.nome)}</option>`).join("")
+    : `<option value="">— cadastre um cliente primeiro —</option>`;
+}
+function openNotifModal(id, presetClienteId) {
+  if (!state.clientes.length && !id) {
+    alert("Cadastre um cliente antes.");
+    openClientModal();
+    return;
+  }
+  refreshClienteSelect();
+  document.querySelector('#notifTabs button[data-tab="proc"]').click();
+  const form = document.getElementById("notifForm");
+  form.reset();
+  document.getElementById("notifModalTitle").textContent = id ? "Editar processo (PAF)" : "Novo processo (PAF)";
+  if (id) {
+    const n = state.notificacoes.find(x => x.id === id);
+    if (n) for (const k in n) if (form.elements[k]) form.elements[k].value = n[k] ?? "";
+  } else {
+    form.elements.id.value = "";
+    form.elements.dataNotificacao.value = todayISO();
+    form.elements.dataCriacao.value = todayISO();
+    if (presetClienteId) form.elements.clienteId.value = presetClienteId;
+    autoPrazoRecurso(form);
+  }
+  openModal("notifModalBack");
+}
+async function saveNotif(ev) {
+  ev.preventDefault();
+  const form = ev.target;
+  const data = Object.fromEntries(new FormData(form));
+  const editing = !!data.id;
+  const prev = editing ? state.notificacoes.find(n => n.id === data.id) : null;
+  const payload = notifToDb(data);
+  if (!editing) delete payload.id;
+  setSync("salvando...", "busy");
+  const q = editing
+    ? sb.from("avcb_notificacoes").update(payload).eq("id", data.id).select().single()
+    : sb.from("avcb_notificacoes").insert(payload).select().single();
+  const { data: row, error } = await q;
+  if (error) { setSync("erro", "err"); alert("Erro ao salvar processo: " + error.message); return; }
+  const mapped = notifFromDb(row);
+  if (editing) {
+    const idx = state.notificacoes.findIndex(n => n.id === row.id);
+    state.notificacoes[idx] = mapped;
+    if (prev && prev.status !== mapped.status) await logEvento(mapped.id, `Atividade alterada: ${prev.status||"—"} → ${mapped.status}`);
+  } else {
+    state.notificacoes.push(mapped);
+    await logEvento(mapped.id, `Processo cadastrado (${mapped.status||"Autuação"})`);
+  }
+  setSync("sincronizado", "ok");
+  closeModal("notifModalBack"); render();
+}
+async function deleteNotif(id) {
+  if (!confirm("Excluir este processo?")) return;
+  setSync("excluindo...", "busy");
+  const { error } = await sb.from("avcb_notificacoes").delete().eq("id", id);
+  if (error) { setSync("erro", "err"); alert("Erro: " + error.message); return; }
+  state.notificacoes = state.notificacoes.filter(n => n.id !== id);
+  state.eventos = state.eventos.filter(e => e.refId !== id);
+  delete state.anexos[id];
+  setSync("sincronizado", "ok");
+  render();
+}
+
+/* -------------------- Eventos / histórico -------------------- */
+async function logEvento(refId, texto) {
+  const { data, error } = await sb.from("avcb_eventos").insert({ notificacao_id: refId, texto }).select().single();
+  if (error) { console.warn(error); return; }
+  state.eventos.unshift({ id: data.id, refId: data.notificacao_id, texto: data.texto, data: data.data });
+}
+async function addEvento(ev, id) {
+  ev.preventDefault();
+  const txt = ev.target.txt.value.trim();
+  if (!txt) return;
+  await logEvento(id, txt);
+  openNotifDetail(id);
+}
+
+/* -------------------- Anexos -------------------- */
+async function attachFile(id, file) {
+  if (!file) return;
+  if (file.size > 3 * 1024 * 1024) {
+    if (!confirm(`Arquivo grande (${(file.size/1024/1024).toFixed(1)}MB). Continuar?`)) return;
+  }
+  setSync("enviando anexo...", "busy");
+  const reader = new FileReader();
+  reader.onload = async () => {
+    const payload = { notificacao_id: id, name: file.name, type: file.type, size: file.size, data: reader.result, storage_path: "inline" };
+    const { data: row, error } = await sb.from("avcb_anexos").insert(payload).select().single();
+    if (error) { setSync("erro", "err"); alert("Erro ao anexar: " + error.message); return; }
+    state.anexos[id] = state.anexos[id] || [];
+    state.anexos[id].push({ id: row.id, name: row.name, type: row.type, size: row.size, data: row.data, addedAt: row.added_at });
+    await logEvento(id, `Anexo adicionado: ${file.name}`);
+    setSync("sincronizado", "ok");
+    openNotifDetail(id);
+  };
+  reader.readAsDataURL(file);
+}
+async function removeAnexo(notifId, anexoId) {
+  if (!confirm("Remover este anexo?")) return;
+  const { error } = await sb.from("avcb_anexos").delete().eq("id", anexoId);
+  if (error) { alert("Erro: " + error.message); return; }
+  state.anexos[notifId] = (state.anexos[notifId]||[]).filter(a => a.id !== anexoId);
+  openNotifDetail(notifId);
+}
+function downloadAnexo(notifId, anexoId) {
+  const a = (state.anexos[notifId]||[]).find(x => x.id === anexoId);
+  if (!a) return;
+  const link = document.createElement("a");
+  link.href = a.data; link.download = a.name; link.click();
+}
+
+/* -------------------- WhatsApp -------------------- */
+function digits(s) { return String(s||"").replace(/\D/g, ""); }
+function waLink(phone, msg) {
+  const p = digits(phone);
+  if (!p) return null;
+  const full = p.length <= 11 ? "55" + p : p;
+  return `https://wa.me/${full}?text=${encodeURIComponent(msg)}`;
+}
+function whatsMsg(n) {
+  const c = clienteById(n.clienteId);
+  const nome = c ? c.nome.split(" ")[0] : "";
+  const u = urgency(n.prazo);
+  const prazoTxt = n.prazo ? `${fmtDate(n.prazo)} (${u.label})` : "sem prazo definido";
+  const proc = n.processo ? `processo ${n.processo}` : "processo do CBMMG";
+  return `Olá ${nome}, tudo bem? Aqui é ${state.escritorio.nome || "o responsável técnico"}.\n\nEstamos acompanhando o ${proc} (${n.status||"em andamento"}).\nPrazo atual: ${prazoTxt}.\n\nPreciso confirmar os próximos passos com você. Pode me responder por aqui?`;
+}
+function openWhats(n) {
+  const c = clienteById(n.clienteId);
+  if (!c || !c.telefone) { alert("Cliente sem telefone cadastrado."); return; }
+  const link = waLink(c.telefone, whatsMsg(n));
+  if (link) window.open(link, "_blank");
+}
+
+/* -------------------- Recurso generator -------------------- */
+function gerarRecurso(n) {
+  const c = clienteById(n.clienteId) || {};
+  const e = state.escritorio || {};
+  const isDefesa = /Autua/i.test(n.status||"") || /Notificação inicial/i.test(n.status||"");
+  const tipo = isDefesa ? "DEFESA" : "RECURSO";
+  const fundamento = isDefesa
+    ? "IT 45/2025 do CBMMG (Portaria n. 78/2025), item 6.3, e Decreto Estadual n. 46.668/2014"
+    : "IT 45/2025 do CBMMG (Portaria n. 78/2025), item 13, e Decreto Estadual n. 46.668/2014";
+  const dest = "AO ILMO. SR. COMANDANTE DA " + (n.unidade || "UNIDADE DO CBMMG") + " DO CORPO DE BOMBEIROS MILITAR DE MINAS GERAIS";
+  const hoje = new Date().toLocaleDateString("pt-BR", { day:'2-digit', month:'long', year:'numeric' });
+
+  return `${dest}
+
+Ref.: ${tipo} administrativa
+Processo (Infoscip): ${n.processo || "________________"}
+Autuado: ${c.nome || "________________"}
+CNPJ/CPF: ${c.documento || "________________"}
+Endereço: ${c.endereco || "________________"}
+
+${c.nome || "________________"}, ${c.documento ? "inscrito no CNPJ/CPF sob o nº " + c.documento : ""}, com endereço à ${c.endereco || "________________"}, por seu responsável técnico infra-assinado, vem, respeitosamente, à presença de V. Sa., com fundamento no ${fundamento}, no prazo legal de 10 (dez) dias corridos contados da efetiva comunicação do ato processual, apresentar
+
+${tipo === "DEFESA" ? "DEFESA ADMINISTRATIVA" : "RECURSO ADMINISTRATIVO"}
+
+em face ${tipo === "DEFESA" ? "do Auto de Infração" : "do Termo de Aplicação de Sanção de " + (n.status||"________________")} referente ao processo em epígrafe, pelas razões de fato e de direito a seguir expostas.
+
+I - DOS FATOS
+
+${n.exigencias ? n.exigencias : "Descrever de forma clara e precisa os fatos, a data de ciência do ato e as circunstâncias da fiscalização."}
+
+II - DAS RAZÕES
+
+1. O Corpo de Bombeiros Militar de Minas Gerais lavrou ${tipo === "DEFESA" ? "o Auto de Infração" : "Termo de Aplicação de Sanção"} imputando as irregularidades acima relatadas.
+
+2. Ocorre que, conforme se demonstrará, ${tipo === "DEFESA" ? "não subsistem os fundamentos da autuação" : "há vícios ou fatos supervenientes que impõem a reforma da sanção aplicada"}, seja em razão da correção das irregularidades apontadas, seja pela ausência de configuração da infração descrita nos arts. 14, I, II e III do Decreto Estadual n. 47.998/2020.
+
+3. [Desenvolver a argumentação: (i) descrever as medidas de segurança já instaladas; (ii) juntar fotos, ART e documentos comprobatórios; (iii) apontar eventual desproporcionalidade da sanção; (iv) requerer prorrogação de prazo, se cabível, nos termos do item 7 da IT 45/2025].
+
+III - DOS PEDIDOS
+
+Diante do exposto, requer-se:
+
+a) o recebimento e conhecimento da presente peça, por tempestiva e regular;
+b) ${tipo === "DEFESA" ? "o acolhimento da defesa para arquivamento do processo, ou, subsidiariamente, a concessão de prazo para regularização" : "o provimento do recurso para reforma/anulação do Termo de Aplicação de Sanção"};
+c) a juntada dos documentos comprobatórios anexos;
+d) a produção de todas as provas em direito admitidas.
+
+Termos em que,
+Pede deferimento.
+
+${e.cidade || "Belo Horizonte"}/MG, ${hoje}.
+
+______________________________________________
+${e.nome || "[Nome do responsável técnico]"}
+${e.registro ? e.registro : "[CREA/CAU nº __________]"}
+${e.telefone ? "Tel.: " + e.telefone : ""}
+${e.email ? "E-mail: " + e.email : ""}
+${e.endereco ? e.endereco : ""}
+`;
+}
+let _recursoContext = null;
+function openRecurso(n) {
+  _recursoContext = n;
+  document.getElementById("recursoText").value = gerarRecurso(n);
+  openModal("recursoModalBack");
+}
+function copyRecurso() {
+  const ta = document.getElementById("recursoText");
+  ta.select(); document.execCommand("copy");
+  alert("Copiado.");
+}
+function downloadRecurso() {
+  const txt = document.getElementById("recursoText").value;
+  const blob = new Blob([txt], { type: "text/plain;charset=utf-8" });
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  const n = _recursoContext;
+  a.download = `defesa-recurso-${n?.processo || n?.id || "processo"}.txt`;
+  a.click();
+}
+
+/* -------------------- Detail -------------------- */
+function openNotifDetail(id) {
+  const n = state.notificacoes.find(x => x.id === id);
+  if (!n) return;
+  const c = clienteById(n.clienteId);
+  const u = urgency(n.prazo);
+  const uR = urgency(n.prazoRecurso);
+  const uP = urgency(n.dataProrrogacao);
+  const evts = state.eventos.filter(e => e.refId === id).sort((a,b) => new Date(b.data) - new Date(a.data));
+  const anexos = state.anexos[id] || [];
+
+  document.getElementById("detailTitle").textContent = `${n.processo || "(sem código)"} · ${c ? c.nome : "Cliente removido"}`;
+  document.getElementById("detailBody").innerHTML = `
+    ${n.necessitaResposta === "Sim" && n.respondido !== "Sim" ? `<div class="danger-box">⚠ Este processo NECESSITA DE RESPOSTA e ainda não foi respondido.</div>` : ""}
+    <div class="grid k-2">
+      <div>
+        <h4 style="margin:0 0 8px">Processo (Infoscip)</h4>
+        <dl class="kv">
+          <dt>Cód. processo</dt><dd>${escapeHtml(n.processo||"—")}</dd>
+          <dt>Atividade atual</dt><dd>${statusChip(n.status)}</dd>
+          <dt>Origem</dt><dd>${escapeHtml(n.origem||"—")}</dd>
+          <dt>Unidade</dt><dd>${escapeHtml(n.unidade||"—")}</dd>
+          <dt>Natureza vistoria</dt><dd>${escapeHtml(n.natureza||"—")}</dd>
+          <dt>Classific. risco</dt><dd>${escapeHtml(n.risco||"—")}</dd>
+          <dt>Criação Infoscip</dt><dd>${fmtDate(n.dataCriacao)}</dd>
+          <dt>Necessita resposta?</dt><dd>${escapeHtml(n.necessitaResposta||"—")}</dd>
+          <dt>Respondido?</dt><dd>${escapeHtml(n.respondido||"—")}</dd>
+          <dt>Progride p/ multa?</dt><dd>${escapeHtml(n.progredeMulta||"—")}</dd>
+          <dt>E-mail processo</dt><dd>${escapeHtml(n.emailProc||"—")}</dd>
+          <dt>Dados complem.</dt><dd style="white-space:pre-wrap">${escapeHtml(n.complementares||"—")}</dd>
+        </dl>
+        <div class="divider"></div>
+        <h4 style="margin:0 0 8px">Prazos</h4>
+        <dl class="kv">
+          <dt>Ciência/notificação</dt><dd>${fmtDate(n.dataNotificacao)}</dd>
+          <dt>Prazo defesa/vistoria</dt><dd>${fmtDate(n.prazo)} <span class="chip ${u.cls}">${u.label}</span></dd>
+          <dt>Prazo recurso</dt><dd>${n.prazoRecurso ? `${fmtDate(n.prazoRecurso)} <span class="chip ${uR.cls}">${uR.label}</span>` : "—"}</dd>
+          <dt>Recurso</dt><dd>${escapeHtml(n.recursoStatus||"Não")} ${n.dataRecurso ? `<span class="hint">(protocolo ${fmtDate(n.dataRecurso)})</span>` : ""}</dd>
+          <dt>Prorrogação</dt><dd>${escapeHtml(n.prorrogacao||"—")} ${n.dataProrrogacao ? `— nova data limite ${fmtDate(n.dataProrrogacao)} <span class="chip ${uP.cls}">${uP.label}</span>` : ""}</dd>
+          <dt>Vistoria acessória</dt><dd>${escapeHtml(n.vistoriaAcessoria||"—")} ${n.dataVistoria ? `<span class="hint">(${fmtDate(n.dataVistoria)})</span>` : ""}</dd>
+        </dl>
+        <div class="divider"></div>
+        <h4 style="margin:0 0 6px">Irregularidades</h4>
+        <div class="hint" style="white-space:pre-wrap">${escapeHtml(n.exigencias||"—")}</div>
+        <div class="divider"></div>
+        <h4 style="margin:0 0 6px">Financeiro</h4>
+        <dl class="kv">
+          <dt>Honorários</dt><dd>${fmtBRL(n.honorarios)} <span class="hint">(${escapeHtml(n.pagamento||"—")})</span></dd>
+          <dt>Multa</dt><dd>${fmtBRL(n.valorMulta)} ${n.multaStatus ? `<span class="hint">(${escapeHtml(n.multaStatus)})</span>` : ""}</dd>
+        </dl>
+      </div>
+      <div>
+        <h4 style="margin:0 0 8px">Cliente</h4>
+        ${c ? `
+          <dl class="kv">
+            <dt>Nome/Razão</dt><dd>${escapeHtml(c.nome)}</dd>
+            <dt>Fantasia</dt><dd>${escapeHtml(c.fantasia||"—")}</dd>
+            <dt>Doc.</dt><dd>${escapeHtml(c.documento||"—")}</dd>
+            <dt>Telefone</dt><dd>${escapeHtml(c.telefone||"—")}</dd>
+            <dt>E-mail</dt><dd>${escapeHtml(c.email||"—")}</dd>
+            <dt>Endereço</dt><dd>${escapeHtml(c.endereco||"—")}</dd>
+            <dt>Ocupação</dt><dd>${escapeHtml(c.ocupacao||"—")}</dd>
+            <dt>Gestão</dt><dd>${escapeHtml(c.gestao||"—")}</dd>
+            <dt>Área</dt><dd>${c.area? c.area+" m²":"—"}</dd>
+            <dt>Altura</dt><dd>${c.altura? c.altura+" m":"—"}</dd>
+          </dl>
+        ` : `<div class="hint">Cliente removido.</div>`}
+        <div class="divider"></div>
+        <h4 style="margin:0 0 8px">Anexos</h4>
+        <div id="anexosList">
+          ${anexos.length ? anexos.map(a => `
+            <div class="anexo-item">
+              <div class="name">${escapeHtml(a.name)}</div>
+              <div class="size">${(a.size/1024).toFixed(0)} KB</div>
+              <button class="icon-btn" title="Baixar" onclick="downloadAnexo('${id}','${a.id}')">⬇</button>
+              <button class="icon-btn" title="Remover" onclick="removeAnexo('${id}','${a.id}')">✕</button>
+            </div>
+          `).join("") : `<div class="hint">Nenhum anexo.</div>`}
+        </div>
+        <label class="btn sm" style="margin-top:6px">
+          + Anexar arquivo (PDF, imagem)
+          <input type="file" style="display:none" accept="application/pdf,image/*" onchange="attachFile('${id}', this.files[0])" />
+        </label>
+        <div class="divider"></div>
+        <h4 style="margin:0 0 8px">Histórico</h4>
+        <div class="timeline">
+          ${evts.length ? evts.slice(0,20).map(e => `
+            <div class="tl-item"><div class="tl-dot"></div>
+              <div class="tl-body">
+                <div class="when">${new Date(e.data).toLocaleString("pt-BR")}</div>
+                <div>${escapeHtml(e.texto)}</div>
+              </div>
+            </div>
+          `).join("") : `<div class="hint">Sem eventos.</div>`}
+          <form onsubmit="addEvento(event, '${id}')" style="display:flex; gap:6px; margin-top:8px">
+            <input name="txt" placeholder="Adicionar entrada no histórico..." style="flex:1" />
+            <button class="btn primary" type="submit">+</button>
+          </form>
+        </div>
+      </div>
+    </div>
+  `;
+  document.getElementById("detailEditBtn").onclick = () => { closeModal("detailModalBack"); openNotifModal(id); };
+  document.getElementById("detailDeleteBtn").onclick = () => { deleteNotif(id); closeModal("detailModalBack"); };
+  document.getElementById("detailWhatsBtn").onclick = () => openWhats(n);
+  document.getElementById("detailRecursoBtn").onclick = () => openRecurso(n);
+  openModal("detailModalBack");
+}
+
+/* -------------------- Views -------------------- */
+function render() {
+  const view = state.currentView || "dashboard";
+  document.querySelectorAll("#nav button").forEach(b => b.classList.toggle("active", b.dataset.view === view));
+  const map = { dashboard: viewDashboard, prazos: viewPrazos, notificacoes: viewNotificacoes, kanban: viewKanban, clientes: viewClientes, escritorio: viewEscritorio, config: viewConfig };
+  const titles = { dashboard:"Dashboard", prazos:"Prazos e alertas", notificacoes:"Processos (PAF)", kanban:"Pipeline dos processos", clientes:"Clientes", escritorio:"Meu escritório", config:"Backup / Config" };
+  document.getElementById("viewTitle").textContent = titles[view];
+  document.getElementById("view").innerHTML = map[view]();
+  bindAfterRender();
+}
+function bindAfterRender() {
+  document.querySelectorAll("[data-open-notif]").forEach(el => el.addEventListener("click", () => openNotifDetail(el.dataset.openNotif)));
+  document.querySelectorAll("[data-edit-client]").forEach(el => el.addEventListener("click", (e) => { e.stopPropagation(); openClientModal(el.dataset.editClient); }));
+  document.querySelectorAll("[data-delete-client]").forEach(el => el.addEventListener("click", (e) => { e.stopPropagation(); deleteClient(el.dataset.deleteClient); }));
+  document.querySelectorAll("[data-new-notif]").forEach(el => el.addEventListener("click", (e) => { e.stopPropagation(); openNotifModal(null, el.dataset.newNotif); }));
+}
+
+function viewDashboard() {
+  const total = state.notificacoes.length;
+  const abertas = state.notificacoes.filter(isAberto).length;
+  const necessitando = state.notificacoes.filter(n => isAberto(n) && n.necessitaResposta === "Sim" && n.respondido !== "Sim").length;
+  const vencendo = state.notificacoes.filter(n => { const d = diffDays(n.prazo); return isAberto(n) && d !== null && d <= 7 && d >= 0; }).length;
+  const vencidas = state.notificacoes.filter(n => { const d = diffDays(n.prazo); return isAberto(n) && d !== null && d < 0; }).length;
+
+  const proximos = [...state.notificacoes]
+    .filter(n => isAberto(n) && n.prazo)
+    .sort((a,b) => new Date(a.prazo) - new Date(b.prazo))
+    .slice(0, 8);
+
+  const recentes = [...state.notificacoes]
+    .sort((a,b) => new Date(b.criadoEm||0) - new Date(a.criadoEm||0))
+    .slice(0, 5);
+
+  return `
+    <div class="grid k-4">
+      <div class="card"><h3>Processos abertos</h3><div class="stat">${abertas}<small>de ${total} total</small></div></div>
+      <div class="card"><h3>Aguardando resposta</h3><div class="stat" style="color:${necessitando?'#fca5a5':'inherit'}">${necessitando}</div></div>
+      <div class="card"><h3>Vencem em até 7 dias</h3><div class="stat" style="color:${vencendo?'#fcd34d':'inherit'}">${vencendo}</div></div>
+      <div class="card"><h3>Vencidos</h3><div class="stat" style="color:${vencidas?'#fca5a5':'inherit'}">${vencidas}</div></div>
+    </div>
+    <div class="grid k-2" style="margin-top:14px">
+      <div class="card">
+        <h3>Próximos prazos</h3>
+        ${proximos.length ? `
+        <table class="data"><thead><tr><th>Cliente</th><th>Processo</th><th>Prazo</th></tr></thead><tbody>
+        ${proximos.map(n => { const c = clienteById(n.clienteId); const u = urgency(n.prazo); return `
+          <tr data-open-notif="${n.id}" style="cursor:pointer">
+            <td>${escapeHtml(c? c.nome : "—")}<div class="subline">${statusChip(n.status)}</div></td>
+            <td>${escapeHtml(n.processo||"—")}<div class="subline">${escapeHtml(n.origem||"")}</div></td>
+            <td>${fmtDate(n.prazo)}<div class="subline"><span class="chip ${u.cls}">${u.label}</span></div></td>
+          </tr>`;}).join("")}
+        </tbody></table>
+        ` : `<div class="empty">Nenhum processo em aberto.</div>`}
+      </div>
+      <div class="card">
+        <h3>Recém cadastrados</h3>
+        ${recentes.length ? `
+        <table class="data"><thead><tr><th>Cliente</th><th>Atividade</th><th>Criado</th></tr></thead><tbody>
+        ${recentes.map(n => { const c = clienteById(n.clienteId); return `
+          <tr data-open-notif="${n.id}" style="cursor:pointer">
+            <td>${escapeHtml(c? c.nome : "—")}<div class="subline">${escapeHtml(n.processo||"")}</div></td>
+            <td>${statusChip(n.status)}</td>
+            <td>${n.criadoEm ? new Date(n.criadoEm).toLocaleDateString("pt-BR") : "—"}</td>
+          </tr>`;}).join("")}
+        </tbody></table>
+        ` : `<div class="empty">Nada por aqui ainda.</div>`}
+      </div>
+    </div>
+  `;
+}
+
+function viewPrazos() {
+  const items = [];
+  state.notificacoes.forEach(n => {
+    if (!isAberto(n)) return;
+    if (n.prazo) items.push({ n, prazo: n.prazo, kind: "Defesa/Vistoria" });
+    if (n.prazoRecurso && !["Deferido","Indeferido"].includes(n.recursoStatus)) items.push({ n, prazo: n.prazoRecurso, kind: "Recurso" });
+    if (n.dataProrrogacao) items.push({ n, prazo: n.dataProrrogacao, kind: "Prorrogação" });
+  });
+  items.sort((a,b) => new Date(a.prazo) - new Date(b.prazo));
+  return `
+    <div class="card">
+      <div class="toolbar">
+        <div class="hint">Vermelho ≤ 3d ou vencido · Amarelo ≤ 10d · Verde > 10d · Prazos em dias corridos (IT 45 item 14.3).</div>
+      </div>
+      ${items.length ? `
+      <table class="data">
+        <thead><tr><th>Prazo</th><th>Urgência</th><th>Tipo</th><th>Cliente</th><th>Processo</th><th>Atividade</th></tr></thead>
+        <tbody>
+        ${items.map(({n, prazo, kind}) => { const c = clienteById(n.clienteId); const u = urgency(prazo); const kindChip = kind === "Recurso" ? '<span class="chip accent">Recurso</span>' : kind === "Prorrogação" ? '<span class="chip info">Prorrogação</span>' : '<span class="chip warn">Defesa/Vistoria</span>'; return `
+          <tr data-open-notif="${n.id}" style="cursor:pointer">
+            <td><strong>${fmtDate(prazo)}</strong></td>
+            <td><span class="chip ${u.cls}">${u.label}</span></td>
+            <td>${kindChip}</td>
+            <td>${escapeHtml(c ? c.nome : "—")}</td>
+            <td>${escapeHtml(n.processo||"—")}<div class="subline">${escapeHtml(n.unidade||"")}</div></td>
+            <td>${statusChip(n.status)}</td>
+          </tr>`;}).join("")}
+        </tbody>
+      </table>
+      ` : `<div class="empty">Nenhum prazo em aberto. 🎉</div>`}
+    </div>
+  `;
+}
+
+function viewNotificacoes() {
+  const q = (state.q||"").toLowerCase();
+  const statusFilter = state.statusFilter || "";
+  const list = state.notificacoes.filter(n => {
+    const c = clienteById(n.clienteId);
+    const hay = `${c?c.nome:""} ${n.processo||""} ${n.origem||""} ${n.unidade||""} ${n.exigencias||""} ${n.emailProc||""}`.toLowerCase();
+    return (!q || hay.includes(q)) && (!statusFilter || n.status === statusFilter);
+  }).sort((a,b) => new Date(b.criadoEm||0) - new Date(a.criadoEm||0));
+
+  const statusOptions = ["Autuação","Notificação inicial","Advertência Escrita aplicada","1ª Multa aplicada","2ª Multa aplicada","Cassação AVCB/CLCB aplicada","Embargo aplicado","Interdição aplicada","Defesa em elaboração","Defesa protocolada","Recurso em elaboração","Recurso protocolado","Regularizado (AVCB/CLCB emitido)","PAF encerrado"];
+
+  return `
+    <div class="card">
+      <div class="toolbar">
+        <input type="search" placeholder="Buscar cliente, cód. processo, unidade..." value="${escapeAttr(state.q||"")}" oninput="state.q = this.value; render();" />
+        <select onchange="state.statusFilter = this.value; render();">
+          <option value="">Todas as atividades</option>
+          ${statusOptions.map(s => `<option ${state.statusFilter===s?"selected":""}>${s}</option>`).join("")}
+        </select>
+        <div class="spacer"></div>
+        <button class="btn" onclick="exportCSV()">Exportar CSV</button>
+        <button class="btn primary" onclick="openNotifModal()">+ Novo processo</button>
+      </div>
+      ${list.length ? `
+      <table class="data">
+        <thead><tr><th>Cliente</th><th>Cód. processo</th><th>Atividade</th><th>Origem</th><th>Ciência</th><th>Prazo</th><th>Resposta?</th><th>Recurso</th></tr></thead>
+        <tbody>
+        ${list.map(n => { const c = clienteById(n.clienteId); const u = urgency(n.prazo); const needsResp = n.necessitaResposta === "Sim" && n.respondido !== "Sim"; return `
+          <tr data-open-notif="${n.id}" style="cursor:pointer">
+            <td>${escapeHtml(c? c.nome : "—")}<div class="subline">${escapeHtml(c?.telefone||"")}</div></td>
+            <td>${escapeHtml(n.processo||"—")}<div class="subline">${escapeHtml(n.unidade||"")}</div></td>
+            <td>${statusChip(n.status)}</td>
+            <td>${escapeHtml(n.origem||"—")}</td>
+            <td>${fmtDate(n.dataNotificacao)}</td>
+            <td>${fmtDate(n.prazo)}<div class="subline"><span class="chip ${u.cls}">${u.label}</span></div></td>
+            <td>${needsResp ? '<span class="chip danger">Pendente</span>' : escapeHtml(n.respondido==="Sim"?"Sim":(n.necessitaResposta||"—"))}</td>
+            <td>${n.recursoStatus ? `<span class="chip accent">${escapeHtml(n.recursoStatus)}</span>` : "—"}</td>
+          </tr>`;}).join("")}
+        </tbody>
+      </table>
+      ` : `<div class="empty">Nenhum processo encontrado.</div>`}
+    </div>
+  `;
+}
+
+function viewKanban() {
+  const cols = ["Autuação","Advertência Escrita aplicada","1ª Multa aplicada","2ª Multa aplicada","Cassação AVCB/CLCB aplicada","Regularizado (AVCB/CLCB emitido)"];
+  return `
+    <div class="kanban">
+      ${cols.map(col => {
+        const items = state.notificacoes.filter(n => n.status === col);
+        return `<div class="col">
+          <header><h4>${escapeHtml(col)}</h4><span class="count">${items.length}</span></header>
+          ${items.map(n => { const c = clienteById(n.clienteId); const u = urgency(n.prazo); return `
+            <div class="kcard" data-open-notif="${n.id}">
+              <div class="name">${escapeHtml(c? c.nome : "—")}</div>
+              <div class="meta">${escapeHtml(n.processo||"sem cód.")} · ${escapeHtml(n.unidade||"")}</div>
+              <div class="meta"><span class="chip ${u.cls}">${u.label}</span></div>
+            </div>`;}).join("") || `<div class="hint" style="padding:8px">—</div>`}
+        </div>`;
+      }).join("")}
+    </div>
+    <div class="hint" style="margin-top:8px">Para mover um processo, abra-o e altere a <em>atividade atual</em>.</div>
+  `;
+}
+
+function viewClientes() {
+  const list = [...state.clientes].sort((a,b) => a.nome.localeCompare(b.nome));
+  return `
+    <div class="card">
+      <div class="toolbar">
+        <div class="hint">${list.length} cliente(s) cadastrado(s)</div>
+        <div class="spacer"></div>
+        <button class="btn primary" onclick="openClientModal()">+ Novo cliente</button>
+      </div>
+      ${list.length ? `
+      <table class="data">
+        <thead><tr><th>Nome</th><th>Documento</th><th>Contato</th><th>Ocupação</th><th>Processos</th><th></th></tr></thead>
+        <tbody>
+        ${list.map(c => { const ns = notifsByCliente(c.id); const abertos = ns.filter(isAberto).length; const wa = c.telefone ? waLink(c.telefone, `Olá ${c.nome.split(" ")[0]}, tudo bem? Aqui é ${state.escritorio.nome || "seu responsável técnico"}.`) : null; return `
+          <tr>
+            <td><strong>${escapeHtml(c.nome)}</strong><div class="subline">${escapeHtml(c.endereco||"")}</div></td>
+            <td>${escapeHtml(c.documento||"—")}</td>
+            <td>${escapeHtml(c.telefone||"—")}<div class="subline">${escapeHtml(c.email||"")}</div></td>
+            <td>${escapeHtml(c.ocupacao||"—")}</td>
+            <td>${ns.length} <span class="hint">(${abertos} em aberto)</span></td>
+            <td class="row-actions">
+              ${wa ? `<a class="icon-btn" title="WhatsApp" href="${wa}" target="_blank">💬</a>` : ""}
+              <button class="icon-btn" title="Novo processo" data-new-notif="${c.id}">＋</button>
+              <button class="icon-btn" title="Editar" data-edit-client="${c.id}">✎</button>
+              <button class="icon-btn" title="Excluir" data-delete-client="${c.id}">🗑</button>
+            </td>
+          </tr>`;}).join("")}
+        </tbody>
+      </table>
+      ` : `<div class="empty">Cadastre seu primeiro cliente para começar.</div>`}
+    </div>
+  `;
+}
+
+function viewEscritorio() {
+  const e = state.escritorio || {};
+  return `
+    <div class="card" style="max-width:720px">
+      <h3>Dados do escritório / responsável técnico</h3>
+      <p class="hint">Usados no gerador de defesa/recurso e nas mensagens de WhatsApp.</p>
+      <form onsubmit="saveEscritorio(event)">
+        <div class="form-grid">
+          <label class="field full"><span>Nome do responsável técnico</span>
+            <input name="nome" value="${escapeAttr(e.nome||"")}" />
+          </label>
+          <label class="field"><span>Registro (CREA/CAU)</span>
+            <input name="registro" value="${escapeAttr(e.registro||"")}" />
+          </label>
+          <label class="field"><span>Telefone</span>
+            <input name="telefone" value="${escapeAttr(e.telefone||"")}" />
+          </label>
+          <label class="field"><span>E-mail</span>
+            <input name="email" type="email" value="${escapeAttr(e.email||"")}" />
+          </label>
+          <label class="field"><span>Cidade</span>
+            <input name="cidade" value="${escapeAttr(e.cidade||"Belo Horizonte")}" />
+          </label>
+          <label class="field full"><span>Endereço completo</span>
+            <input name="endereco" value="${escapeAttr(e.endereco||"")}" />
+          </label>
+        </div>
+        <div style="margin-top:12px">
+          <button class="btn primary" type="submit">Salvar</button>
+        </div>
+      </form>
+    </div>
+  `;
+}
+
+async function saveEscritorio(ev) {
+  ev.preventDefault();
+  const data = Object.fromEntries(new FormData(ev.target));
+  setSync("salvando...", "busy");
+  const payload = { ...data, user_id: state.user.id };
+  const { data: row, error } = await sb.from("avcb_escritorio").upsert(payload).select().single();
+  if (error) { setSync("erro", "err"); alert("Erro: " + error.message); return; }
+  state.escritorio = row;
+  setSync("sincronizado", "ok");
+  alert("Dados do escritório salvos.");
+}
+
+function viewConfig() {
+  return `
+    <div class="grid k-2">
+      <div class="card">
+        <h3>Backup</h3>
+        <p class="hint">Seus dados já estão sincronizados no Supabase (nuvem). Você também pode baixar um backup local.</p>
+        <div style="display:flex; gap:8px; flex-wrap:wrap">
+          <button class="btn primary" onclick="exportData()">Baixar backup (.json)</button>
+          <button class="btn" onclick="exportCSV()">Exportar processos (.csv)</button>
+        </div>
+      </div>
+      <div class="card">
+        <h3>Sessão</h3>
+        <p class="hint">Logado como <b>${escapeHtml(state.user?.email||"—")}</b>.</p>
+        <button class="btn" onclick="signOut()">Sair da conta</button>
+      </div>
+      <div class="card full" style="grid-column:1/-1">
+        <h3>Sobre</h3>
+        <p class="hint">PRIME · CRM de fiscalização CBMMG. Estrutura alinhada ao Infoscip (fiscalizacaobombeiros.mg.gov.br) e à IT 45/2025 (Portaria n. 78/2025).<br/>Backend: Supabase com RLS (cada usuário só vê os próprios dados).</p>
+      </div>
+    </div>
+  `;
+}
+
+/* -------------------- CSV / Backup export -------------------- */
+function csvEscape(v) {
+  const s = String(v ?? "");
+  if (/[",;\n]/.test(s)) return '"' + s.replace(/"/g, '""') + '"';
+  return s;
+}
+function exportCSV() {
+  const rows = [["Cod. processo","Cliente","Documento","Atividade","Origem","Unidade","Ciencia","Prazo","Prazo recurso","Recurso","Necessita resposta","Respondido","Honorarios","Multa","E-mail"]];
+  state.notificacoes.forEach(n => {
+    const c = clienteById(n.clienteId) || {};
+    rows.push([n.processo,c.nome,c.documento,n.status,n.origem,n.unidade,n.dataNotificacao,n.prazo,n.prazoRecurso,n.recursoStatus,n.necessitaResposta,n.respondido,n.honorarios,n.valorMulta,n.emailProc]);
+  });
+  const csv = rows.map(r => r.map(csvEscape).join(";")).join("\n");
+  const blob = new Blob(["﻿" + csv], { type: "text/csv;charset=utf-8" });
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = `prime-processos-${todayISO()}.csv`;
+  a.click();
+}
+function exportData() {
+  const dump = { clientes: state.clientes, notificacoes: state.notificacoes, eventos: state.eventos, anexos: state.anexos, escritorio: state.escritorio };
+  const blob = new Blob([JSON.stringify(dump, null, 2)], { type: "application/json" });
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = `prime-avcb-backup-${todayISO()}.json`;
+  a.click();
+}
+
+/* -------------------- Utilities -------------------- */
+function escapeHtml(s) { return String(s ?? "").replace(/[&<>"']/g, c => ({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c])); }
+function escapeAttr(s) { return escapeHtml(s); }
+
+/* -------------------- Init -------------------- */
+document.querySelectorAll("#nav button").forEach(btn => {
+  btn.addEventListener("click", () => { state.currentView = btn.dataset.view; render(); });
+});
+
+(async () => {
+  const { data: { session } } = await sb.auth.getSession();
+  if (session) {
+    await onLoggedIn(session.user);
+  } else {
+    document.getElementById("authScreen").style.display = "grid";
+  }
+})();
+
+sb.auth.onAuthStateChange((_ev, session) => {
+  if (!session) location.reload();
+});
+</script>
+</body>
+</html>
