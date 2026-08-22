@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>PRIME • CRM de Notificações AVCB</title>
+<title>PRIME • CRM de Notificações AVCB (CBMMG)</title>
 <style>
   :root {
     --bg: #0f1216;
@@ -34,7 +34,6 @@
   }
   a { color: var(--accent-2); text-decoration: none; }
 
-  /* Layout */
   .app { display: grid; grid-template-columns: 240px 1fr; min-height: 100vh; }
   aside {
     background: linear-gradient(180deg, #12171d 0%, #0f1216 100%);
@@ -63,15 +62,13 @@
   nav button.active .dot { background: var(--accent); }
   .sidebar-footer { position: absolute; bottom: 14px; left: 14px; right: 14px; color: var(--muted); font-size: 11px; }
 
-  main { padding: 22px 26px 60px; max-width: 1400px; width: 100%; }
+  main { padding: 22px 26px 60px; max-width: 1500px; width: 100%; }
   .topbar { display: flex; align-items: center; gap: 12px; margin-bottom: 18px; }
   .topbar h1 { font-size: 20px; margin: 0; flex: 1; }
   .topbar .actions { display: flex; gap: 8px; }
 
-  /* Buttons */
   .btn {
-    background: var(--panel);
-    color: var(--text);
+    background: var(--panel); color: var(--text);
     border: 1px solid var(--border);
     padding: 8px 12px; border-radius: 8px; cursor: pointer; font-size: 13px;
     display: inline-flex; align-items: center; gap: 6px;
@@ -82,8 +79,8 @@
   .btn.ghost { background: transparent; }
   .btn.danger { background: transparent; color: var(--danger); border-color: rgba(239,68,68,.35); }
   .btn.danger:hover { background: rgba(239,68,68,.08); }
+  .btn.sm { padding: 6px 10px; font-size: 12px; }
 
-  /* Cards / grid */
   .grid { display: grid; gap: 14px; }
   .grid.k-4 { grid-template-columns: repeat(4, 1fr); }
   .grid.k-3 { grid-template-columns: repeat(3, 1fr); }
@@ -92,17 +89,13 @@
   @media (max-width: 720px) { .grid.k-4, .grid.k-3, .grid.k-2 { grid-template-columns: 1fr; } .app { grid-template-columns: 1fr; } aside { position: static; height: auto; } }
 
   .card {
-    background: var(--panel);
-    border: 1px solid var(--border);
-    border-radius: 12px;
-    padding: 14px;
-    box-shadow: var(--shadow);
+    background: var(--panel); border: 1px solid var(--border);
+    border-radius: 12px; padding: 14px; box-shadow: var(--shadow);
   }
   .card h3 { margin: 0 0 6px; font-size: 13px; color: var(--muted); font-weight: 600; letter-spacing: .3px; text-transform: uppercase; }
   .stat { font-size: 26px; font-weight: 800; }
   .stat small { font-size: 12px; color: var(--muted); font-weight: 500; margin-left: 6px; }
 
-  /* Toolbar */
   .toolbar {
     display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-bottom: 12px;
   }
@@ -112,7 +105,6 @@
   }
   .toolbar .spacer { flex: 1; }
 
-  /* Table */
   table.data { width: 100%; border-collapse: collapse; }
   table.data th, table.data td { text-align: left; padding: 10px 10px; border-bottom: 1px solid var(--border); font-size: 13px; vertical-align: top; }
   table.data th { color: var(--muted); font-weight: 600; font-size: 11px; text-transform: uppercase; letter-spacing: .3px; }
@@ -120,7 +112,6 @@
   table.data td .subline { color: var(--muted); font-size: 12px; }
   .empty { color: var(--muted); text-align: center; padding: 40px 12px; border: 1px dashed var(--border); border-radius: 12px; }
 
-  /* Chips */
   .chip {
     display: inline-flex; align-items: center; gap: 6px;
     padding: 3px 8px; border-radius: 999px; background: var(--chip);
@@ -132,25 +123,33 @@
   .chip.info { color: #93c5fd; border-color: rgba(59,130,246,.3); background: rgba(59,130,246,.08); }
   .chip.accent { color: #ffb997; border-color: rgba(255,90,31,.35); background: rgba(255,90,31,.08); }
 
-  /* Modal */
   .modal-back { position: fixed; inset: 0; background: rgba(0,0,0,.55); backdrop-filter: blur(4px); display: none; z-index: 40; }
   .modal-back.open { display: grid; place-items: center; padding: 20px; }
   .modal {
-    background: var(--panel);
-    border: 1px solid var(--border);
-    border-radius: 14px;
-    width: min(720px, 100%);
-    max-height: 90vh; overflow: auto;
+    background: var(--panel); border: 1px solid var(--border);
+    border-radius: 14px; width: min(860px, 100%);
+    max-height: 92vh; overflow: auto;
     box-shadow: 0 30px 60px rgba(0,0,0,.5);
   }
-  .modal-header { padding: 14px 18px; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 10px; position: sticky; top: 0; background: var(--panel); }
+  .modal.wide { width: min(1100px, 100%); }
+  .modal-header { padding: 14px 18px; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 10px; position: sticky; top: 0; background: var(--panel); z-index: 2; }
   .modal-header h2 { margin: 0; font-size: 16px; flex: 1; }
   .modal-body { padding: 16px 18px; }
-  .modal-footer { padding: 12px 18px; border-top: 1px solid var(--border); display: flex; gap: 8px; justify-content: flex-end; position: sticky; bottom: 0; background: var(--panel); }
+  .modal-footer { padding: 12px 18px; border-top: 1px solid var(--border); display: flex; gap: 8px; justify-content: flex-end; position: sticky; bottom: 0; background: var(--panel); flex-wrap: wrap; }
 
-  /* Forms */
+  .tabs { display: flex; gap: 4px; border-bottom: 1px solid var(--border); margin-bottom: 12px; overflow-x: auto; }
+  .tabs button {
+    background: transparent; border: 0; color: var(--muted);
+    padding: 8px 12px; border-radius: 8px 8px 0 0; cursor: pointer;
+    font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: .3px;
+    border-bottom: 2px solid transparent; white-space: nowrap;
+  }
+  .tabs button.active { color: var(--accent-2); border-bottom-color: var(--accent); }
+
   .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .form-grid.k-3 { grid-template-columns: 1fr 1fr 1fr; }
   .form-grid .full { grid-column: 1 / -1; }
+  .form-grid .col-2 { grid-column: span 2; }
   label.field { display: flex; flex-direction: column; gap: 6px; font-size: 12px; color: var(--muted); }
   label.field > span.req::after { content: " *"; color: var(--accent); }
   input, select, textarea {
@@ -160,7 +159,6 @@
   textarea { resize: vertical; min-height: 80px; }
   input:focus, select:focus, textarea:focus { outline: 2px solid rgba(255,90,31,.5); outline-offset: 1px; border-color: transparent; }
 
-  /* Kanban */
   .kanban { display: grid; grid-template-columns: repeat(6, minmax(220px, 1fr)); gap: 12px; overflow-x: auto; padding-bottom: 8px; }
   .col {
     background: var(--panel); border: 1px solid var(--border); border-radius: 12px;
@@ -177,10 +175,7 @@
   .kcard .name { font-weight: 700; font-size: 13px; }
   .kcard .meta { font-size: 11px; color: var(--muted); display: flex; gap: 8px; flex-wrap: wrap; }
 
-  /* Detail view */
-  .detail-grid { display: grid; grid-template-columns: 2fr 1fr; gap: 14px; }
-  @media (max-width: 900px) { .detail-grid { grid-template-columns: 1fr; } }
-  .kv { display: grid; grid-template-columns: 140px 1fr; gap: 6px 12px; font-size: 13px; }
+  .kv { display: grid; grid-template-columns: 170px 1fr; gap: 6px 12px; font-size: 13px; }
   .kv dt { color: var(--muted); }
   .timeline { display: flex; flex-direction: column; gap: 10px; }
   .tl-item { display: grid; grid-template-columns: 20px 1fr; gap: 10px; }
@@ -194,8 +189,17 @@
 
   .divider { height: 1px; background: var(--border); margin: 10px 0; }
   .hint { color: var(--muted); font-size: 12px; }
+  .warn-box { border-left: 3px solid var(--warn); background: rgba(245,158,11,.08); padding: 8px 10px; border-radius: 6px; font-size: 12px; color: #fcd34d; margin-bottom: 8px; }
+  .danger-box { border-left: 3px solid var(--danger); background: rgba(239,68,68,.08); padding: 8px 10px; border-radius: 6px; font-size: 12px; color: #fca5a5; margin-bottom: 8px; }
 
-  /* Print */
+  .anexo-item {
+    display: flex; align-items: center; gap: 10px;
+    background: var(--panel-2); border: 1px solid var(--border);
+    padding: 8px 10px; border-radius: 8px; margin-bottom: 6px;
+  }
+  .anexo-item .name { flex: 1; font-size: 13px; }
+  .anexo-item .size { font-size: 11px; color: var(--muted); }
+
   @media print {
     aside, .topbar .actions, .toolbar, .modal-back { display: none !important; }
     body { background: white; color: black; }
@@ -210,19 +214,21 @@
       <div class="brand-mark">P</div>
       <div>
         <div class="brand-name">PRIME</div>
-        <div class="brand-sub">CRM Notificações AVCB</div>
+        <div class="brand-sub">CRM Fiscalização CBMMG</div>
       </div>
     </div>
     <nav id="nav">
       <button data-view="dashboard" class="active"><span class="dot"></span> Dashboard</button>
       <button data-view="prazos"><span class="dot"></span> Prazos</button>
-      <button data-view="notificacoes"><span class="dot"></span> Notificações</button>
-      <button data-view="kanban"><span class="dot"></span> Pipeline (Kanban)</button>
+      <button data-view="notificacoes"><span class="dot"></span> Processos (PAF)</button>
+      <button data-view="kanban"><span class="dot"></span> Pipeline</button>
       <button data-view="clientes"><span class="dot"></span> Clientes</button>
+      <button data-view="escritorio"><span class="dot"></span> Meu escritório</button>
       <button data-view="config"><span class="dot"></span> Backup / Config</button>
     </nav>
     <div class="sidebar-footer">
-      Dados salvos neste navegador.<br/>Faça backup periódico.
+      Alinhado à IT 45 CBMMG (Portaria 78/2025).<br/>
+      Dados salvos neste navegador.
     </div>
   </aside>
 
@@ -231,7 +237,7 @@
       <h1 id="viewTitle">Dashboard</h1>
       <div class="actions">
         <button class="btn" onclick="openClientModal()">+ Cliente</button>
-        <button class="btn primary" onclick="openNotifModal()">+ Notificação</button>
+        <button class="btn primary" onclick="openNotifModal()">+ Processo</button>
       </div>
     </div>
     <div id="view"></div>
@@ -252,15 +258,10 @@
           <label class="field full"><span class="req">Nome / Razão social</span>
             <input name="nome" required />
           </label>
-          <label class="field"><span>CNPJ / CPF</span>
-            <input name="documento" />
-          </label>
-          <label class="field"><span>Telefone / WhatsApp</span>
-            <input name="telefone" />
-          </label>
-          <label class="field full"><span>E-mail</span>
-            <input name="email" type="email" />
-          </label>
+          <label class="field"><span>Nome fantasia</span><input name="fantasia" /></label>
+          <label class="field"><span>CNPJ / CPF</span><input name="documento" /></label>
+          <label class="field"><span>Telefone / WhatsApp</span><input name="telefone" placeholder="(31) 9 9999-9999" /></label>
+          <label class="field"><span>E-mail</span><input name="email" type="email" /></label>
           <label class="field full"><span>Endereço da edificação</span>
             <input name="endereco" placeholder="Rua, nº, bairro, cidade/UF" />
           </label>
@@ -281,18 +282,28 @@
               <option>M - Especial</option>
             </select>
           </label>
-          <label class="field"><span>Área construída (m²)</span>
-            <input name="area" type="number" step="0.01" />
+          <label class="field"><span>Classificação de risco</span>
+            <select name="risco">
+              <option value="">—</option>
+              <option>Nível I</option>
+              <option>Nível II</option>
+              <option>Nível III</option>
+            </select>
           </label>
-          <label class="field"><span>Altura (m)</span>
-            <input name="altura" type="number" step="0.01" />
+          <label class="field"><span>Área construída (m²)</span><input name="area" type="number" step="0.01" /></label>
+          <label class="field"><span>Altura (m)</span><input name="altura" type="number" step="0.01" /></label>
+          <label class="field"><span>Nº pavimentos</span><input name="pavimentos" type="number" /></label>
+          <label class="field"><span>Tipo de gestão</span>
+            <select name="gestao">
+              <option value="">—</option>
+              <option>Com convenção de condomínio</option>
+              <option>Sem convenção de condomínio</option>
+              <option>Unipessoal</option>
+              <option>Órgão público</option>
+              <option>Outro</option>
+            </select>
           </label>
-          <label class="field"><span>Nº pavimentos</span>
-            <input name="pavimentos" type="number" />
-          </label>
-          <label class="field full"><span>Observações</span>
-            <textarea name="obs"></textarea>
-          </label>
+          <label class="field full"><span>Observações</span><textarea name="obs"></textarea></label>
         </div>
       </form>
     </div>
@@ -303,89 +314,194 @@
   </div>
 </div>
 
-<!-- Notification Modal -->
+<!-- Notification Modal (Processo PAF) -->
 <div class="modal-back" id="notifModalBack">
-  <div class="modal">
+  <div class="modal wide">
     <div class="modal-header">
-      <h2 id="notifModalTitle">Nova notificação</h2>
+      <h2 id="notifModalTitle">Novo processo (PAF)</h2>
       <button class="icon-btn" onclick="closeModal('notifModalBack')">✕</button>
     </div>
     <div class="modal-body">
       <form id="notifForm" onsubmit="saveNotif(event)">
         <input type="hidden" name="id" />
-        <div class="form-grid">
-          <label class="field full"><span class="req">Cliente</span>
-            <select name="clienteId" required id="notifClienteSelect"></select>
-          </label>
-          <label class="field"><span>Número do processo/notificação</span>
-            <input name="processo" placeholder="Ex.: 1350.01.0012345/2026" />
-          </label>
-          <label class="field"><span>Órgão</span>
-            <select name="orgao">
-              <option>CBMMG</option>
-              <option>Prefeitura</option>
-              <option>Ministério Público</option>
-              <option>Outro</option>
-            </select>
-          </label>
-          <label class="field"><span class="req">Data da notificação</span>
-            <input name="dataNotificacao" type="date" required />
-          </label>
-          <label class="field"><span class="req">Prazo para atendimento</span>
-            <input name="prazo" type="date" required />
-          </label>
-          <label class="field"><span>Status</span>
-            <select name="status">
-              <option>Notificado</option>
-              <option>Em análise</option>
-              <option>Projeto em elaboração</option>
-              <option>Protocolado</option>
-              <option>Aguardando vistoria</option>
-              <option>AVCB emitido</option>
-              <option>Em recurso</option>
-              <option>Encerrado</option>
-            </select>
-          </label>
-          <label class="field"><span>Tipo</span>
-            <select name="tipo">
-              <option>Regularização (AVCB)</option>
-              <option>Renovação AVCB</option>
-              <option>CLCB</option>
-              <option>Auto de infração</option>
-              <option>Interdição</option>
-              <option>Vistoria técnica</option>
-              <option>Outro</option>
-            </select>
-          </label>
-          <label class="field full"><span>Exigências / Motivo</span>
-            <textarea name="exigencias" placeholder="Liste as exigências da notificação..."></textarea>
-          </label>
-          <label class="field"><span>Prazo para recurso</span>
-            <input name="prazoRecurso" type="date" />
-          </label>
-          <label class="field"><span>Recurso interposto?</span>
-            <select name="recursoStatus">
-              <option value="">Não</option>
-              <option>Em preparação</option>
-              <option>Protocolado</option>
-              <option>Deferido</option>
-              <option>Indeferido</option>
-            </select>
-          </label>
-          <label class="field"><span>Valor honorários (R$)</span>
-            <input name="honorarios" type="number" step="0.01" />
-          </label>
-          <label class="field"><span>Pagamento</span>
-            <select name="pagamento">
-              <option>Pendente</option>
-              <option>Sinal recebido</option>
-              <option>Parcial</option>
-              <option>Quitado</option>
-            </select>
-          </label>
-          <label class="field full"><span>Anotações</span>
-            <textarea name="anotacoes"></textarea>
-          </label>
+        <div class="tabs" id="notifTabs">
+          <button type="button" class="active" data-tab="proc">Processo</button>
+          <button type="button" data-tab="edif">Edificação/Estabelec.</button>
+          <button type="button" data-tab="prazos">Prazos e recurso</button>
+          <button type="button" data-tab="fin">Financeiro e anotações</button>
+        </div>
+
+        <div data-tabpane="proc">
+          <div class="form-grid k-3">
+            <label class="field col-2"><span class="req">Cliente</span>
+              <select name="clienteId" required id="notifClienteSelect"></select>
+            </label>
+            <label class="field"><span>Cód. processo (Infoscip)</span>
+              <input name="processo" placeholder="AAAA-FIS######" />
+            </label>
+            <label class="field"><span>Atividade atual</span>
+              <select name="status" onchange="autoPrazoRecurso(this.form)">
+                <option>Autuação</option>
+                <option>Notificação inicial</option>
+                <option>Advertência Escrita aplicada</option>
+                <option>1ª Multa aplicada</option>
+                <option>2ª Multa aplicada</option>
+                <option>Cassação AVCB/CLCB aplicada</option>
+                <option>Embargo aplicado</option>
+                <option>Interdição aplicada</option>
+                <option>Defesa em elaboração</option>
+                <option>Defesa protocolada</option>
+                <option>Recurso em elaboração</option>
+                <option>Recurso protocolado</option>
+                <option>Prorrogação de prazo solicitada</option>
+                <option>Prorrogação deferida</option>
+                <option>Comunicação de correção enviada</option>
+                <option>Aguardando vistoria acessória</option>
+                <option>Regularizado (AVCB/CLCB emitido)</option>
+                <option>PAF encerrado</option>
+              </select>
+            </label>
+            <label class="field"><span>Origem</span>
+              <select name="origem">
+                <option>Alerta Vermelho</option>
+                <option>Denúncia</option>
+                <option>Fiscalização programada</option>
+                <option>Vistoria acessória</option>
+                <option>Ordem judicial</option>
+                <option>Outra</option>
+              </select>
+            </label>
+            <label class="field"><span>Unidade CBMMG</span>
+              <input name="unidade" placeholder="Ex.: 1BBM (BH), 2BBM (Uberlândia)..." />
+            </label>
+            <label class="field"><span>Natureza da vistoria</span>
+              <select name="natureza">
+                <option>P01001 - Vistoria de fiscalização</option>
+                <option>P01002 - Vistoria acessória</option>
+                <option>P01003 - Vistoria técnica</option>
+                <option>Vistoria para renovação</option>
+                <option>Outra</option>
+              </select>
+            </label>
+            <label class="field"><span>Classificação de risco</span>
+              <select name="risco">
+                <option value="">—</option>
+                <option>Nível I</option>
+                <option>Nível II</option>
+                <option>Nível III</option>
+              </select>
+            </label>
+            <label class="field"><span>Data de criação (Infoscip)</span>
+              <input name="dataCriacao" type="date" />
+            </label>
+            <label class="field"><span>Necessita de resposta?</span>
+              <select name="necessitaResposta"><option>Sim</option><option>Não</option></select>
+            </label>
+            <label class="field"><span>Processo respondido?</span>
+              <select name="respondido"><option>Não</option><option>Sim</option></select>
+            </label>
+            <label class="field"><span>Progredirá para multa?</span>
+              <select name="progredeMulta"><option>—</option><option>Sim</option><option>Não</option></select>
+            </label>
+            <label class="field"><span>E-mail principal do processo</span>
+              <input name="emailProc" type="email" placeholder="e-mail cadastrado no Infoscip" />
+            </label>
+            <label class="field"><span>E-mail secundário</span>
+              <input name="emailProcSec" type="email" />
+            </label>
+            <label class="field full"><span>Dados complementares (Infoscip)</span>
+              <textarea name="complementares" rows="2" placeholder="Ex.: Alerta vermelho do dia dd/mm/aaaa"></textarea>
+            </label>
+          </div>
+        </div>
+
+        <div data-tabpane="edif" style="display:none">
+          <div class="form-grid">
+            <label class="field full"><span>Endereço de correspondência (se diferente do cadastro)</span>
+              <input name="enderecoCorresp" />
+            </label>
+            <label class="field"><span>Nome fantasia / estabelecimento</span>
+              <input name="estabelecimento" />
+            </label>
+            <label class="field"><span>Nº de representantes cadastrados</span>
+              <input name="representantes" type="number" min="0" />
+            </label>
+            <label class="field full"><span>Irregularidades apontadas</span>
+              <textarea name="exigencias" rows="4" placeholder="Liste, de forma resumida, o(s) fato(s) constitutivo(s) da infração..."></textarea>
+            </label>
+          </div>
+        </div>
+
+        <div data-tabpane="prazos" style="display:none">
+          <div class="warn-box">Prazos são contados em <b>dias corridos</b> (IT 45 item 14.3). O prazo de defesa e o de recurso são de <b>10 dias</b> a partir da efetiva comunicação do ato (IT 45 itens 6.3.1 e 13.1).</div>
+          <div class="form-grid k-3">
+            <label class="field"><span class="req">Data da ciência / notificação</span>
+              <input name="dataNotificacao" type="date" required onchange="autoPrazoRecurso(this.form)" />
+            </label>
+            <label class="field"><span>Prazo final (defesa/vistoria)</span>
+              <input name="prazo" type="date" />
+            </label>
+            <label class="field"><span>Prazo para recurso</span>
+              <input name="prazoRecurso" type="date" />
+            </label>
+            <label class="field"><span>Recurso interposto?</span>
+              <select name="recursoStatus">
+                <option value="">Não</option>
+                <option>Em preparação</option>
+                <option>Protocolado</option>
+                <option>Deferido</option>
+                <option>Indeferido</option>
+              </select>
+            </label>
+            <label class="field"><span>Data protocolo do recurso</span>
+              <input name="dataRecurso" type="date" />
+            </label>
+            <label class="field"><span>Prorrogação de prazo</span>
+              <select name="prorrogacao">
+                <option value="">—</option>
+                <option>Solicitada</option>
+                <option>Deferida</option>
+                <option>Indeferida</option>
+              </select>
+            </label>
+            <label class="field"><span>Nova data limite (prorrogação)</span>
+              <input name="dataProrrogacao" type="date" />
+            </label>
+            <label class="field"><span>Vistoria acessória em aberto?</span>
+              <select name="vistoriaAcessoria"><option>Não</option><option>Sim</option></select>
+            </label>
+            <label class="field"><span>Data da vistoria</span>
+              <input name="dataVistoria" type="date" />
+            </label>
+          </div>
+        </div>
+
+        <div data-tabpane="fin" style="display:none">
+          <div class="form-grid">
+            <label class="field"><span>Valor honorários (R$)</span><input name="honorarios" type="number" step="0.01" /></label>
+            <label class="field"><span>Pagamento</span>
+              <select name="pagamento">
+                <option>Pendente</option>
+                <option>Sinal recebido</option>
+                <option>Parcial</option>
+                <option>Quitado</option>
+              </select>
+            </label>
+            <label class="field"><span>Valor da multa (R$)</span><input name="valorMulta" type="number" step="0.01" /></label>
+            <label class="field"><span>Multa: situação</span>
+              <select name="multaStatus">
+                <option value="">—</option>
+                <option>Não aplicada</option>
+                <option>Pendente pagamento</option>
+                <option>Paga</option>
+                <option>Parcelada</option>
+                <option>Em dívida ativa</option>
+              </select>
+            </label>
+            <label class="field full"><span>Anotações internas</span>
+              <textarea name="anotacoes" rows="4"></textarea>
+            </label>
+          </div>
         </div>
       </form>
     </div>
@@ -398,7 +514,7 @@
 
 <!-- Detail Modal -->
 <div class="modal-back" id="detailModalBack">
-  <div class="modal">
+  <div class="modal wide">
     <div class="modal-header">
       <h2 id="detailTitle">Detalhes</h2>
       <button class="icon-btn" onclick="closeModal('detailModalBack')">✕</button>
@@ -407,31 +523,76 @@
     <div class="modal-footer">
       <button class="btn danger" id="detailDeleteBtn">Excluir</button>
       <div style="flex:1"></div>
+      <button class="btn" id="detailWhatsBtn">WhatsApp</button>
+      <button class="btn" id="detailRecursoBtn">Gerar defesa/recurso</button>
       <button class="btn" onclick="window.print()">Imprimir</button>
       <button class="btn primary" id="detailEditBtn">Editar</button>
     </div>
   </div>
 </div>
 
+<!-- Recurso Modal -->
+<div class="modal-back" id="recursoModalBack">
+  <div class="modal wide">
+    <div class="modal-header">
+      <h2>Minuta de defesa/recurso</h2>
+      <button class="icon-btn" onclick="closeModal('recursoModalBack')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="hint" style="margin-bottom:8px">Modelo com base na IT 45/2025 do CBMMG. Ajuste antes de protocolar no Infoscip.</div>
+      <textarea id="recursoText" rows="24" style="font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 12px;"></textarea>
+    </div>
+    <div class="modal-footer">
+      <button class="btn" onclick="closeModal('recursoModalBack')">Fechar</button>
+      <button class="btn" onclick="copyRecurso()">Copiar</button>
+      <button class="btn primary" onclick="downloadRecurso()">Baixar .txt</button>
+    </div>
+  </div>
+</div>
+
 <script>
 /* -------------------- Storage -------------------- */
-const KEY = "prime.avcb.v1";
+const KEY = "prime.avcb.v2";
 const state = load();
 
 function load() {
   try {
     const raw = localStorage.getItem(KEY);
-    if (raw) return JSON.parse(raw);
+    if (raw) {
+      const s = JSON.parse(raw);
+      s.anexos = s.anexos || {};
+      s.escritorio = s.escritorio || {};
+      s.eventos = s.eventos || [];
+      return s;
+    }
+    // migrate from v1 if exists
+    const rawV1 = localStorage.getItem("prime.avcb.v1");
+    if (rawV1) {
+      const s = JSON.parse(rawV1);
+      s.anexos = s.anexos || {};
+      s.escritorio = s.escritorio || {};
+      s.eventos = s.eventos || [];
+      return s;
+    }
   } catch (e) {}
-  return { clientes: [], notificacoes: [], eventos: [] };
+  return { clientes: [], notificacoes: [], eventos: [], anexos: {}, escritorio: {} };
 }
-function save() { localStorage.setItem(KEY, JSON.stringify(state)); }
+function save() {
+  try { localStorage.setItem(KEY, JSON.stringify(state)); }
+  catch (e) { alert("Erro ao salvar: armazenamento cheio. Exclua anexos ou faça backup e limpe."); }
+}
 function uid() { return Math.random().toString(36).slice(2, 10); }
 
 /* -------------------- Helpers -------------------- */
 const fmtBRL = v => (Number(v||0)).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 const fmtDate = d => d ? new Date(d + "T00:00:00").toLocaleDateString("pt-BR") : "—";
 const todayISO = () => new Date().toISOString().slice(0,10);
+function addDays(iso, n) {
+  if (!iso) return "";
+  const d = new Date(iso + "T00:00:00");
+  d.setDate(d.getDate() + n);
+  return d.toISOString().slice(0,10);
+}
 function diffDays(d) {
   if (!d) return null;
   const a = new Date(d + "T00:00:00");
@@ -448,21 +609,19 @@ function urgency(d) {
   return { cls: "ok", label: `${n}d restantes` };
 }
 function statusChip(s) {
-  const map = {
-    "Notificado": "warn",
-    "Em análise": "info",
-    "Projeto em elaboração": "info",
-    "Protocolado": "info",
-    "Aguardando vistoria": "accent",
-    "AVCB emitido": "ok",
-    "Em recurso": "warn",
-    "Encerrado": ""
-  };
-  return `<span class="chip ${map[s]||""}">${s||"—"}</span>`;
+  const danger = ["Autuação","Advertência Escrita aplicada","1ª Multa aplicada","2ª Multa aplicada","Cassação AVCB/CLCB aplicada","Embargo aplicado","Interdição aplicada"];
+  const info = ["Defesa em elaboração","Defesa protocolada","Recurso em elaboração","Recurso protocolado","Prorrogação de prazo solicitada","Comunicação de correção enviada"];
+  const warn = ["Notificação inicial","Aguardando vistoria acessória","Prorrogação deferida"];
+  const ok = ["Regularizado (AVCB/CLCB emitido)","PAF encerrado"];
+  let cls = "";
+  if (danger.includes(s)) cls = "danger";
+  else if (info.includes(s)) cls = "info";
+  else if (warn.includes(s)) cls = "warn";
+  else if (ok.includes(s)) cls = "ok";
+  return `<span class="chip ${cls}">${escapeHtml(s||"—")}</span>`;
 }
 function clienteById(id) { return state.clientes.find(c => c.id === id); }
 function notifsByCliente(id) { return state.notificacoes.filter(n => n.clienteId === id); }
-
 function logEvento(refId, texto) {
   state.eventos.push({ id: uid(), refId, texto, data: new Date().toISOString() });
 }
@@ -473,6 +632,23 @@ function closeModal(id) { document.getElementById(id).classList.remove("open"); 
 document.querySelectorAll(".modal-back").forEach(el => {
   el.addEventListener("click", e => { if (e.target === el) el.classList.remove("open"); });
 });
+// Tabs in notif modal
+document.querySelectorAll("#notifTabs button").forEach(b => {
+  b.addEventListener("click", () => {
+    document.querySelectorAll("#notifTabs button").forEach(x => x.classList.remove("active"));
+    b.classList.add("active");
+    document.querySelectorAll("[data-tabpane]").forEach(p => { p.style.display = p.dataset.tabpane === b.dataset.tab ? "" : "none"; });
+  });
+});
+
+/* -------------------- Auto compute prazo -------------------- */
+function autoPrazoRecurso(form) {
+  const dn = form.dataNotificacao.value;
+  if (!dn) return;
+  // Defesa/Recurso: 10 dias corridos após ciência
+  if (!form.prazo.value) form.prazo.value = addDays(dn, 10);
+  if (!form.prazoRecurso.value) form.prazoRecurso.value = addDays(dn, 10);
+}
 
 /* -------------------- Client CRUD -------------------- */
 function openClientModal(id) {
@@ -502,9 +678,11 @@ function saveClient(ev) {
   save(); closeModal("clientModalBack"); render();
 }
 function deleteClient(id) {
-  if (!confirm("Excluir este cliente e todas as suas notificações?")) return;
+  if (!confirm("Excluir este cliente e todos os seus processos?")) return;
   state.clientes = state.clientes.filter(c => c.id !== id);
+  const removed = state.notificacoes.filter(n => n.clienteId === id).map(n => n.id);
   state.notificacoes = state.notificacoes.filter(n => n.clienteId !== id);
+  removed.forEach(nid => { delete state.anexos[nid]; state.eventos = state.eventos.filter(e => e.refId !== nid); });
   save(); render();
 }
 
@@ -522,16 +700,20 @@ function openNotifModal(id, presetClienteId) {
     return;
   }
   refreshClienteSelect();
+  // reset to first tab
+  document.querySelector('#notifTabs button[data-tab="proc"]').click();
   const form = document.getElementById("notifForm");
   form.reset();
-  document.getElementById("notifModalTitle").textContent = id ? "Editar notificação" : "Nova notificação";
+  document.getElementById("notifModalTitle").textContent = id ? "Editar processo (PAF)" : "Novo processo (PAF)";
   if (id) {
     const n = state.notificacoes.find(x => x.id === id);
     if (n) for (const k in n) if (form.elements[k]) form.elements[k].value = n[k] ?? "";
   } else {
     form.elements.id.value = "";
     form.elements.dataNotificacao.value = todayISO();
+    form.elements.dataCriacao.value = todayISO();
     if (presetClienteId) form.elements.clienteId.value = presetClienteId;
+    autoPrazoRecurso(form);
   }
   openModal("notifModalBack");
 }
@@ -543,20 +725,152 @@ function saveNotif(ev) {
     const idx = state.notificacoes.findIndex(n => n.id === data.id);
     const prev = state.notificacoes[idx];
     state.notificacoes[idx] = { ...prev, ...data };
-    if (prev.status !== data.status) logEvento(data.id, `Status alterado: ${prev.status||"—"} → ${data.status}`);
+    if (prev.status !== data.status) logEvento(data.id, `Atividade alterada: ${prev.status||"—"} → ${data.status}`);
   } else {
     data.id = uid();
     data.criadoEm = new Date().toISOString();
     state.notificacoes.push(data);
-    logEvento(data.id, `Notificação cadastrada (${data.status||"Notificado"})`);
+    logEvento(data.id, `Processo cadastrado (${data.status||"Autuação"})`);
   }
   save(); closeModal("notifModalBack"); render();
 }
 function deleteNotif(id) {
-  if (!confirm("Excluir esta notificação?")) return;
+  if (!confirm("Excluir este processo?")) return;
   state.notificacoes = state.notificacoes.filter(n => n.id !== id);
   state.eventos = state.eventos.filter(e => e.refId !== id);
+  delete state.anexos[id];
   save(); render();
+}
+
+/* -------------------- Anexos -------------------- */
+function attachFile(id, file) {
+  if (!file) return;
+  if (file.size > 3 * 1024 * 1024) {
+    if (!confirm(`Arquivo grande (${(file.size/1024/1024).toFixed(1)}MB). O navegador tem limite total (~5-10MB). Continuar?`)) return;
+  }
+  const reader = new FileReader();
+  reader.onload = () => {
+    state.anexos[id] = state.anexos[id] || [];
+    state.anexos[id].push({ id: uid(), name: file.name, type: file.type, size: file.size, data: reader.result, addedAt: new Date().toISOString() });
+    logEvento(id, `Anexo adicionado: ${file.name}`);
+    save(); openNotifDetail(id);
+  };
+  reader.readAsDataURL(file);
+}
+function removeAnexo(notifId, anexoId) {
+  if (!confirm("Remover este anexo?")) return;
+  state.anexos[notifId] = (state.anexos[notifId]||[]).filter(a => a.id !== anexoId);
+  save(); openNotifDetail(notifId);
+}
+function downloadAnexo(notifId, anexoId) {
+  const a = (state.anexos[notifId]||[]).find(x => x.id === anexoId);
+  if (!a) return;
+  const link = document.createElement("a");
+  link.href = a.data; link.download = a.name; link.click();
+}
+
+/* -------------------- WhatsApp -------------------- */
+function digits(s) { return String(s||"").replace(/\D/g, ""); }
+function waLink(phone, msg) {
+  const p = digits(phone);
+  if (!p) return null;
+  const full = p.length <= 11 ? "55" + p : p;
+  return `https://wa.me/${full}?text=${encodeURIComponent(msg)}`;
+}
+function whatsMsg(n) {
+  const c = clienteById(n.clienteId);
+  const nome = c ? c.nome.split(" ")[0] : "";
+  const u = urgency(n.prazo);
+  const prazoTxt = n.prazo ? `${fmtDate(n.prazo)} (${u.label})` : "sem prazo definido";
+  const proc = n.processo ? `processo ${n.processo}` : "processo do CBMMG";
+  return `Olá ${nome}, tudo bem? Aqui é ${state.escritorio.nome || "o responsável técnico"}.\n\nEstamos acompanhando o ${proc} (${n.status||"em andamento"}).\nPrazo atual: ${prazoTxt}.\n\nPreciso confirmar os próximos passos com você. Pode me responder por aqui?`;
+}
+function openWhats(n) {
+  const c = clienteById(n.clienteId);
+  if (!c || !c.telefone) { alert("Cliente sem telefone cadastrado."); return; }
+  const link = waLink(c.telefone, whatsMsg(n));
+  if (link) window.open(link, "_blank");
+}
+
+/* -------------------- Recurso/Defesa generator -------------------- */
+function gerarRecurso(n) {
+  const c = clienteById(n.clienteId) || {};
+  const e = state.escritorio || {};
+  const isDefesa = /Autua/i.test(n.status||"") || /Notificação inicial/i.test(n.status||"");
+  const tipo = isDefesa ? "DEFESA" : "RECURSO";
+  const fundamento = isDefesa
+    ? "IT 45/2025 do CBMMG (Portaria n. 78/2025), item 6.3, e Decreto Estadual n. 46.668/2014"
+    : "IT 45/2025 do CBMMG (Portaria n. 78/2025), item 13, e Decreto Estadual n. 46.668/2014";
+  const dest = "AO ILMO. SR. COMANDANTE DA " + (n.unidade || "UNIDADE DO CBMMG") + " DO CORPO DE BOMBEIROS MILITAR DE MINAS GERAIS";
+  const hoje = new Date().toLocaleDateString("pt-BR", { day:'2-digit', month:'long', year:'numeric' });
+
+  return `${dest}
+
+Ref.: ${tipo} administrativa
+Processo (Infoscip): ${n.processo || "________________"}
+Autuado: ${c.nome || "________________"}
+CNPJ/CPF: ${c.documento || "________________"}
+Endereço: ${c.endereco || "________________"}
+
+${c.nome || "________________"}, ${c.documento ? "inscrito no CNPJ/CPF sob o nº " + c.documento : ""}, com endereço à ${c.endereco || "________________"}, por seu responsável técnico infra-assinado, vem, respeitosamente, à presença de V. Sa., com fundamento no ${fundamento}, no prazo legal de 10 (dez) dias corridos contados da efetiva comunicação do ato processual, apresentar
+
+${tipo === "DEFESA" ? "DEFESA ADMINISTRATIVA" : "RECURSO ADMINISTRATIVO"}
+
+em face ${tipo === "DEFESA" ? "do Auto de Infração" : "do Termo de Aplicação de Sanção de " + (n.status||"________________")} referente ao processo em epígrafe, pelas razões de fato e de direito a seguir expostas.
+
+I - DOS FATOS
+
+${n.exigencias ? n.exigencias : "Descrever de forma clara e precisa os fatos, a data de ciência do ato e as circunstâncias da fiscalização."}
+
+II - DAS RAZÕES
+
+1. O Corpo de Bombeiros Militar de Minas Gerais lavrou ${tipo === "DEFESA" ? "o Auto de Infração" : "Termo de Aplicação de Sanção"} imputando as irregularidades acima relatadas.
+
+2. Ocorre que, conforme se demonstrará, ${tipo === "DEFESA" ? "não subsistem os fundamentos da autuação" : "há vícios ou fatos supervenientes que impõem a reforma da sanção aplicada"}, seja em razão da correção das irregularidades apontadas, seja pela ausência de configuração da infração descrita nos arts. 14, I, II e III do Decreto Estadual n. 47.998/2020.
+
+3. [Desenvolver a argumentação: (i) descrever as medidas de segurança já instaladas; (ii) juntar fotos, ART e documentos comprobatórios; (iii) apontar eventual desproporcionalidade da sanção; (iv) requerer prorrogação de prazo, se cabível, nos termos do item 7 da IT 45/2025].
+
+III - DOS PEDIDOS
+
+Diante do exposto, requer-se:
+
+a) o recebimento e conhecimento da presente peça, por tempestiva e regular;
+b) ${tipo === "DEFESA" ? "o acolhimento da defesa para arquivamento do processo, ou, subsidiariamente, a concessão de prazo para regularização" : "o provimento do recurso para reforma/anulação do Termo de Aplicação de Sanção"};
+c) a juntada dos documentos comprobatórios anexos;
+d) a produção de todas as provas em direito admitidas.
+
+Termos em que,
+Pede deferimento.
+
+${e.cidade || "Belo Horizonte"}/MG, ${hoje}.
+
+______________________________________________
+${e.nome || "[Nome do responsável técnico]"}
+${e.registro ? e.registro : "[CREA/CAU nº __________]"}
+${e.telefone ? "Tel.: " + e.telefone : ""}
+${e.email ? "E-mail: " + e.email : ""}
+${e.endereco ? e.endereco : ""}
+`;
+}
+let _recursoContext = null;
+function openRecurso(n) {
+  _recursoContext = n;
+  document.getElementById("recursoText").value = gerarRecurso(n);
+  openModal("recursoModalBack");
+}
+function copyRecurso() {
+  const ta = document.getElementById("recursoText");
+  ta.select(); document.execCommand("copy");
+  alert("Copiado.");
+}
+function downloadRecurso() {
+  const txt = document.getElementById("recursoText").value;
+  const blob = new Blob([txt], { type: "text/plain;charset=utf-8" });
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  const n = _recursoContext;
+  a.download = `defesa-recurso-${n?.processo || n?.id || "processo"}.txt`;
+  a.click();
 }
 
 /* -------------------- Detail -------------------- */
@@ -566,48 +880,88 @@ function openNotifDetail(id) {
   const c = clienteById(n.clienteId);
   const u = urgency(n.prazo);
   const uR = urgency(n.prazoRecurso);
+  const uP = urgency(n.dataProrrogacao);
   const evts = state.eventos.filter(e => e.refId === id).sort((a,b) => new Date(b.data) - new Date(a.data));
-  document.getElementById("detailTitle").textContent = `Processo ${n.processo || "(sem número)"} · ${c ? c.nome : "Cliente removido"}`;
+  const anexos = state.anexos[id] || [];
+
+  document.getElementById("detailTitle").textContent = `${n.processo || "(sem código)"} · ${c ? c.nome : "Cliente removido"}`;
   document.getElementById("detailBody").innerHTML = `
-    <div class="detail-grid">
+    ${n.necessitaResposta === "Sim" && n.respondido !== "Sim" ? `<div class="danger-box">⚠ Este processo NECESSITA DE RESPOSTA e ainda não foi respondido.</div>` : ""}
+    <div class="grid k-2">
       <div>
+        <h4 style="margin:0 0 8px">Processo (Infoscip)</h4>
         <dl class="kv">
-          <dt>Status</dt><dd>${statusChip(n.status)}</dd>
-          <dt>Tipo</dt><dd>${escapeHtml(n.tipo||"—")}</dd>
-          <dt>Órgão</dt><dd>${escapeHtml(n.orgao||"—")}</dd>
-          <dt>Processo nº</dt><dd>${escapeHtml(n.processo||"—")}</dd>
-          <dt>Notificação em</dt><dd>${fmtDate(n.dataNotificacao)}</dd>
-          <dt>Prazo</dt><dd>${fmtDate(n.prazo)} <span class="chip ${u.cls}">${u.label}</span></dd>
-          <dt>Prazo recurso</dt><dd>${n.prazoRecurso ? `${fmtDate(n.prazoRecurso)} <span class="chip ${uR.cls}">${uR.label}</span>` : "—"}</dd>
-          <dt>Recurso</dt><dd>${escapeHtml(n.recursoStatus||"Não")}</dd>
-          <dt>Honorários</dt><dd>${fmtBRL(n.honorarios)}</dd>
-          <dt>Pagamento</dt><dd>${escapeHtml(n.pagamento||"—")}</dd>
+          <dt>Cód. processo</dt><dd>${escapeHtml(n.processo||"—")}</dd>
+          <dt>Atividade atual</dt><dd>${statusChip(n.status)}</dd>
+          <dt>Origem</dt><dd>${escapeHtml(n.origem||"—")}</dd>
+          <dt>Unidade</dt><dd>${escapeHtml(n.unidade||"—")}</dd>
+          <dt>Natureza vistoria</dt><dd>${escapeHtml(n.natureza||"—")}</dd>
+          <dt>Classific. risco</dt><dd>${escapeHtml(n.risco||"—")}</dd>
+          <dt>Criação Infoscip</dt><dd>${fmtDate(n.dataCriacao)}</dd>
+          <dt>Necessita resposta?</dt><dd>${escapeHtml(n.necessitaResposta||"—")}</dd>
+          <dt>Respondido?</dt><dd>${escapeHtml(n.respondido||"—")}</dd>
+          <dt>Progride p/ multa?</dt><dd>${escapeHtml(n.progredeMulta||"—")}</dd>
+          <dt>E-mail processo</dt><dd>${escapeHtml(n.emailProc||"—")}</dd>
+          <dt>Dados complem.</dt><dd style="white-space:pre-wrap">${escapeHtml(n.complementares||"—")}</dd>
         </dl>
         <div class="divider"></div>
-        <h4 style="margin:0 0 6px">Exigências</h4>
+        <h4 style="margin:0 0 8px">Prazos</h4>
+        <dl class="kv">
+          <dt>Ciência/notificação</dt><dd>${fmtDate(n.dataNotificacao)}</dd>
+          <dt>Prazo defesa/vistoria</dt><dd>${fmtDate(n.prazo)} <span class="chip ${u.cls}">${u.label}</span></dd>
+          <dt>Prazo recurso</dt><dd>${n.prazoRecurso ? `${fmtDate(n.prazoRecurso)} <span class="chip ${uR.cls}">${uR.label}</span>` : "—"}</dd>
+          <dt>Recurso</dt><dd>${escapeHtml(n.recursoStatus||"Não")} ${n.dataRecurso ? `<span class="hint">(protocolo ${fmtDate(n.dataRecurso)})</span>` : ""}</dd>
+          <dt>Prorrogação</dt><dd>${escapeHtml(n.prorrogacao||"—")} ${n.dataProrrogacao ? `— nova data limite ${fmtDate(n.dataProrrogacao)} <span class="chip ${uP.cls}">${uP.label}</span>` : ""}</dd>
+          <dt>Vistoria acessória</dt><dd>${escapeHtml(n.vistoriaAcessoria||"—")} ${n.dataVistoria ? `<span class="hint">(${fmtDate(n.dataVistoria)})</span>` : ""}</dd>
+        </dl>
+        <div class="divider"></div>
+        <h4 style="margin:0 0 6px">Irregularidades</h4>
         <div class="hint" style="white-space:pre-wrap">${escapeHtml(n.exigencias||"—")}</div>
         <div class="divider"></div>
-        <h4 style="margin:0 0 6px">Anotações</h4>
-        <div class="hint" style="white-space:pre-wrap">${escapeHtml(n.anotacoes||"—")}</div>
+        <h4 style="margin:0 0 6px">Financeiro</h4>
+        <dl class="kv">
+          <dt>Honorários</dt><dd>${fmtBRL(n.honorarios)} <span class="hint">(${escapeHtml(n.pagamento||"—")})</span></dd>
+          <dt>Multa</dt><dd>${fmtBRL(n.valorMulta)} ${n.multaStatus ? `<span class="hint">(${escapeHtml(n.multaStatus)})</span>` : ""}</dd>
+        </dl>
       </div>
       <div>
         <h4 style="margin:0 0 8px">Cliente</h4>
         ${c ? `
           <dl class="kv">
-            <dt>Nome</dt><dd>${escapeHtml(c.nome)}</dd>
+            <dt>Nome/Razão</dt><dd>${escapeHtml(c.nome)}</dd>
+            <dt>Fantasia</dt><dd>${escapeHtml(c.fantasia||"—")}</dd>
             <dt>Doc.</dt><dd>${escapeHtml(c.documento||"—")}</dd>
             <dt>Telefone</dt><dd>${escapeHtml(c.telefone||"—")}</dd>
             <dt>E-mail</dt><dd>${escapeHtml(c.email||"—")}</dd>
             <dt>Endereço</dt><dd>${escapeHtml(c.endereco||"—")}</dd>
             <dt>Ocupação</dt><dd>${escapeHtml(c.ocupacao||"—")}</dd>
+            <dt>Gestão</dt><dd>${escapeHtml(c.gestao||"—")}</dd>
             <dt>Área</dt><dd>${c.area? c.area+" m²":"—"}</dd>
             <dt>Altura</dt><dd>${c.altura? c.altura+" m":"—"}</dd>
           </dl>
         ` : `<div class="hint">Cliente removido.</div>`}
+
+        <div class="divider"></div>
+        <h4 style="margin:0 0 8px">Anexos</h4>
+        <div id="anexosList">
+          ${anexos.length ? anexos.map(a => `
+            <div class="anexo-item">
+              <div class="name">${escapeHtml(a.name)}</div>
+              <div class="size">${(a.size/1024).toFixed(0)} KB</div>
+              <button class="icon-btn" title="Baixar" onclick="downloadAnexo('${id}','${a.id}')">⬇</button>
+              <button class="icon-btn" title="Remover" onclick="removeAnexo('${id}','${a.id}')">✕</button>
+            </div>
+          `).join("") : `<div class="hint">Nenhum anexo.</div>`}
+        </div>
+        <label class="btn sm" style="margin-top:6px">
+          + Anexar arquivo (PDF, imagem)
+          <input type="file" style="display:none" accept="application/pdf,image/*" onchange="attachFile('${id}', this.files[0])" />
+        </label>
+
         <div class="divider"></div>
         <h4 style="margin:0 0 8px">Histórico</h4>
         <div class="timeline">
-          ${evts.length ? evts.map(e => `
+          ${evts.length ? evts.slice(0,20).map(e => `
             <div class="tl-item"><div class="tl-dot"></div>
               <div class="tl-body">
                 <div class="when">${new Date(e.data).toLocaleString("pt-BR")}</div>
@@ -625,6 +979,8 @@ function openNotifDetail(id) {
   `;
   document.getElementById("detailEditBtn").onclick = () => { closeModal("detailModalBack"); openNotifModal(id); };
   document.getElementById("detailDeleteBtn").onclick = () => { deleteNotif(id); closeModal("detailModalBack"); };
+  document.getElementById("detailWhatsBtn").onclick = () => openWhats(n);
+  document.getElementById("detailRecursoBtn").onclick = () => openRecurso(n);
   openModal("detailModalBack");
 }
 function addEvento(ev, id) {
@@ -640,13 +996,12 @@ function addEvento(ev, id) {
 function render() {
   const view = state.currentView || "dashboard";
   document.querySelectorAll("#nav button").forEach(b => b.classList.toggle("active", b.dataset.view === view));
-  const map = { dashboard: viewDashboard, prazos: viewPrazos, notificacoes: viewNotificacoes, kanban: viewKanban, clientes: viewClientes, config: viewConfig };
-  const titles = { dashboard:"Dashboard", prazos:"Prazos e alertas", notificacoes:"Notificações", kanban:"Pipeline dos processos", clientes:"Clientes", config:"Backup / Config" };
+  const map = { dashboard: viewDashboard, prazos: viewPrazos, notificacoes: viewNotificacoes, kanban: viewKanban, clientes: viewClientes, escritorio: viewEscritorio, config: viewConfig };
+  const titles = { dashboard:"Dashboard", prazos:"Prazos e alertas", notificacoes:"Processos (PAF)", kanban:"Pipeline dos processos", clientes:"Clientes", escritorio:"Meu escritório", config:"Backup / Config" };
   document.getElementById("viewTitle").textContent = titles[view];
   document.getElementById("view").innerHTML = map[view]();
   bindAfterRender();
 }
-
 function bindAfterRender() {
   document.querySelectorAll("[data-open-notif]").forEach(el => el.addEventListener("click", () => openNotifDetail(el.dataset.openNotif)));
   document.querySelectorAll("[data-edit-client]").forEach(el => el.addEventListener("click", (e) => { e.stopPropagation(); openClientModal(el.dataset.editClient); }));
@@ -654,14 +1009,17 @@ function bindAfterRender() {
   document.querySelectorAll("[data-new-notif]").forEach(el => el.addEventListener("click", (e) => { e.stopPropagation(); openNotifModal(null, el.dataset.newNotif); }));
 }
 
+function isAberto(n) { return !["Regularizado (AVCB/CLCB emitido)","PAF encerrado"].includes(n.status); }
+
 function viewDashboard() {
   const total = state.notificacoes.length;
-  const abertas = state.notificacoes.filter(n => n.status !== "AVCB emitido" && n.status !== "Encerrado").length;
-  const vencendo = state.notificacoes.filter(n => { const d = diffDays(n.prazo); return n.status !== "AVCB emitido" && n.status !== "Encerrado" && d !== null && d <= 7 && d >= 0; }).length;
-  const vencidas = state.notificacoes.filter(n => { const d = diffDays(n.prazo); return n.status !== "AVCB emitido" && n.status !== "Encerrado" && d !== null && d < 0; }).length;
+  const abertas = state.notificacoes.filter(isAberto).length;
+  const necessitando = state.notificacoes.filter(n => isAberto(n) && n.necessitaResposta === "Sim" && n.respondido !== "Sim").length;
+  const vencendo = state.notificacoes.filter(n => { const d = diffDays(n.prazo); return isAberto(n) && d !== null && d <= 7 && d >= 0; }).length;
+  const vencidas = state.notificacoes.filter(n => { const d = diffDays(n.prazo); return isAberto(n) && d !== null && d < 0; }).length;
 
   const proximos = [...state.notificacoes]
-    .filter(n => n.status !== "AVCB emitido" && n.status !== "Encerrado" && n.prazo)
+    .filter(n => isAberto(n) && n.prazo)
     .sort((a,b) => new Date(a.prazo) - new Date(b.prazo))
     .slice(0, 8);
 
@@ -671,10 +1029,10 @@ function viewDashboard() {
 
   return `
     <div class="grid k-4">
-      <div class="card"><h3>Notificações abertas</h3><div class="stat">${abertas}<small>de ${total} total</small></div></div>
+      <div class="card"><h3>Processos abertos</h3><div class="stat">${abertas}<small>de ${total} total</small></div></div>
+      <div class="card"><h3>Aguardando resposta</h3><div class="stat" style="color:${necessitando?'#fca5a5':'inherit'}">${necessitando}</div></div>
       <div class="card"><h3>Vencem em até 7 dias</h3><div class="stat" style="color:${vencendo?'#fcd34d':'inherit'}">${vencendo}</div></div>
-      <div class="card"><h3>Vencidas</h3><div class="stat" style="color:${vencidas?'#fca5a5':'inherit'}">${vencidas}</div></div>
-      <div class="card"><h3>Clientes ativos</h3><div class="stat">${state.clientes.length}</div></div>
+      <div class="card"><h3>Vencidos</h3><div class="stat" style="color:${vencidas?'#fca5a5':'inherit'}">${vencidas}</div></div>
     </div>
     <div class="grid k-2" style="margin-top:14px">
       <div class="card">
@@ -684,16 +1042,16 @@ function viewDashboard() {
         ${proximos.map(n => { const c = clienteById(n.clienteId); const u = urgency(n.prazo); return `
           <tr data-open-notif="${n.id}" style="cursor:pointer">
             <td>${escapeHtml(c? c.nome : "—")}<div class="subline">${statusChip(n.status)}</div></td>
-            <td>${escapeHtml(n.processo||"—")}<div class="subline">${escapeHtml(n.tipo||"")}</div></td>
+            <td>${escapeHtml(n.processo||"—")}<div class="subline">${escapeHtml(n.origem||"")}</div></td>
             <td>${fmtDate(n.prazo)}<div class="subline"><span class="chip ${u.cls}">${u.label}</span></div></td>
           </tr>`;}).join("")}
         </tbody></table>
-        ` : `<div class="empty">Nenhuma notificação em aberto.</div>`}
+        ` : `<div class="empty">Nenhum processo em aberto.</div>`}
       </div>
       <div class="card">
-        <h3>Recém cadastradas</h3>
+        <h3>Recém cadastrados</h3>
         ${recentes.length ? `
-        <table class="data"><thead><tr><th>Cliente</th><th>Status</th><th>Criado</th></tr></thead><tbody>
+        <table class="data"><thead><tr><th>Cliente</th><th>Atividade</th><th>Criado</th></tr></thead><tbody>
         ${recentes.map(n => { const c = clienteById(n.clienteId); return `
           <tr data-open-notif="${n.id}" style="cursor:pointer">
             <td>${escapeHtml(c? c.nome : "—")}<div class="subline">${escapeHtml(n.processo||"")}</div></td>
@@ -708,30 +1066,30 @@ function viewDashboard() {
 }
 
 function viewPrazos() {
-  const items = state.notificacoes
-    .filter(n => n.status !== "AVCB emitido" && n.status !== "Encerrado")
-    .map(n => ({ n, prazo: n.prazo, kind: "atendimento" }))
-    .concat(state.notificacoes
-      .filter(n => n.prazoRecurso && n.recursoStatus !== "Deferido" && n.recursoStatus !== "Indeferido")
-      .map(n => ({ n, prazo: n.prazoRecurso, kind: "recurso" })))
-    .filter(x => x.prazo)
-    .sort((a,b) => new Date(a.prazo) - new Date(b.prazo));
+  const items = [];
+  state.notificacoes.forEach(n => {
+    if (!isAberto(n)) return;
+    if (n.prazo) items.push({ n, prazo: n.prazo, kind: "Defesa/Vistoria" });
+    if (n.prazoRecurso && !["Deferido","Indeferido"].includes(n.recursoStatus)) items.push({ n, prazo: n.prazoRecurso, kind: "Recurso" });
+    if (n.dataProrrogacao) items.push({ n, prazo: n.dataProrrogacao, kind: "Prorrogação" });
+  });
+  items.sort((a,b) => new Date(a.prazo) - new Date(b.prazo));
   return `
     <div class="card">
       <div class="toolbar">
-        <div class="hint">Ordenado por urgência. Cores: vermelho ≤ 3d ou vencido, amarelo ≤ 10d, verde > 10d.</div>
+        <div class="hint">Vermelho ≤ 3d ou vencido · Amarelo ≤ 10d · Verde > 10d · Prazos em dias corridos (IT 45 item 14.3).</div>
       </div>
       ${items.length ? `
       <table class="data">
-        <thead><tr><th>Prazo</th><th>Urgência</th><th>Tipo</th><th>Cliente</th><th>Processo</th><th>Status</th></tr></thead>
+        <thead><tr><th>Prazo</th><th>Urgência</th><th>Tipo</th><th>Cliente</th><th>Processo</th><th>Atividade</th></tr></thead>
         <tbody>
-        ${items.map(({n, prazo, kind}) => { const c = clienteById(n.clienteId); const u = urgency(prazo); return `
+        ${items.map(({n, prazo, kind}) => { const c = clienteById(n.clienteId); const u = urgency(prazo); const kindChip = kind === "Recurso" ? '<span class="chip accent">Recurso</span>' : kind === "Prorrogação" ? '<span class="chip info">Prorrogação</span>' : '<span class="chip warn">Defesa/Vistoria</span>'; return `
           <tr data-open-notif="${n.id}" style="cursor:pointer">
             <td><strong>${fmtDate(prazo)}</strong></td>
             <td><span class="chip ${u.cls}">${u.label}</span></td>
-            <td>${kind === "recurso" ? '<span class="chip accent">Recurso</span>' : '<span class="chip info">Atendimento</span>'}</td>
+            <td>${kindChip}</td>
             <td>${escapeHtml(c ? c.nome : "—")}</td>
-            <td>${escapeHtml(n.processo||"—")}<div class="subline">${escapeHtml(n.tipo||"")}</div></td>
+            <td>${escapeHtml(n.processo||"—")}<div class="subline">${escapeHtml(n.unidade||"")}</div></td>
             <td>${statusChip(n.status)}</td>
           </tr>`;}).join("")}
         </tbody>
@@ -746,62 +1104,64 @@ function viewNotificacoes() {
   const statusFilter = state.statusFilter || "";
   const list = state.notificacoes.filter(n => {
     const c = clienteById(n.clienteId);
-    const hay = `${c?c.nome:""} ${n.processo||""} ${n.tipo||""} ${n.orgao||""} ${n.exigencias||""}`.toLowerCase();
+    const hay = `${c?c.nome:""} ${n.processo||""} ${n.origem||""} ${n.unidade||""} ${n.exigencias||""} ${n.emailProc||""}`.toLowerCase();
     return (!q || hay.includes(q)) && (!statusFilter || n.status === statusFilter);
   }).sort((a,b) => new Date(b.criadoEm||0) - new Date(a.criadoEm||0));
 
-  const statusOptions = ["Notificado","Em análise","Projeto em elaboração","Protocolado","Aguardando vistoria","AVCB emitido","Em recurso","Encerrado"];
+  const statusOptions = ["Autuação","Notificação inicial","Advertência Escrita aplicada","1ª Multa aplicada","2ª Multa aplicada","Cassação AVCB/CLCB aplicada","Embargo aplicado","Interdição aplicada","Defesa em elaboração","Defesa protocolada","Recurso em elaboração","Recurso protocolado","Regularizado (AVCB/CLCB emitido)","PAF encerrado"];
 
   return `
     <div class="card">
       <div class="toolbar">
-        <input type="search" id="fSearch" placeholder="Buscar cliente, processo, exigência..." value="${escapeAttr(state.q||"")}" oninput="state.q = this.value; render();" />
+        <input type="search" id="fSearch" placeholder="Buscar cliente, cód. processo, unidade..." value="${escapeAttr(state.q||"")}" oninput="state.q = this.value; render();" />
         <select id="fStatus" onchange="state.statusFilter = this.value; render();">
-          <option value="">Todos os status</option>
+          <option value="">Todas as atividades</option>
           ${statusOptions.map(s => `<option ${state.statusFilter===s?"selected":""}>${s}</option>`).join("")}
         </select>
         <div class="spacer"></div>
-        <button class="btn primary" onclick="openNotifModal()">+ Nova notificação</button>
+        <button class="btn" onclick="exportCSV()">Exportar CSV</button>
+        <button class="btn primary" onclick="openNotifModal()">+ Novo processo</button>
       </div>
       ${list.length ? `
       <table class="data">
-        <thead><tr><th>Cliente</th><th>Processo</th><th>Tipo</th><th>Data</th><th>Prazo</th><th>Status</th><th>Recurso</th></tr></thead>
+        <thead><tr><th>Cliente</th><th>Cód. processo</th><th>Atividade</th><th>Origem</th><th>Ciência</th><th>Prazo</th><th>Resposta?</th><th>Recurso</th></tr></thead>
         <tbody>
-        ${list.map(n => { const c = clienteById(n.clienteId); const u = urgency(n.prazo); return `
+        ${list.map(n => { const c = clienteById(n.clienteId); const u = urgency(n.prazo); const needsResp = n.necessitaResposta === "Sim" && n.respondido !== "Sim"; return `
           <tr data-open-notif="${n.id}" style="cursor:pointer">
             <td>${escapeHtml(c? c.nome : "—")}<div class="subline">${escapeHtml(c?.telefone||"")}</div></td>
-            <td>${escapeHtml(n.processo||"—")}<div class="subline">${escapeHtml(n.orgao||"")}</div></td>
-            <td>${escapeHtml(n.tipo||"—")}</td>
+            <td>${escapeHtml(n.processo||"—")}<div class="subline">${escapeHtml(n.unidade||"")}</div></td>
+            <td>${statusChip(n.status)}</td>
+            <td>${escapeHtml(n.origem||"—")}</td>
             <td>${fmtDate(n.dataNotificacao)}</td>
             <td>${fmtDate(n.prazo)}<div class="subline"><span class="chip ${u.cls}">${u.label}</span></div></td>
-            <td>${statusChip(n.status)}</td>
+            <td>${needsResp ? '<span class="chip danger">Pendente</span>' : escapeHtml(n.respondido==="Sim"?"Sim":(n.necessitaResposta||"—"))}</td>
             <td>${n.recursoStatus ? `<span class="chip accent">${escapeHtml(n.recursoStatus)}</span>` : "—"}</td>
           </tr>`;}).join("")}
         </tbody>
       </table>
-      ` : `<div class="empty">Nenhuma notificação encontrada.</div>`}
+      ` : `<div class="empty">Nenhum processo encontrado.</div>`}
     </div>
   `;
 }
 
 function viewKanban() {
-  const cols = ["Notificado","Em análise","Projeto em elaboração","Protocolado","Aguardando vistoria","AVCB emitido"];
+  const cols = ["Autuação","Advertência Escrita aplicada","1ª Multa aplicada","2ª Multa aplicada","Cassação AVCB/CLCB aplicada","Regularizado (AVCB/CLCB emitido)"];
   return `
     <div class="kanban">
       ${cols.map(col => {
         const items = state.notificacoes.filter(n => n.status === col);
         return `<div class="col">
-          <header><h4>${col}</h4><span class="count">${items.length}</span></header>
+          <header><h4>${escapeHtml(col)}</h4><span class="count">${items.length}</span></header>
           ${items.map(n => { const c = clienteById(n.clienteId); const u = urgency(n.prazo); return `
             <div class="kcard" data-open-notif="${n.id}">
               <div class="name">${escapeHtml(c? c.nome : "—")}</div>
-              <div class="meta">${escapeHtml(n.processo||"sem nº")} · ${escapeHtml(n.tipo||"")}</div>
+              <div class="meta">${escapeHtml(n.processo||"sem cód.")} · ${escapeHtml(n.unidade||"")}</div>
               <div class="meta"><span class="chip ${u.cls}">${u.label}</span></div>
             </div>`;}).join("") || `<div class="hint" style="padding:8px">—</div>`}
         </div>`;
       }).join("")}
     </div>
-    <div class="hint" style="margin-top:8px">Dica: para mover um processo de coluna, abra-o e altere o campo <em>Status</em>.</div>
+    <div class="hint" style="margin-top:8px">Para mover um processo, abra-o e altere a <em>atividade atual</em>. Etapas intermediárias (defesa/recurso em preparação) aparecem no dashboard e na aba Processos.</div>
   `;
 }
 
@@ -816,17 +1176,18 @@ function viewClientes() {
       </div>
       ${list.length ? `
       <table class="data">
-        <thead><tr><th>Nome</th><th>Documento</th><th>Contato</th><th>Ocupação</th><th>Notificações</th><th></th></tr></thead>
+        <thead><tr><th>Nome</th><th>Documento</th><th>Contato</th><th>Ocupação</th><th>Processos</th><th></th></tr></thead>
         <tbody>
-        ${list.map(c => { const ns = notifsByCliente(c.id); return `
+        ${list.map(c => { const ns = notifsByCliente(c.id); const abertos = ns.filter(isAberto).length; const wa = c.telefone ? waLink(c.telefone, `Olá ${c.nome.split(" ")[0]}, tudo bem? Aqui é ${state.escritorio.nome || "seu responsável técnico"}.`) : null; return `
           <tr>
             <td><strong>${escapeHtml(c.nome)}</strong><div class="subline">${escapeHtml(c.endereco||"")}</div></td>
             <td>${escapeHtml(c.documento||"—")}</td>
             <td>${escapeHtml(c.telefone||"—")}<div class="subline">${escapeHtml(c.email||"")}</div></td>
             <td>${escapeHtml(c.ocupacao||"—")}</td>
-            <td>${ns.length} <span class="hint">(${ns.filter(x => x.status !== "AVCB emitido" && x.status !== "Encerrado").length} em aberto)</span></td>
+            <td>${ns.length} <span class="hint">(${abertos} em aberto)</span></td>
             <td class="row-actions">
-              <button class="icon-btn" title="Nova notificação para este cliente" data-new-notif="${c.id}">＋</button>
+              ${wa ? `<a class="icon-btn" title="WhatsApp" href="${wa}" target="_blank">💬</a>` : ""}
+              <button class="icon-btn" title="Novo processo" data-new-notif="${c.id}">＋</button>
               <button class="icon-btn" title="Editar" data-edit-client="${c.id}">✎</button>
               <button class="icon-btn" title="Excluir" data-delete-client="${c.id}">🗑</button>
             </td>
@@ -838,14 +1199,58 @@ function viewClientes() {
   `;
 }
 
+function viewEscritorio() {
+  const e = state.escritorio || {};
+  return `
+    <div class="card" style="max-width:720px">
+      <h3>Dados do escritório / responsável técnico</h3>
+      <p class="hint">Usados no gerador de defesa/recurso e nas mensagens de WhatsApp.</p>
+      <form onsubmit="saveEscritorio(event)">
+        <div class="form-grid">
+          <label class="field full"><span>Nome do responsável técnico</span>
+            <input name="nome" value="${escapeAttr(e.nome||"")}" />
+          </label>
+          <label class="field"><span>Registro (CREA/CAU)</span>
+            <input name="registro" value="${escapeAttr(e.registro||"")}" placeholder="Ex.: CREA-MG 000000/D" />
+          </label>
+          <label class="field"><span>Telefone</span>
+            <input name="telefone" value="${escapeAttr(e.telefone||"")}" />
+          </label>
+          <label class="field"><span>E-mail</span>
+            <input name="email" type="email" value="${escapeAttr(e.email||"")}" />
+          </label>
+          <label class="field"><span>Cidade</span>
+            <input name="cidade" value="${escapeAttr(e.cidade||"Belo Horizonte")}" />
+          </label>
+          <label class="field full"><span>Endereço completo</span>
+            <input name="endereco" value="${escapeAttr(e.endereco||"")}" />
+          </label>
+        </div>
+        <div style="margin-top:12px">
+          <button class="btn primary" type="submit">Salvar</button>
+        </div>
+      </form>
+    </div>
+  `;
+}
+
+function saveEscritorio(ev) {
+  ev.preventDefault();
+  const data = Object.fromEntries(new FormData(ev.target));
+  state.escritorio = data;
+  save();
+  alert("Dados do escritório salvos.");
+}
+
 function viewConfig() {
   return `
     <div class="grid k-2">
       <div class="card">
         <h3>Backup</h3>
-        <p class="hint">Exporte um arquivo JSON com todos os dados (clientes, notificações e histórico). Guarde em um local seguro.</p>
-        <div style="display:flex; gap:8px">
+        <p class="hint">Exporte um arquivo JSON com todos os dados (clientes, processos, anexos e histórico).</p>
+        <div style="display:flex; gap:8px; flex-wrap:wrap">
           <button class="btn primary" onclick="exportData()">Baixar backup (.json)</button>
+          <button class="btn" onclick="exportCSV()">Exportar processos (.csv)</button>
           <label class="btn">
             Importar backup
             <input type="file" accept="application/json" style="display:none" onchange="importData(event)" />
@@ -859,10 +1264,30 @@ function viewConfig() {
       </div>
       <div class="card full" style="grid-column:1/-1">
         <h3>Sobre</h3>
-        <p class="hint">PRIME · CRM de notificações AVCB. Ferramenta pessoal para acompanhamento de processos junto ao CBMMG (regularização, renovação, autos, interdições e recursos). Todos os dados ficam no seu navegador (localStorage) — não são enviados para nenhum servidor.</p>
+        <p class="hint">PRIME · CRM de fiscalização CBMMG. Estrutura de campos alinhada ao Infoscip (fiscalizacaobombeiros.mg.gov.br) e à IT 45/2025 (Portaria n. 78/2025).<br/>Todos os dados ficam no navegador (localStorage) — não são enviados a nenhum servidor. Faça backups periódicos.</p>
       </div>
     </div>
   `;
+}
+
+/* -------------------- CSV export -------------------- */
+function csvEscape(v) {
+  const s = String(v ?? "");
+  if (/[",;\n]/.test(s)) return '"' + s.replace(/"/g, '""') + '"';
+  return s;
+}
+function exportCSV() {
+  const rows = [["Cod. processo","Cliente","Documento","Atividade","Origem","Unidade","Ciencia","Prazo","Prazo recurso","Recurso","Necessita resposta","Respondido","Honorarios","Multa","E-mail"]];
+  state.notificacoes.forEach(n => {
+    const c = clienteById(n.clienteId) || {};
+    rows.push([n.processo,c.nome,c.documento,n.status,n.origem,n.unidade,n.dataNotificacao,n.prazo,n.prazoRecurso,n.recursoStatus,n.necessitaResposta,n.respondido,n.honorarios,n.valorMulta,n.emailProc]);
+  });
+  const csv = rows.map(r => r.map(csvEscape).join(";")).join("\n");
+  const blob = new Blob(["﻿" + csv], { type: "text/csv;charset=utf-8" });
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = `prime-processos-${todayISO()}.csv`;
+  a.click();
 }
 
 /* -------------------- Backup -------------------- */
@@ -885,6 +1310,8 @@ function importData(ev) {
       state.clientes = data.clientes;
       state.notificacoes = data.notificacoes;
       state.eventos = data.eventos || [];
+      state.anexos = data.anexos || {};
+      state.escritorio = data.escritorio || {};
       save(); render();
       alert("Backup importado.");
     } catch (e) {
@@ -896,7 +1323,7 @@ function importData(ev) {
 function wipeAll() {
   if (!confirm("Apagar TODOS os dados? Essa ação não pode ser desfeita.")) return;
   if (!confirm("Tem certeza mesmo? Faça um backup antes.")) return;
-  state.clientes = []; state.notificacoes = []; state.eventos = [];
+  state.clientes = []; state.notificacoes = []; state.eventos = []; state.anexos = {};
   save(); render();
 }
 
