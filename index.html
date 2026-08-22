@@ -1,1 +1,915 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>PRIME • CRM de Notificações AVCB</title>
+<style>
+  :root {
+    --bg: #0f1216;
+    --panel: #171c22;
+    --panel-2: #1e252d;
+    --border: #2a323c;
+    --text: #e6ebf1;
+    --muted: #8a95a3;
+    --accent: #ff5a1f;
+    --accent-2: #ff8a4a;
+    --ok: #22c55e;
+    --warn: #f59e0b;
+    --danger: #ef4444;
+    --info: #3b82f6;
+    --chip: #232b34;
+    --shadow: 0 6px 20px rgba(0,0,0,.35);
+  }
+  * { box-sizing: border-box; }
+  html, body { height: 100%; }
+  body {
+    margin: 0;
+    background: radial-gradient(1200px 800px at 90% -10%, rgba(255,90,31,.10), transparent 60%),
+                radial-gradient(900px 700px at -10% 110%, rgba(59,130,246,.10), transparent 60%),
+                var(--bg);
+    color: var(--text);
+    font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+  a { color: var(--accent-2); text-decoration: none; }
 
+  /* Layout */
+  .app { display: grid; grid-template-columns: 240px 1fr; min-height: 100vh; }
+  aside {
+    background: linear-gradient(180deg, #12171d 0%, #0f1216 100%);
+    border-right: 1px solid var(--border);
+    padding: 18px 14px;
+    position: sticky; top: 0; height: 100vh;
+  }
+  .brand { display: flex; align-items: center; gap: 10px; padding: 6px 6px 18px; }
+  .brand-mark {
+    width: 32px; height: 32px; border-radius: 8px;
+    background: linear-gradient(135deg, var(--accent), var(--accent-2));
+    display: grid; place-items: center; color: white; font-weight: 800;
+    box-shadow: 0 4px 14px rgba(255,90,31,.35);
+  }
+  .brand-name { font-weight: 800; letter-spacing: .3px; }
+  .brand-sub { font-size: 11px; color: var(--muted); }
+  nav { display: flex; flex-direction: column; gap: 2px; margin-top: 6px; }
+  nav button {
+    background: transparent; color: var(--text); border: 0; text-align: left;
+    padding: 10px 12px; border-radius: 8px; cursor: pointer; font-size: 14px;
+    display: flex; align-items: center; gap: 10px;
+  }
+  nav button:hover { background: var(--panel); }
+  nav button.active { background: var(--panel-2); box-shadow: inset 0 0 0 1px var(--border); }
+  nav .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--muted); }
+  nav button.active .dot { background: var(--accent); }
+  .sidebar-footer { position: absolute; bottom: 14px; left: 14px; right: 14px; color: var(--muted); font-size: 11px; }
+
+  main { padding: 22px 26px 60px; max-width: 1400px; width: 100%; }
+  .topbar { display: flex; align-items: center; gap: 12px; margin-bottom: 18px; }
+  .topbar h1 { font-size: 20px; margin: 0; flex: 1; }
+  .topbar .actions { display: flex; gap: 8px; }
+
+  /* Buttons */
+  .btn {
+    background: var(--panel);
+    color: var(--text);
+    border: 1px solid var(--border);
+    padding: 8px 12px; border-radius: 8px; cursor: pointer; font-size: 13px;
+    display: inline-flex; align-items: center; gap: 6px;
+  }
+  .btn:hover { background: var(--panel-2); }
+  .btn.primary { background: linear-gradient(135deg, var(--accent), var(--accent-2)); border-color: transparent; color: white; font-weight: 600; }
+  .btn.primary:hover { filter: brightness(1.05); }
+  .btn.ghost { background: transparent; }
+  .btn.danger { background: transparent; color: var(--danger); border-color: rgba(239,68,68,.35); }
+  .btn.danger:hover { background: rgba(239,68,68,.08); }
+
+  /* Cards / grid */
+  .grid { display: grid; gap: 14px; }
+  .grid.k-4 { grid-template-columns: repeat(4, 1fr); }
+  .grid.k-3 { grid-template-columns: repeat(3, 1fr); }
+  .grid.k-2 { grid-template-columns: repeat(2, 1fr); }
+  @media (max-width: 1100px) { .grid.k-4 { grid-template-columns: repeat(2,1fr); } .grid.k-3 { grid-template-columns: repeat(2,1fr); } }
+  @media (max-width: 720px) { .grid.k-4, .grid.k-3, .grid.k-2 { grid-template-columns: 1fr; } .app { grid-template-columns: 1fr; } aside { position: static; height: auto; } }
+
+  .card {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 14px;
+    box-shadow: var(--shadow);
+  }
+  .card h3 { margin: 0 0 6px; font-size: 13px; color: var(--muted); font-weight: 600; letter-spacing: .3px; text-transform: uppercase; }
+  .stat { font-size: 26px; font-weight: 800; }
+  .stat small { font-size: 12px; color: var(--muted); font-weight: 500; margin-left: 6px; }
+
+  /* Toolbar */
+  .toolbar {
+    display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-bottom: 12px;
+  }
+  .toolbar input[type="search"], .toolbar select {
+    background: var(--panel); color: var(--text); border: 1px solid var(--border);
+    padding: 8px 10px; border-radius: 8px; font-size: 13px; min-width: 180px;
+  }
+  .toolbar .spacer { flex: 1; }
+
+  /* Table */
+  table.data { width: 100%; border-collapse: collapse; }
+  table.data th, table.data td { text-align: left; padding: 10px 10px; border-bottom: 1px solid var(--border); font-size: 13px; vertical-align: top; }
+  table.data th { color: var(--muted); font-weight: 600; font-size: 11px; text-transform: uppercase; letter-spacing: .3px; }
+  table.data tr:hover td { background: rgba(255,255,255,.02); }
+  table.data td .subline { color: var(--muted); font-size: 12px; }
+  .empty { color: var(--muted); text-align: center; padding: 40px 12px; border: 1px dashed var(--border); border-radius: 12px; }
+
+  /* Chips */
+  .chip {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 3px 8px; border-radius: 999px; background: var(--chip);
+    font-size: 11px; color: var(--muted); border: 1px solid var(--border);
+  }
+  .chip.ok { color: #86efac; border-color: rgba(34,197,94,.3); background: rgba(34,197,94,.08); }
+  .chip.warn { color: #fcd34d; border-color: rgba(245,158,11,.3); background: rgba(245,158,11,.08); }
+  .chip.danger { color: #fca5a5; border-color: rgba(239,68,68,.35); background: rgba(239,68,68,.08); }
+  .chip.info { color: #93c5fd; border-color: rgba(59,130,246,.3); background: rgba(59,130,246,.08); }
+  .chip.accent { color: #ffb997; border-color: rgba(255,90,31,.35); background: rgba(255,90,31,.08); }
+
+  /* Modal */
+  .modal-back { position: fixed; inset: 0; background: rgba(0,0,0,.55); backdrop-filter: blur(4px); display: none; z-index: 40; }
+  .modal-back.open { display: grid; place-items: center; padding: 20px; }
+  .modal {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    width: min(720px, 100%);
+    max-height: 90vh; overflow: auto;
+    box-shadow: 0 30px 60px rgba(0,0,0,.5);
+  }
+  .modal-header { padding: 14px 18px; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 10px; position: sticky; top: 0; background: var(--panel); }
+  .modal-header h2 { margin: 0; font-size: 16px; flex: 1; }
+  .modal-body { padding: 16px 18px; }
+  .modal-footer { padding: 12px 18px; border-top: 1px solid var(--border); display: flex; gap: 8px; justify-content: flex-end; position: sticky; bottom: 0; background: var(--panel); }
+
+  /* Forms */
+  .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .form-grid .full { grid-column: 1 / -1; }
+  label.field { display: flex; flex-direction: column; gap: 6px; font-size: 12px; color: var(--muted); }
+  label.field > span.req::after { content: " *"; color: var(--accent); }
+  input, select, textarea {
+    background: var(--panel-2); color: var(--text); border: 1px solid var(--border);
+    padding: 9px 10px; border-radius: 8px; font-size: 13px; font-family: inherit; width: 100%;
+  }
+  textarea { resize: vertical; min-height: 80px; }
+  input:focus, select:focus, textarea:focus { outline: 2px solid rgba(255,90,31,.5); outline-offset: 1px; border-color: transparent; }
+
+  /* Kanban */
+  .kanban { display: grid; grid-template-columns: repeat(6, minmax(220px, 1fr)); gap: 12px; overflow-x: auto; padding-bottom: 8px; }
+  .col {
+    background: var(--panel); border: 1px solid var(--border); border-radius: 12px;
+    padding: 10px; display: flex; flex-direction: column; gap: 8px; min-height: 300px;
+  }
+  .col header { display: flex; align-items: center; justify-content: space-between; padding: 4px 6px 8px; border-bottom: 1px dashed var(--border); }
+  .col h4 { margin: 0; font-size: 12px; text-transform: uppercase; letter-spacing: .4px; color: var(--muted); }
+  .count { font-size: 11px; padding: 2px 6px; border-radius: 999px; background: var(--panel-2); color: var(--muted); }
+  .kcard {
+    background: var(--panel-2); border: 1px solid var(--border); border-radius: 10px;
+    padding: 10px; cursor: pointer; display: flex; flex-direction: column; gap: 6px;
+  }
+  .kcard:hover { border-color: rgba(255,90,31,.4); }
+  .kcard .name { font-weight: 700; font-size: 13px; }
+  .kcard .meta { font-size: 11px; color: var(--muted); display: flex; gap: 8px; flex-wrap: wrap; }
+
+  /* Detail view */
+  .detail-grid { display: grid; grid-template-columns: 2fr 1fr; gap: 14px; }
+  @media (max-width: 900px) { .detail-grid { grid-template-columns: 1fr; } }
+  .kv { display: grid; grid-template-columns: 140px 1fr; gap: 6px 12px; font-size: 13px; }
+  .kv dt { color: var(--muted); }
+  .timeline { display: flex; flex-direction: column; gap: 10px; }
+  .tl-item { display: grid; grid-template-columns: 20px 1fr; gap: 10px; }
+  .tl-dot { width: 10px; height: 10px; border-radius: 50%; background: var(--accent); margin-top: 6px; box-shadow: 0 0 0 3px rgba(255,90,31,.15); }
+  .tl-body { background: var(--panel-2); border: 1px solid var(--border); border-radius: 8px; padding: 8px 10px; }
+  .tl-body .when { font-size: 11px; color: var(--muted); }
+
+  .row-actions { display: flex; gap: 4px; }
+  .icon-btn { background: transparent; border: 0; color: var(--muted); cursor: pointer; padding: 4px 6px; border-radius: 6px; font-size: 13px; }
+  .icon-btn:hover { color: var(--text); background: var(--panel-2); }
+
+  .divider { height: 1px; background: var(--border); margin: 10px 0; }
+  .hint { color: var(--muted); font-size: 12px; }
+
+  /* Print */
+  @media print {
+    aside, .topbar .actions, .toolbar, .modal-back { display: none !important; }
+    body { background: white; color: black; }
+    .card, .modal, .col, .kcard { background: white !important; border-color: #ddd !important; color: black !important; }
+  }
+</style>
+</head>
+<body>
+<div class="app">
+  <aside>
+    <div class="brand">
+      <div class="brand-mark">P</div>
+      <div>
+        <div class="brand-name">PRIME</div>
+        <div class="brand-sub">CRM Notificações AVCB</div>
+      </div>
+    </div>
+    <nav id="nav">
+      <button data-view="dashboard" class="active"><span class="dot"></span> Dashboard</button>
+      <button data-view="prazos"><span class="dot"></span> Prazos</button>
+      <button data-view="notificacoes"><span class="dot"></span> Notificações</button>
+      <button data-view="kanban"><span class="dot"></span> Pipeline (Kanban)</button>
+      <button data-view="clientes"><span class="dot"></span> Clientes</button>
+      <button data-view="config"><span class="dot"></span> Backup / Config</button>
+    </nav>
+    <div class="sidebar-footer">
+      Dados salvos neste navegador.<br/>Faça backup periódico.
+    </div>
+  </aside>
+
+  <main>
+    <div class="topbar">
+      <h1 id="viewTitle">Dashboard</h1>
+      <div class="actions">
+        <button class="btn" onclick="openClientModal()">+ Cliente</button>
+        <button class="btn primary" onclick="openNotifModal()">+ Notificação</button>
+      </div>
+    </div>
+    <div id="view"></div>
+  </main>
+</div>
+
+<!-- Client Modal -->
+<div class="modal-back" id="clientModalBack">
+  <div class="modal">
+    <div class="modal-header">
+      <h2 id="clientModalTitle">Novo cliente</h2>
+      <button class="icon-btn" onclick="closeModal('clientModalBack')">✕</button>
+    </div>
+    <div class="modal-body">
+      <form id="clientForm" onsubmit="saveClient(event)">
+        <input type="hidden" name="id" />
+        <div class="form-grid">
+          <label class="field full"><span class="req">Nome / Razão social</span>
+            <input name="nome" required />
+          </label>
+          <label class="field"><span>CNPJ / CPF</span>
+            <input name="documento" />
+          </label>
+          <label class="field"><span>Telefone / WhatsApp</span>
+            <input name="telefone" />
+          </label>
+          <label class="field full"><span>E-mail</span>
+            <input name="email" type="email" />
+          </label>
+          <label class="field full"><span>Endereço da edificação</span>
+            <input name="endereco" placeholder="Rua, nº, bairro, cidade/UF" />
+          </label>
+          <label class="field"><span>Ocupação (IT 01)</span>
+            <select name="ocupacao">
+              <option value="">—</option>
+              <option>A - Residencial</option>
+              <option>B - Serviço de hospedagem</option>
+              <option>C - Comercial</option>
+              <option>D - Serviço profissional</option>
+              <option>E - Educacional</option>
+              <option>F - Reunião de público</option>
+              <option>G - Serviço automotivo</option>
+              <option>H - Serviço de saúde</option>
+              <option>I - Industrial</option>
+              <option>J - Depósito</option>
+              <option>L - Explosivos</option>
+              <option>M - Especial</option>
+            </select>
+          </label>
+          <label class="field"><span>Área construída (m²)</span>
+            <input name="area" type="number" step="0.01" />
+          </label>
+          <label class="field"><span>Altura (m)</span>
+            <input name="altura" type="number" step="0.01" />
+          </label>
+          <label class="field"><span>Nº pavimentos</span>
+            <input name="pavimentos" type="number" />
+          </label>
+          <label class="field full"><span>Observações</span>
+            <textarea name="obs"></textarea>
+          </label>
+        </div>
+      </form>
+    </div>
+    <div class="modal-footer">
+      <button class="btn ghost" onclick="closeModal('clientModalBack')">Cancelar</button>
+      <button class="btn primary" onclick="document.getElementById('clientForm').requestSubmit()">Salvar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Notification Modal -->
+<div class="modal-back" id="notifModalBack">
+  <div class="modal">
+    <div class="modal-header">
+      <h2 id="notifModalTitle">Nova notificação</h2>
+      <button class="icon-btn" onclick="closeModal('notifModalBack')">✕</button>
+    </div>
+    <div class="modal-body">
+      <form id="notifForm" onsubmit="saveNotif(event)">
+        <input type="hidden" name="id" />
+        <div class="form-grid">
+          <label class="field full"><span class="req">Cliente</span>
+            <select name="clienteId" required id="notifClienteSelect"></select>
+          </label>
+          <label class="field"><span>Número do processo/notificação</span>
+            <input name="processo" placeholder="Ex.: 1350.01.0012345/2026" />
+          </label>
+          <label class="field"><span>Órgão</span>
+            <select name="orgao">
+              <option>CBMMG</option>
+              <option>Prefeitura</option>
+              <option>Ministério Público</option>
+              <option>Outro</option>
+            </select>
+          </label>
+          <label class="field"><span class="req">Data da notificação</span>
+            <input name="dataNotificacao" type="date" required />
+          </label>
+          <label class="field"><span class="req">Prazo para atendimento</span>
+            <input name="prazo" type="date" required />
+          </label>
+          <label class="field"><span>Status</span>
+            <select name="status">
+              <option>Notificado</option>
+              <option>Em análise</option>
+              <option>Projeto em elaboração</option>
+              <option>Protocolado</option>
+              <option>Aguardando vistoria</option>
+              <option>AVCB emitido</option>
+              <option>Em recurso</option>
+              <option>Encerrado</option>
+            </select>
+          </label>
+          <label class="field"><span>Tipo</span>
+            <select name="tipo">
+              <option>Regularização (AVCB)</option>
+              <option>Renovação AVCB</option>
+              <option>CLCB</option>
+              <option>Auto de infração</option>
+              <option>Interdição</option>
+              <option>Vistoria técnica</option>
+              <option>Outro</option>
+            </select>
+          </label>
+          <label class="field full"><span>Exigências / Motivo</span>
+            <textarea name="exigencias" placeholder="Liste as exigências da notificação..."></textarea>
+          </label>
+          <label class="field"><span>Prazo para recurso</span>
+            <input name="prazoRecurso" type="date" />
+          </label>
+          <label class="field"><span>Recurso interposto?</span>
+            <select name="recursoStatus">
+              <option value="">Não</option>
+              <option>Em preparação</option>
+              <option>Protocolado</option>
+              <option>Deferido</option>
+              <option>Indeferido</option>
+            </select>
+          </label>
+          <label class="field"><span>Valor honorários (R$)</span>
+            <input name="honorarios" type="number" step="0.01" />
+          </label>
+          <label class="field"><span>Pagamento</span>
+            <select name="pagamento">
+              <option>Pendente</option>
+              <option>Sinal recebido</option>
+              <option>Parcial</option>
+              <option>Quitado</option>
+            </select>
+          </label>
+          <label class="field full"><span>Anotações</span>
+            <textarea name="anotacoes"></textarea>
+          </label>
+        </div>
+      </form>
+    </div>
+    <div class="modal-footer">
+      <button class="btn ghost" onclick="closeModal('notifModalBack')">Cancelar</button>
+      <button class="btn primary" onclick="document.getElementById('notifForm').requestSubmit()">Salvar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Detail Modal -->
+<div class="modal-back" id="detailModalBack">
+  <div class="modal">
+    <div class="modal-header">
+      <h2 id="detailTitle">Detalhes</h2>
+      <button class="icon-btn" onclick="closeModal('detailModalBack')">✕</button>
+    </div>
+    <div class="modal-body" id="detailBody"></div>
+    <div class="modal-footer">
+      <button class="btn danger" id="detailDeleteBtn">Excluir</button>
+      <div style="flex:1"></div>
+      <button class="btn" onclick="window.print()">Imprimir</button>
+      <button class="btn primary" id="detailEditBtn">Editar</button>
+    </div>
+  </div>
+</div>
+
+<script>
+/* -------------------- Storage -------------------- */
+const KEY = "prime.avcb.v1";
+const state = load();
+
+function load() {
+  try {
+    const raw = localStorage.getItem(KEY);
+    if (raw) return JSON.parse(raw);
+  } catch (e) {}
+  return { clientes: [], notificacoes: [], eventos: [] };
+}
+function save() { localStorage.setItem(KEY, JSON.stringify(state)); }
+function uid() { return Math.random().toString(36).slice(2, 10); }
+
+/* -------------------- Helpers -------------------- */
+const fmtBRL = v => (Number(v||0)).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+const fmtDate = d => d ? new Date(d + "T00:00:00").toLocaleDateString("pt-BR") : "—";
+const todayISO = () => new Date().toISOString().slice(0,10);
+function diffDays(d) {
+  if (!d) return null;
+  const a = new Date(d + "T00:00:00");
+  const b = new Date(todayISO() + "T00:00:00");
+  return Math.round((a - b) / 86400000);
+}
+function urgency(d) {
+  const n = diffDays(d);
+  if (n === null) return { cls: "", label: "—" };
+  if (n < 0) return { cls: "danger", label: `Vencido há ${Math.abs(n)}d` };
+  if (n === 0) return { cls: "danger", label: "Vence hoje" };
+  if (n <= 3) return { cls: "danger", label: `${n}d restantes` };
+  if (n <= 10) return { cls: "warn", label: `${n}d restantes` };
+  return { cls: "ok", label: `${n}d restantes` };
+}
+function statusChip(s) {
+  const map = {
+    "Notificado": "warn",
+    "Em análise": "info",
+    "Projeto em elaboração": "info",
+    "Protocolado": "info",
+    "Aguardando vistoria": "accent",
+    "AVCB emitido": "ok",
+    "Em recurso": "warn",
+    "Encerrado": ""
+  };
+  return `<span class="chip ${map[s]||""}">${s||"—"}</span>`;
+}
+function clienteById(id) { return state.clientes.find(c => c.id === id); }
+function notifsByCliente(id) { return state.notificacoes.filter(n => n.clienteId === id); }
+
+function logEvento(refId, texto) {
+  state.eventos.push({ id: uid(), refId, texto, data: new Date().toISOString() });
+}
+
+/* -------------------- Modals -------------------- */
+function openModal(id) { document.getElementById(id).classList.add("open"); }
+function closeModal(id) { document.getElementById(id).classList.remove("open"); }
+document.querySelectorAll(".modal-back").forEach(el => {
+  el.addEventListener("click", e => { if (e.target === el) el.classList.remove("open"); });
+});
+
+/* -------------------- Client CRUD -------------------- */
+function openClientModal(id) {
+  const form = document.getElementById("clientForm");
+  form.reset();
+  document.getElementById("clientModalTitle").textContent = id ? "Editar cliente" : "Novo cliente";
+  if (id) {
+    const c = clienteById(id);
+    if (c) for (const k in c) if (form.elements[k]) form.elements[k].value = c[k] ?? "";
+  } else {
+    form.elements.id.value = "";
+  }
+  openModal("clientModalBack");
+}
+function saveClient(ev) {
+  ev.preventDefault();
+  const form = ev.target;
+  const data = Object.fromEntries(new FormData(form));
+  if (data.id) {
+    const idx = state.clientes.findIndex(c => c.id === data.id);
+    state.clientes[idx] = { ...state.clientes[idx], ...data };
+  } else {
+    data.id = uid();
+    data.criadoEm = new Date().toISOString();
+    state.clientes.push(data);
+  }
+  save(); closeModal("clientModalBack"); render();
+}
+function deleteClient(id) {
+  if (!confirm("Excluir este cliente e todas as suas notificações?")) return;
+  state.clientes = state.clientes.filter(c => c.id !== id);
+  state.notificacoes = state.notificacoes.filter(n => n.clienteId !== id);
+  save(); render();
+}
+
+/* -------------------- Notif CRUD -------------------- */
+function refreshClienteSelect() {
+  const sel = document.getElementById("notifClienteSelect");
+  sel.innerHTML = state.clientes.length
+    ? state.clientes.map(c => `<option value="${c.id}">${escapeHtml(c.nome)}</option>`).join("")
+    : `<option value="">— cadastre um cliente primeiro —</option>`;
+}
+function openNotifModal(id, presetClienteId) {
+  if (!state.clientes.length && !id) {
+    alert("Cadastre um cliente antes.");
+    openClientModal();
+    return;
+  }
+  refreshClienteSelect();
+  const form = document.getElementById("notifForm");
+  form.reset();
+  document.getElementById("notifModalTitle").textContent = id ? "Editar notificação" : "Nova notificação";
+  if (id) {
+    const n = state.notificacoes.find(x => x.id === id);
+    if (n) for (const k in n) if (form.elements[k]) form.elements[k].value = n[k] ?? "";
+  } else {
+    form.elements.id.value = "";
+    form.elements.dataNotificacao.value = todayISO();
+    if (presetClienteId) form.elements.clienteId.value = presetClienteId;
+  }
+  openModal("notifModalBack");
+}
+function saveNotif(ev) {
+  ev.preventDefault();
+  const form = ev.target;
+  const data = Object.fromEntries(new FormData(form));
+  if (data.id) {
+    const idx = state.notificacoes.findIndex(n => n.id === data.id);
+    const prev = state.notificacoes[idx];
+    state.notificacoes[idx] = { ...prev, ...data };
+    if (prev.status !== data.status) logEvento(data.id, `Status alterado: ${prev.status||"—"} → ${data.status}`);
+  } else {
+    data.id = uid();
+    data.criadoEm = new Date().toISOString();
+    state.notificacoes.push(data);
+    logEvento(data.id, `Notificação cadastrada (${data.status||"Notificado"})`);
+  }
+  save(); closeModal("notifModalBack"); render();
+}
+function deleteNotif(id) {
+  if (!confirm("Excluir esta notificação?")) return;
+  state.notificacoes = state.notificacoes.filter(n => n.id !== id);
+  state.eventos = state.eventos.filter(e => e.refId !== id);
+  save(); render();
+}
+
+/* -------------------- Detail -------------------- */
+function openNotifDetail(id) {
+  const n = state.notificacoes.find(x => x.id === id);
+  if (!n) return;
+  const c = clienteById(n.clienteId);
+  const u = urgency(n.prazo);
+  const uR = urgency(n.prazoRecurso);
+  const evts = state.eventos.filter(e => e.refId === id).sort((a,b) => new Date(b.data) - new Date(a.data));
+  document.getElementById("detailTitle").textContent = `Processo ${n.processo || "(sem número)"} · ${c ? c.nome : "Cliente removido"}`;
+  document.getElementById("detailBody").innerHTML = `
+    <div class="detail-grid">
+      <div>
+        <dl class="kv">
+          <dt>Status</dt><dd>${statusChip(n.status)}</dd>
+          <dt>Tipo</dt><dd>${escapeHtml(n.tipo||"—")}</dd>
+          <dt>Órgão</dt><dd>${escapeHtml(n.orgao||"—")}</dd>
+          <dt>Processo nº</dt><dd>${escapeHtml(n.processo||"—")}</dd>
+          <dt>Notificação em</dt><dd>${fmtDate(n.dataNotificacao)}</dd>
+          <dt>Prazo</dt><dd>${fmtDate(n.prazo)} <span class="chip ${u.cls}">${u.label}</span></dd>
+          <dt>Prazo recurso</dt><dd>${n.prazoRecurso ? `${fmtDate(n.prazoRecurso)} <span class="chip ${uR.cls}">${uR.label}</span>` : "—"}</dd>
+          <dt>Recurso</dt><dd>${escapeHtml(n.recursoStatus||"Não")}</dd>
+          <dt>Honorários</dt><dd>${fmtBRL(n.honorarios)}</dd>
+          <dt>Pagamento</dt><dd>${escapeHtml(n.pagamento||"—")}</dd>
+        </dl>
+        <div class="divider"></div>
+        <h4 style="margin:0 0 6px">Exigências</h4>
+        <div class="hint" style="white-space:pre-wrap">${escapeHtml(n.exigencias||"—")}</div>
+        <div class="divider"></div>
+        <h4 style="margin:0 0 6px">Anotações</h4>
+        <div class="hint" style="white-space:pre-wrap">${escapeHtml(n.anotacoes||"—")}</div>
+      </div>
+      <div>
+        <h4 style="margin:0 0 8px">Cliente</h4>
+        ${c ? `
+          <dl class="kv">
+            <dt>Nome</dt><dd>${escapeHtml(c.nome)}</dd>
+            <dt>Doc.</dt><dd>${escapeHtml(c.documento||"—")}</dd>
+            <dt>Telefone</dt><dd>${escapeHtml(c.telefone||"—")}</dd>
+            <dt>E-mail</dt><dd>${escapeHtml(c.email||"—")}</dd>
+            <dt>Endereço</dt><dd>${escapeHtml(c.endereco||"—")}</dd>
+            <dt>Ocupação</dt><dd>${escapeHtml(c.ocupacao||"—")}</dd>
+            <dt>Área</dt><dd>${c.area? c.area+" m²":"—"}</dd>
+            <dt>Altura</dt><dd>${c.altura? c.altura+" m":"—"}</dd>
+          </dl>
+        ` : `<div class="hint">Cliente removido.</div>`}
+        <div class="divider"></div>
+        <h4 style="margin:0 0 8px">Histórico</h4>
+        <div class="timeline">
+          ${evts.length ? evts.map(e => `
+            <div class="tl-item"><div class="tl-dot"></div>
+              <div class="tl-body">
+                <div class="when">${new Date(e.data).toLocaleString("pt-BR")}</div>
+                <div>${escapeHtml(e.texto)}</div>
+              </div>
+            </div>
+          `).join("") : `<div class="hint">Sem eventos.</div>`}
+          <form onsubmit="addEvento(event, '${id}')" style="display:flex; gap:6px; margin-top:8px">
+            <input name="txt" placeholder="Adicionar entrada no histórico..." style="flex:1" />
+            <button class="btn primary" type="submit">+</button>
+          </form>
+        </div>
+      </div>
+    </div>
+  `;
+  document.getElementById("detailEditBtn").onclick = () => { closeModal("detailModalBack"); openNotifModal(id); };
+  document.getElementById("detailDeleteBtn").onclick = () => { deleteNotif(id); closeModal("detailModalBack"); };
+  openModal("detailModalBack");
+}
+function addEvento(ev, id) {
+  ev.preventDefault();
+  const txt = ev.target.txt.value.trim();
+  if (!txt) return;
+  logEvento(id, txt);
+  save();
+  openNotifDetail(id);
+}
+
+/* -------------------- Views -------------------- */
+function render() {
+  const view = state.currentView || "dashboard";
+  document.querySelectorAll("#nav button").forEach(b => b.classList.toggle("active", b.dataset.view === view));
+  const map = { dashboard: viewDashboard, prazos: viewPrazos, notificacoes: viewNotificacoes, kanban: viewKanban, clientes: viewClientes, config: viewConfig };
+  const titles = { dashboard:"Dashboard", prazos:"Prazos e alertas", notificacoes:"Notificações", kanban:"Pipeline dos processos", clientes:"Clientes", config:"Backup / Config" };
+  document.getElementById("viewTitle").textContent = titles[view];
+  document.getElementById("view").innerHTML = map[view]();
+  bindAfterRender();
+}
+
+function bindAfterRender() {
+  document.querySelectorAll("[data-open-notif]").forEach(el => el.addEventListener("click", () => openNotifDetail(el.dataset.openNotif)));
+  document.querySelectorAll("[data-edit-client]").forEach(el => el.addEventListener("click", (e) => { e.stopPropagation(); openClientModal(el.dataset.editClient); }));
+  document.querySelectorAll("[data-delete-client]").forEach(el => el.addEventListener("click", (e) => { e.stopPropagation(); deleteClient(el.dataset.deleteClient); }));
+  document.querySelectorAll("[data-new-notif]").forEach(el => el.addEventListener("click", (e) => { e.stopPropagation(); openNotifModal(null, el.dataset.newNotif); }));
+}
+
+function viewDashboard() {
+  const total = state.notificacoes.length;
+  const abertas = state.notificacoes.filter(n => n.status !== "AVCB emitido" && n.status !== "Encerrado").length;
+  const vencendo = state.notificacoes.filter(n => { const d = diffDays(n.prazo); return n.status !== "AVCB emitido" && n.status !== "Encerrado" && d !== null && d <= 7 && d >= 0; }).length;
+  const vencidas = state.notificacoes.filter(n => { const d = diffDays(n.prazo); return n.status !== "AVCB emitido" && n.status !== "Encerrado" && d !== null && d < 0; }).length;
+
+  const proximos = [...state.notificacoes]
+    .filter(n => n.status !== "AVCB emitido" && n.status !== "Encerrado" && n.prazo)
+    .sort((a,b) => new Date(a.prazo) - new Date(b.prazo))
+    .slice(0, 8);
+
+  const recentes = [...state.notificacoes]
+    .sort((a,b) => new Date(b.criadoEm||0) - new Date(a.criadoEm||0))
+    .slice(0, 5);
+
+  return `
+    <div class="grid k-4">
+      <div class="card"><h3>Notificações abertas</h3><div class="stat">${abertas}<small>de ${total} total</small></div></div>
+      <div class="card"><h3>Vencem em até 7 dias</h3><div class="stat" style="color:${vencendo?'#fcd34d':'inherit'}">${vencendo}</div></div>
+      <div class="card"><h3>Vencidas</h3><div class="stat" style="color:${vencidas?'#fca5a5':'inherit'}">${vencidas}</div></div>
+      <div class="card"><h3>Clientes ativos</h3><div class="stat">${state.clientes.length}</div></div>
+    </div>
+    <div class="grid k-2" style="margin-top:14px">
+      <div class="card">
+        <h3>Próximos prazos</h3>
+        ${proximos.length ? `
+        <table class="data"><thead><tr><th>Cliente</th><th>Processo</th><th>Prazo</th></tr></thead><tbody>
+        ${proximos.map(n => { const c = clienteById(n.clienteId); const u = urgency(n.prazo); return `
+          <tr data-open-notif="${n.id}" style="cursor:pointer">
+            <td>${escapeHtml(c? c.nome : "—")}<div class="subline">${statusChip(n.status)}</div></td>
+            <td>${escapeHtml(n.processo||"—")}<div class="subline">${escapeHtml(n.tipo||"")}</div></td>
+            <td>${fmtDate(n.prazo)}<div class="subline"><span class="chip ${u.cls}">${u.label}</span></div></td>
+          </tr>`;}).join("")}
+        </tbody></table>
+        ` : `<div class="empty">Nenhuma notificação em aberto.</div>`}
+      </div>
+      <div class="card">
+        <h3>Recém cadastradas</h3>
+        ${recentes.length ? `
+        <table class="data"><thead><tr><th>Cliente</th><th>Status</th><th>Criado</th></tr></thead><tbody>
+        ${recentes.map(n => { const c = clienteById(n.clienteId); return `
+          <tr data-open-notif="${n.id}" style="cursor:pointer">
+            <td>${escapeHtml(c? c.nome : "—")}<div class="subline">${escapeHtml(n.processo||"")}</div></td>
+            <td>${statusChip(n.status)}</td>
+            <td>${n.criadoEm ? new Date(n.criadoEm).toLocaleDateString("pt-BR") : "—"}</td>
+          </tr>`;}).join("")}
+        </tbody></table>
+        ` : `<div class="empty">Nada por aqui ainda.</div>`}
+      </div>
+    </div>
+  `;
+}
+
+function viewPrazos() {
+  const items = state.notificacoes
+    .filter(n => n.status !== "AVCB emitido" && n.status !== "Encerrado")
+    .map(n => ({ n, prazo: n.prazo, kind: "atendimento" }))
+    .concat(state.notificacoes
+      .filter(n => n.prazoRecurso && n.recursoStatus !== "Deferido" && n.recursoStatus !== "Indeferido")
+      .map(n => ({ n, prazo: n.prazoRecurso, kind: "recurso" })))
+    .filter(x => x.prazo)
+    .sort((a,b) => new Date(a.prazo) - new Date(b.prazo));
+  return `
+    <div class="card">
+      <div class="toolbar">
+        <div class="hint">Ordenado por urgência. Cores: vermelho ≤ 3d ou vencido, amarelo ≤ 10d, verde > 10d.</div>
+      </div>
+      ${items.length ? `
+      <table class="data">
+        <thead><tr><th>Prazo</th><th>Urgência</th><th>Tipo</th><th>Cliente</th><th>Processo</th><th>Status</th></tr></thead>
+        <tbody>
+        ${items.map(({n, prazo, kind}) => { const c = clienteById(n.clienteId); const u = urgency(prazo); return `
+          <tr data-open-notif="${n.id}" style="cursor:pointer">
+            <td><strong>${fmtDate(prazo)}</strong></td>
+            <td><span class="chip ${u.cls}">${u.label}</span></td>
+            <td>${kind === "recurso" ? '<span class="chip accent">Recurso</span>' : '<span class="chip info">Atendimento</span>'}</td>
+            <td>${escapeHtml(c ? c.nome : "—")}</td>
+            <td>${escapeHtml(n.processo||"—")}<div class="subline">${escapeHtml(n.tipo||"")}</div></td>
+            <td>${statusChip(n.status)}</td>
+          </tr>`;}).join("")}
+        </tbody>
+      </table>
+      ` : `<div class="empty">Nenhum prazo em aberto. 🎉</div>`}
+    </div>
+  `;
+}
+
+function viewNotificacoes() {
+  const q = (state.q||"").toLowerCase();
+  const statusFilter = state.statusFilter || "";
+  const list = state.notificacoes.filter(n => {
+    const c = clienteById(n.clienteId);
+    const hay = `${c?c.nome:""} ${n.processo||""} ${n.tipo||""} ${n.orgao||""} ${n.exigencias||""}`.toLowerCase();
+    return (!q || hay.includes(q)) && (!statusFilter || n.status === statusFilter);
+  }).sort((a,b) => new Date(b.criadoEm||0) - new Date(a.criadoEm||0));
+
+  const statusOptions = ["Notificado","Em análise","Projeto em elaboração","Protocolado","Aguardando vistoria","AVCB emitido","Em recurso","Encerrado"];
+
+  return `
+    <div class="card">
+      <div class="toolbar">
+        <input type="search" id="fSearch" placeholder="Buscar cliente, processo, exigência..." value="${escapeAttr(state.q||"")}" oninput="state.q = this.value; render();" />
+        <select id="fStatus" onchange="state.statusFilter = this.value; render();">
+          <option value="">Todos os status</option>
+          ${statusOptions.map(s => `<option ${state.statusFilter===s?"selected":""}>${s}</option>`).join("")}
+        </select>
+        <div class="spacer"></div>
+        <button class="btn primary" onclick="openNotifModal()">+ Nova notificação</button>
+      </div>
+      ${list.length ? `
+      <table class="data">
+        <thead><tr><th>Cliente</th><th>Processo</th><th>Tipo</th><th>Data</th><th>Prazo</th><th>Status</th><th>Recurso</th></tr></thead>
+        <tbody>
+        ${list.map(n => { const c = clienteById(n.clienteId); const u = urgency(n.prazo); return `
+          <tr data-open-notif="${n.id}" style="cursor:pointer">
+            <td>${escapeHtml(c? c.nome : "—")}<div class="subline">${escapeHtml(c?.telefone||"")}</div></td>
+            <td>${escapeHtml(n.processo||"—")}<div class="subline">${escapeHtml(n.orgao||"")}</div></td>
+            <td>${escapeHtml(n.tipo||"—")}</td>
+            <td>${fmtDate(n.dataNotificacao)}</td>
+            <td>${fmtDate(n.prazo)}<div class="subline"><span class="chip ${u.cls}">${u.label}</span></div></td>
+            <td>${statusChip(n.status)}</td>
+            <td>${n.recursoStatus ? `<span class="chip accent">${escapeHtml(n.recursoStatus)}</span>` : "—"}</td>
+          </tr>`;}).join("")}
+        </tbody>
+      </table>
+      ` : `<div class="empty">Nenhuma notificação encontrada.</div>`}
+    </div>
+  `;
+}
+
+function viewKanban() {
+  const cols = ["Notificado","Em análise","Projeto em elaboração","Protocolado","Aguardando vistoria","AVCB emitido"];
+  return `
+    <div class="kanban">
+      ${cols.map(col => {
+        const items = state.notificacoes.filter(n => n.status === col);
+        return `<div class="col">
+          <header><h4>${col}</h4><span class="count">${items.length}</span></header>
+          ${items.map(n => { const c = clienteById(n.clienteId); const u = urgency(n.prazo); return `
+            <div class="kcard" data-open-notif="${n.id}">
+              <div class="name">${escapeHtml(c? c.nome : "—")}</div>
+              <div class="meta">${escapeHtml(n.processo||"sem nº")} · ${escapeHtml(n.tipo||"")}</div>
+              <div class="meta"><span class="chip ${u.cls}">${u.label}</span></div>
+            </div>`;}).join("") || `<div class="hint" style="padding:8px">—</div>`}
+        </div>`;
+      }).join("")}
+    </div>
+    <div class="hint" style="margin-top:8px">Dica: para mover um processo de coluna, abra-o e altere o campo <em>Status</em>.</div>
+  `;
+}
+
+function viewClientes() {
+  const list = [...state.clientes].sort((a,b) => a.nome.localeCompare(b.nome));
+  return `
+    <div class="card">
+      <div class="toolbar">
+        <div class="hint">${list.length} cliente(s) cadastrado(s)</div>
+        <div class="spacer"></div>
+        <button class="btn primary" onclick="openClientModal()">+ Novo cliente</button>
+      </div>
+      ${list.length ? `
+      <table class="data">
+        <thead><tr><th>Nome</th><th>Documento</th><th>Contato</th><th>Ocupação</th><th>Notificações</th><th></th></tr></thead>
+        <tbody>
+        ${list.map(c => { const ns = notifsByCliente(c.id); return `
+          <tr>
+            <td><strong>${escapeHtml(c.nome)}</strong><div class="subline">${escapeHtml(c.endereco||"")}</div></td>
+            <td>${escapeHtml(c.documento||"—")}</td>
+            <td>${escapeHtml(c.telefone||"—")}<div class="subline">${escapeHtml(c.email||"")}</div></td>
+            <td>${escapeHtml(c.ocupacao||"—")}</td>
+            <td>${ns.length} <span class="hint">(${ns.filter(x => x.status !== "AVCB emitido" && x.status !== "Encerrado").length} em aberto)</span></td>
+            <td class="row-actions">
+              <button class="icon-btn" title="Nova notificação para este cliente" data-new-notif="${c.id}">＋</button>
+              <button class="icon-btn" title="Editar" data-edit-client="${c.id}">✎</button>
+              <button class="icon-btn" title="Excluir" data-delete-client="${c.id}">🗑</button>
+            </td>
+          </tr>`;}).join("")}
+        </tbody>
+      </table>
+      ` : `<div class="empty">Cadastre seu primeiro cliente para começar.</div>`}
+    </div>
+  `;
+}
+
+function viewConfig() {
+  return `
+    <div class="grid k-2">
+      <div class="card">
+        <h3>Backup</h3>
+        <p class="hint">Exporte um arquivo JSON com todos os dados (clientes, notificações e histórico). Guarde em um local seguro.</p>
+        <div style="display:flex; gap:8px">
+          <button class="btn primary" onclick="exportData()">Baixar backup (.json)</button>
+          <label class="btn">
+            Importar backup
+            <input type="file" accept="application/json" style="display:none" onchange="importData(event)" />
+          </label>
+        </div>
+      </div>
+      <div class="card">
+        <h3>Zona de risco</h3>
+        <p class="hint">Apagar todos os dados deste navegador. Ação irreversível.</p>
+        <button class="btn danger" onclick="wipeAll()">Apagar tudo</button>
+      </div>
+      <div class="card full" style="grid-column:1/-1">
+        <h3>Sobre</h3>
+        <p class="hint">PRIME · CRM de notificações AVCB. Ferramenta pessoal para acompanhamento de processos junto ao CBMMG (regularização, renovação, autos, interdições e recursos). Todos os dados ficam no seu navegador (localStorage) — não são enviados para nenhum servidor.</p>
+      </div>
+    </div>
+  `;
+}
+
+/* -------------------- Backup -------------------- */
+function exportData() {
+  const blob = new Blob([JSON.stringify(state, null, 2)], { type: "application/json" });
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = `prime-avcb-backup-${todayISO()}.json`;
+  a.click();
+}
+function importData(ev) {
+  const f = ev.target.files[0];
+  if (!f) return;
+  const reader = new FileReader();
+  reader.onload = () => {
+    try {
+      const data = JSON.parse(reader.result);
+      if (!data.clientes || !data.notificacoes) throw new Error("Formato inválido");
+      if (!confirm("Isso substituirá os dados atuais. Continuar?")) return;
+      state.clientes = data.clientes;
+      state.notificacoes = data.notificacoes;
+      state.eventos = data.eventos || [];
+      save(); render();
+      alert("Backup importado.");
+    } catch (e) {
+      alert("Arquivo inválido.");
+    }
+  };
+  reader.readAsText(f);
+}
+function wipeAll() {
+  if (!confirm("Apagar TODOS os dados? Essa ação não pode ser desfeita.")) return;
+  if (!confirm("Tem certeza mesmo? Faça um backup antes.")) return;
+  state.clientes = []; state.notificacoes = []; state.eventos = [];
+  save(); render();
+}
+
+/* -------------------- Utilities -------------------- */
+function escapeHtml(s) { return String(s ?? "").replace(/[&<>"']/g, c => ({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c])); }
+function escapeAttr(s) { return escapeHtml(s); }
+
+/* -------------------- Init -------------------- */
+document.querySelectorAll("#nav button").forEach(btn => {
+  btn.addEventListener("click", () => { state.currentView = btn.dataset.view; render(); });
+});
+if (!state.currentView) state.currentView = "dashboard";
+render();
+</script>
+</body>
+</html>
