@@ -244,20 +244,20 @@
       </div>
     </div>
     <div id="authMsg"></div>
-    <form id="authForm" onsubmit="doAuth(event)">
+    <form id="authForm" onsubmit="doAuth(event, 'login')">
       <div class="form-grid" style="grid-template-columns:1fr">
         <label class="field"><span>E-mail</span>
           <input name="email" type="email" required autocomplete="email" />
         </label>
-        <label class="field"><span>Senha</span>
+        <label class="field"><span>Senha (mínimo 6 caracteres)</span>
           <input name="password" type="password" required minlength="6" autocomplete="current-password" />
         </label>
       </div>
       <div style="display:flex; gap:8px; margin-top:16px">
-        <button class="btn primary" type="submit" id="btnLogin" data-mode="login">Entrar</button>
-        <button class="btn" type="button" onclick="toggleAuthMode()">Criar conta</button>
+        <button class="btn primary" type="submit" style="flex:1">Entrar</button>
+        <button class="btn" type="button" onclick="doAuth(new Event('signup'), 'signup')" style="flex:1">Criar conta</button>
       </div>
-      <p class="hint" style="margin-top:12px; text-align:center">Seus dados ficam privados por RLS — só o seu login vê os seus processos.</p>
+      <p class="hint" style="margin-top:12px; text-align:center">Primeira vez? Preencha e-mail e senha acima e clique em <b>Criar conta</b>.<br/>Já tem conta? Preencha e clique em <b>Entrar</b>.</p>
     </form>
   </div>
 </div>
@@ -613,24 +613,31 @@ function setSync(text, kind) {
 }
 
 /* -------------------- Auth -------------------- */
-let authMode = "login";
-function toggleAuthMode() {
-  authMode = authMode === "login" ? "signup" : "login";
-  document.getElementById("btnLogin").textContent = authMode === "login" ? "Entrar" : "Criar conta";
-  document.getElementById("btnLogin").dataset.mode = authMode;
-  document.querySelector("#authForm [type=button]").textContent = authMode === "login" ? "Criar conta" : "Já tenho conta";
-  document.getElementById("authMsg").innerHTML = "";
-}
-async function doAuth(ev) {
-  ev.preventDefault();
-  const data = Object.fromEntries(new FormData(ev.target));
+async function doAuth(ev, mode) {
+  if (ev && ev.preventDefault) ev.preventDefault();
+  const form = document.getElementById("authForm");
+  const data = Object.fromEntries(new FormData(form));
   const msg = document.getElementById("authMsg");
-  msg.innerHTML = "";
-  const fn = authMode === "login" ? sb.auth.signInWithPassword.bind(sb.auth) : sb.auth.signUp.bind(sb.auth);
+  if (!data.email || !data.password) {
+    msg.innerHTML = `<div class="warn-box">Preencha e-mail e senha primeiro.</div>`;
+    return;
+  }
+  if (data.password.length < 6) {
+    msg.innerHTML = `<div class="warn-box">A senha precisa ter pelo menos 6 caracteres.</div>`;
+    return;
+  }
+  msg.innerHTML = `<div class="hint">${mode === "login" ? "Entrando" : "Criando conta"}...</div>`;
+  const fn = mode === "login" ? sb.auth.signInWithPassword.bind(sb.auth) : sb.auth.signUp.bind(sb.auth);
   const { data: res, error } = await fn({ email: data.email, password: data.password });
-  if (error) { msg.innerHTML = `<div class="danger-box">${escapeHtml(error.message)}</div>`; return; }
-  if (authMode === "signup" && !res.session) {
-    msg.innerHTML = `<div class="ok-box">Conta criada. Confirme seu e-mail (se solicitado) e entre.</div>`;
+  if (error) {
+    let m = error.message;
+    if (/Invalid login credentials/i.test(m)) m = "E-mail ou senha inválidos. Se ainda não tem conta, clique em Criar conta.";
+    if (/already registered/i.test(m)) m = "Este e-mail já tem conta. Use o botão Entrar.";
+    msg.innerHTML = `<div class="danger-box">${escapeHtml(m)}</div>`;
+    return;
+  }
+  if (mode === "signup" && !res.session) {
+    msg.innerHTML = `<div class="ok-box">Conta criada. Verifique seu e-mail para confirmar (se solicitado) e depois clique em Entrar.</div>`;
     return;
   }
   await onLoggedIn(res.session?.user || res.user);
