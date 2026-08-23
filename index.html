@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>PRIME • CRM Fiscalização CBMMG</title>
+<title>PRIME • Gestão de PAF e Autuações</title>
 <link rel="manifest" href="/manifest.webmanifest" />
 <meta name="theme-color" content="#ff5a1f" />
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -240,7 +240,7 @@
       <div class="brand-mark">P</div>
       <div>
         <div style="font-weight:800; font-size:18px">PRIME</div>
-        <div class="hint">CRM Fiscalização CBMMG</div>
+        <div class="hint">Gestão de PAF e Autuações</div>
       </div>
     </div>
     <div id="authMsg"></div>
@@ -268,7 +268,7 @@
       <div class="brand-mark">P</div>
       <div>
         <div class="brand-name">PRIME</div>
-        <div class="brand-sub">CRM Fiscalização CBMMG</div>
+        <div class="brand-sub">Gestão de PAF e Autuações</div>
       </div>
     </div>
     <div class="user-tag" id="userTag">—</div>
@@ -719,7 +719,7 @@ async function hydrate() {
       sb.from("avcb_clientes").select("*"),
       sb.from("avcb_notificacoes").select("*"),
       sb.from("avcb_eventos").select("*").order("data", { ascending: false }),
-      sb.from("avcb_anexos").select("id,name,type,size,data,notificacao_id,added_at"),
+      sb.from("avcb_anexos").select("id,name,type,size,data,notificacao_id,added_at,categoria"),
       sb.from("avcb_escritorio").select("*").maybeSingle(),
     ]);
     for (const r of [clientesR, notifsR, eventosR, anexosR, escritorioR]) if (r.error) throw r.error;
@@ -729,7 +729,7 @@ async function hydrate() {
     state.anexos = {};
     (anexosR.data||[]).forEach(a => {
       state.anexos[a.notificacao_id] = state.anexos[a.notificacao_id] || [];
-      state.anexos[a.notificacao_id].push({ id: a.id, name: a.name, type: a.type, size: a.size, data: a.data, addedAt: a.added_at });
+      state.anexos[a.notificacao_id].push({ id: a.id, name: a.name, type: a.type, size: a.size, data: a.data, addedAt: a.added_at, categoria: a.categoria });
     });
     state.escritorio = escritorioR.data || {};
     setSync("sincronizado", "ok");
@@ -779,6 +779,71 @@ function statusChip(s) {
 function clienteById(id) { return state.clientes.find(c => c.id === id); }
 function notifsByCliente(id) { return state.notificacoes.filter(n => n.clienteId === id); }
 function isAberto(n) { return !["Regularizado (AVCB/CLCB emitido)","PAF encerrado"].includes(n.status); }
+
+/* -------------------- Documentação -------------------- */
+const DOC_CATEGORIAS = [
+  "Notificação / Auto de Infração",
+  "REDS",
+  "Relatório de Fiscalização",
+  "Comprovante de recebimento",
+  "Fotos da irregularidade",
+  "Defesa",
+  "Recurso",
+  "Protocolo do recurso",
+  "Resposta do CBMMG",
+];
+function anexosPorCategoria(nid) {
+  const anx = state.anexos[nid] || [];
+  const map = {};
+  DOC_CATEGORIAS.forEach(c => map[c] = []);
+  map["Outros"] = [];
+  anx.forEach(a => {
+    const c = DOC_CATEGORIAS.includes(a.categoria) ? a.categoria : "Outros";
+    map[c].push(a);
+  });
+  return map;
+}
+function docProgresso(nid) {
+  const anx = state.anexos[nid] || [];
+  const cats = new Set(anx.map(a => a.categoria).filter(Boolean));
+  const totalObrigatorias = DOC_CATEGORIAS.length;
+  const preenchidas = DOC_CATEGORIAS.filter(c => cats.has(c)).length;
+  return { preenchidas, total: totalObrigatorias, pct: totalObrigatorias ? Math.round(100*preenchidas/totalObrigatorias) : 0 };
+}
+
+/* -------------------- Regras de dashboard -------------------- */
+function isNovo(n) {
+  // Autuação/Notificação inicial recente, sem análise ainda
+  if (!isAberto(n)) return false;
+  if (!["Autuação","Notificação inicial"].includes(n.status)) return false;
+  const criado = new Date(n.criadoEm || 0);
+  const dias = Math.round((Date.now() - criado) / 86400000);
+  return dias <= 14;
+}
+function precisaRecurso(n) {
+  if (!isAberto(n)) return false;
+  const cabe = ["Advertência Escrita aplicada","1ª Multa aplicada","2ª Multa aplicada","Cassação AVCB/CLCB aplicada","Embargo aplicado","Interdição aplicada"].includes(n.status);
+  const naoProtocolado = !n.recursoStatus || ["Em preparação"].includes(n.recursoStatus);
+  return cabe && naoProtocolado;
+}
+function docsIncompletos(n) {
+  const p = docProgresso(n.id);
+  return isAberto(n) && p.preenchidas < 3; // menos que 3 categorias preenchidas
+}
+function aguardaCBMMG(n) {
+  return isAberto(n) && ["Defesa protocolada","Recurso protocolado","Aguardando vistoria acessória"].includes(n.status);
+}
+function emAndamento(n) {
+  return isAberto(n) && ["Em análise","Defesa em elaboração","Projeto em elaboração","Recurso em elaboração","PSCIP protocolado"].includes(n.status);
+}
+function prazoVencido(n) {
+  const d = diffDays(n.prazo);
+  return isAberto(n) && d !== null && d < 0;
+}
+function prazoCritico(n) {
+  const d = diffDays(n.prazo);
+  return isAberto(n) && d !== null && d >= 0 && d <= 3;
+}
 
 /* -------------------- Modals -------------------- */
 function openModal(id) { document.getElementById(id).classList.add("open"); }
@@ -932,7 +997,7 @@ async function addEvento(ev, id) {
 }
 
 /* -------------------- Anexos -------------------- */
-async function attachFile(id, file) {
+async function attachFile(id, file, categoria) {
   if (!file) return;
   if (file.size > 3 * 1024 * 1024) {
     if (!confirm(`Arquivo grande (${(file.size/1024/1024).toFixed(1)}MB). Continuar?`)) return;
@@ -940,12 +1005,12 @@ async function attachFile(id, file) {
   setSync("enviando anexo...", "busy");
   const reader = new FileReader();
   reader.onload = async () => {
-    const payload = { notificacao_id: id, name: file.name, type: file.type, size: file.size, data: reader.result, storage_path: "inline" };
+    const payload = { notificacao_id: id, name: file.name, type: file.type, size: file.size, data: reader.result, storage_path: "inline", categoria: categoria || null };
     const { data: row, error } = await sb.from("avcb_anexos").insert(payload).select().single();
     if (error) { setSync("erro", "err"); alert("Erro ao anexar: " + error.message); return; }
     state.anexos[id] = state.anexos[id] || [];
-    state.anexos[id].push({ id: row.id, name: row.name, type: row.type, size: row.size, data: row.data, addedAt: row.added_at });
-    await logEvento(id, `Anexo adicionado: ${file.name}`);
+    state.anexos[id].push({ id: row.id, name: row.name, type: row.type, size: row.size, data: row.data, addedAt: row.added_at, categoria: row.categoria });
+    await logEvento(id, `Anexo adicionado (${categoria||"sem categoria"}): ${file.name}`);
     setSync("sincronizado", "ok");
     openNotifDetail(id);
   };
@@ -1135,23 +1200,63 @@ function openNotifDetail(id) {
             <dt>Área</dt><dd>${c.area? c.area+" m²":"—"}</dd>
             <dt>Altura</dt><dd>${c.altura? c.altura+" m":"—"}</dd>
           </dl>
+          ${(() => {
+            const outros = notifsByCliente(c.id).filter(x => x.id !== id);
+            if (!outros.length) return "";
+            const reincidente = outros.length >= 2;
+            return `
+              <div class="divider"></div>
+              <h4 style="margin:0 0 6px">Histórico CBMMG desta empresa ${reincidente ? '<span class="chip warn">reincidente</span>' : ''}</h4>
+              <table class="data" style="font-size:12px">
+                <thead><tr><th>PAF</th><th>Atividade</th><th>Data</th></tr></thead>
+                <tbody>
+                ${outros.sort((a,b) => new Date(b.criadoEm||0) - new Date(a.criadoEm||0)).slice(0,8).map(o => `
+                  <tr onclick="event.stopPropagation(); closeModal('detailModalBack'); openNotifDetail('${o.id}')" style="cursor:pointer">
+                    <td>${escapeHtml(o.processo||"—")}</td>
+                    <td>${statusChip(o.status)}</td>
+                    <td>${fmtDate(o.dataNotificacao)}</td>
+                  </tr>
+                `).join("")}
+                </tbody>
+              </table>
+            `;
+          })()}
         ` : `<div class="hint">Cliente removido.</div>`}
         <div class="divider"></div>
-        <h4 style="margin:0 0 8px">Anexos</h4>
-        <div id="anexosList">
-          ${anexos.length ? anexos.map(a => `
-            <div class="anexo-item">
-              <div class="name">${escapeHtml(a.name)}</div>
-              <div class="size">${(a.size/1024).toFixed(0)} KB</div>
-              <button class="icon-btn" title="Baixar" onclick="downloadAnexo('${id}','${a.id}')">⬇</button>
-              <button class="icon-btn" title="Remover" onclick="removeAnexo('${id}','${a.id}')">✕</button>
-            </div>
-          `).join("") : `<div class="hint">Nenhum anexo.</div>`}
+        <h4 style="margin:0 0 8px; display:flex; align-items:center; gap:10px">📸 Documentação
+          <span class="chip ${docProgresso(id).preenchidas === DOC_CATEGORIAS.length ? "ok" : docProgresso(id).preenchidas >= 3 ? "warn" : "danger"}">${docProgresso(id).preenchidas}/${DOC_CATEGORIAS.length}</span>
+        </h4>
+        <div style="height:6px; background:var(--panel-2); border-radius:999px; overflow:hidden; margin-bottom:10px">
+          <div style="height:100%; width:${docProgresso(id).pct}%; background:linear-gradient(90deg, var(--accent), var(--accent-2));"></div>
         </div>
-        <label class="btn sm" style="margin-top:6px">
-          + Anexar arquivo (PDF, imagem)
-          <input type="file" style="display:none" accept="application/pdf,image/*" onchange="attachFile('${id}', this.files[0])" />
-        </label>
+        ${(() => {
+          const grouped = anexosPorCategoria(id);
+          const cats = [...DOC_CATEGORIAS, "Outros"];
+          return cats.map(cat => {
+            const items = grouped[cat] || [];
+            const done = items.length > 0;
+            return `
+              <div style="margin-bottom:8px">
+                <div style="display:flex; align-items:center; gap:8px; font-size:12px; color:var(--muted); margin-bottom:4px">
+                  <span style="color:${done?'#86efac':'#8a95a3'}">${done ? "✓" : "○"}</span>
+                  <span style="flex:1; font-weight:600">${escapeHtml(cat)}</span>
+                  <label class="icon-btn" title="Anexar em ${escapeAttr(cat)}">
+                    +
+                    <input type="file" style="display:none" accept="application/pdf,image/*" onchange="attachFile('${id}', this.files[0], '${escapeAttr(cat)}')" />
+                  </label>
+                </div>
+                ${items.length ? items.map(a => `
+                  <div class="anexo-item">
+                    <div class="name">${escapeHtml(a.name)}</div>
+                    <div class="size">${(a.size/1024).toFixed(0)} KB</div>
+                    <button class="icon-btn" title="Baixar" onclick="downloadAnexo('${id}','${a.id}')">⬇</button>
+                    <button class="icon-btn" title="Remover" onclick="removeAnexo('${id}','${a.id}')">✕</button>
+                  </div>
+                `).join("") : ""}
+              </div>
+            `;
+          }).join("");
+        })()}
         <div class="divider"></div>
         <h4 style="margin:0 0 8px">Histórico</h4>
         <div class="timeline">
@@ -1196,57 +1301,140 @@ function bindAfterRender() {
 }
 
 function viewDashboard() {
-  const total = state.notificacoes.length;
-  const abertas = state.notificacoes.filter(isAberto).length;
-  const necessitando = state.notificacoes.filter(n => isAberto(n) && n.necessitaResposta === "Sim" && n.respondido !== "Sim").length;
-  const vencendo = state.notificacoes.filter(n => { const d = diffDays(n.prazo); return isAberto(n) && d !== null && d <= 7 && d >= 0; }).length;
-  const vencidas = state.notificacoes.filter(n => { const d = diffDays(n.prazo); return isAberto(n) && d !== null && d < 0; }).length;
+  const novos = state.notificacoes.filter(isNovo);
+  const criticos = state.notificacoes.filter(prazoCritico);
+  const recursosPend = state.notificacoes.filter(precisaRecurso);
+  const docsPend = state.notificacoes.filter(docsIncompletos);
+  const andamento = state.notificacoes.filter(emAndamento);
+  const aguardando = state.notificacoes.filter(aguardaCBMMG);
+  const recProtocolado = state.notificacoes.filter(n => isAberto(n) && n.recursoStatus === "Protocolado");
+  const vencidos = state.notificacoes.filter(prazoVencido);
 
-  const proximos = [...state.notificacoes]
-    .filter(n => isAberto(n) && n.prazo)
-    .sort((a,b) => new Date(a.prazo) - new Date(b.prazo))
-    .slice(0, 8);
+  // Central de atenção: processos que precisam ação
+  const atencao = [];
+  const seen = new Set();
+  const addAtencao = (n, motivo, cls) => {
+    if (seen.has(n.id)) return;
+    seen.add(n.id);
+    atencao.push({ n, motivo, cls });
+  };
+  vencidos.forEach(n => addAtencao(n, "Prazo vencido", "danger"));
+  criticos.forEach(n => addAtencao(n, "Prazo crítico (≤3d)", "danger"));
+  recursosPend.forEach(n => addAtencao(n, "Recurso pendente", "warn"));
+  state.notificacoes.filter(n => isAberto(n) && n.necessitaResposta === "Sim" && n.respondido !== "Sim").forEach(n => addAtencao(n, "Necessita resposta", "warn"));
+  docsPend.forEach(n => addAtencao(n, "Documentação incompleta", "info"));
+  novos.forEach(n => addAtencao(n, "Nova autuação", "accent"));
 
-  const recentes = [...state.notificacoes]
-    .sort((a,b) => new Date(b.criadoEm||0) - new Date(a.criadoEm||0))
-    .slice(0, 5);
+  // ordenar por urgência do prazo
+  atencao.sort((a,b) => {
+    const da = diffDays(a.n.prazo);
+    const db = diffDays(b.n.prazo);
+    if (da === null) return 1; if (db === null) return -1;
+    return da - db;
+  });
+
+  const cardBtn = (n) => `<button class="btn sm" onclick="event.stopPropagation(); openNotifDetail('${n.id}')">Abrir</button>`;
 
   return `
+    <!-- Linha 1: 4 cards principais -->
     <div class="grid k-4">
-      <div class="card"><h3>Processos abertos</h3><div class="stat">${abertas}<small>de ${total} total</small></div></div>
-      <div class="card"><h3>Aguardando resposta</h3><div class="stat" style="color:${necessitando?'#fca5a5':'inherit'}">${necessitando}</div></div>
-      <div class="card"><h3>Vencem em até 7 dias</h3><div class="stat" style="color:${vencendo?'#fcd34d':'inherit'}">${vencendo}</div></div>
-      <div class="card"><h3>Vencidos</h3><div class="stat" style="color:${vencidas?'#fca5a5':'inherit'}">${vencidas}</div></div>
-    </div>
-    <div class="grid k-2" style="margin-top:14px">
-      <div class="card">
-        <h3>Próximos prazos</h3>
-        ${proximos.length ? `
-        <table class="data"><thead><tr><th>Cliente</th><th>Processo</th><th>Prazo</th></tr></thead><tbody>
-        ${proximos.map(n => { const c = clienteById(n.clienteId); const u = urgency(n.prazo); return `
-          <tr data-open-notif="${n.id}" style="cursor:pointer">
-            <td>${escapeHtml(c? c.nome : "—")}<div class="subline">${statusChip(n.status)}</div></td>
-            <td>${escapeHtml(n.processo||"—")}<div class="subline">${escapeHtml(n.origem||"")}</div></td>
-            <td>${fmtDate(n.prazo)}<div class="subline"><span class="chip ${u.cls}">${u.label}</span></div></td>
-          </tr>`;}).join("")}
-        </tbody></table>
-        ` : `<div class="empty">Nenhum processo em aberto.</div>`}
+      <div class="card" style="border-color: rgba(255,90,31,.35); cursor:pointer" onclick="filterAndGo('novos')">
+        <h3>🆕 Novas autuações</h3>
+        <div class="stat" style="color:${novos.length?'#ffb997':'inherit'}">${novos.length}</div>
+        <div class="hint">Cadastradas ≤ 14d, ainda em Autuação/Notificação inicial</div>
       </div>
-      <div class="card">
-        <h3>Recém cadastrados</h3>
-        ${recentes.length ? `
-        <table class="data"><thead><tr><th>Cliente</th><th>Atividade</th><th>Criado</th></tr></thead><tbody>
-        ${recentes.map(n => { const c = clienteById(n.clienteId); return `
+      <div class="card" style="border-color: rgba(239,68,68,.35); cursor:pointer" onclick="filterAndGo('criticos')">
+        <h3>🔴 Prazos críticos</h3>
+        <div class="stat" style="color:${criticos.length?'#fca5a5':'inherit'}">${criticos.length}</div>
+        <div class="hint">Prazo vencendo em até 3 dias</div>
+      </div>
+      <div class="card" style="border-color: rgba(245,158,11,.35); cursor:pointer" onclick="filterAndGo('recursos')">
+        <h3>🟠 Recursos pendentes</h3>
+        <div class="stat" style="color:${recursosPend.length?'#fcd34d':'inherit'}">${recursosPend.length}</div>
+        <div class="hint">Sanção aplicada, recurso não protocolado</div>
+      </div>
+      <div class="card" style="border-color: rgba(59,130,246,.35); cursor:pointer" onclick="filterAndGo('docs')">
+        <h3>📸 Docs pendentes</h3>
+        <div class="stat" style="color:${docsPend.length?'#93c5fd':'inherit'}">${docsPend.length}</div>
+        <div class="hint">Menos de 3 categorias de documentos anexadas</div>
+      </div>
+    </div>
+
+    <!-- Linha 2: pipeline -->
+    <div class="grid k-4" style="margin-top:14px">
+      <div class="card"><h3>Em andamento</h3><div class="stat">${andamento.length}</div><div class="hint">Análise/defesa/recurso em elaboração</div></div>
+      <div class="card"><h3>Aguardando CBMMG</h3><div class="stat">${aguardando.length}</div><div class="hint">Defesa/recurso protocolado ou vistoria</div></div>
+      <div class="card"><h3>Recurso protocolado</h3><div class="stat" style="color:${recProtocolado.length?'#86efac':'inherit'}">${recProtocolado.length}</div><div class="hint">Aguardando decisão</div></div>
+      <div class="card"><h3>Vencidos</h3><div class="stat" style="color:${vencidos.length?'#fca5a5':'inherit'}">${vencidos.length}</div><div class="hint">Ação imediata</div></div>
+    </div>
+
+    <!-- Central de Atenção -->
+    <div class="card" style="margin-top:14px">
+      <h3>🚨 Central de atenção — ações necessárias</h3>
+      ${atencao.length ? `
+      <table class="data">
+        <thead><tr><th>Empresa</th><th>Processo</th><th>Situação</th><th>Prazo</th><th>Motivo</th><th></th></tr></thead>
+        <tbody>
+        ${atencao.slice(0, 12).map(({n, motivo, cls}) => { const c = clienteById(n.clienteId); const u = urgency(n.prazo); return `
           <tr data-open-notif="${n.id}" style="cursor:pointer">
-            <td>${escapeHtml(c? c.nome : "—")}<div class="subline">${escapeHtml(n.processo||"")}</div></td>
+            <td><strong>${escapeHtml(c ? c.nome : "—")}</strong><div class="subline">${escapeHtml(c?.documento||"")}</div></td>
+            <td>${escapeHtml(n.processo||"—")}<div class="subline">${escapeHtml(n.unidade||"")}</div></td>
             <td>${statusChip(n.status)}</td>
-            <td>${n.criadoEm ? new Date(n.criadoEm).toLocaleDateString("pt-BR") : "—"}</td>
+            <td>${fmtDate(n.prazo)}<div class="subline"><span class="chip ${u.cls}">${u.label}</span></div></td>
+            <td><span class="chip ${cls}">${motivo}</span></td>
+            <td>${cardBtn(n)}</td>
           </tr>`;}).join("")}
-        </tbody></table>
-        ` : `<div class="empty">Nada por aqui ainda.</div>`}
+        </tbody>
+      </table>
+      ${atencao.length > 12 ? `<div class="hint" style="margin-top:6px">+${atencao.length-12} outras pendências. Veja em Processos.</div>` : ""}
+      ` : `<div class="empty">Tudo em dia. 🎉</div>`}
+    </div>
+
+    <!-- Minha Fila -->
+    <div class="card" style="margin-top:14px">
+      <h3>🎯 Minha fila — pendências agrupadas</h3>
+      <div class="grid k-3">
+        <div style="padding:8px; border-radius:8px; background:var(--panel-2); cursor:pointer" onclick="filterAndGo('vencidos')">
+          <div style="font-size:18px; font-weight:700; color:#fca5a5">⚫ ${vencidos.length}</div>
+          <div class="hint">Prazos vencidos</div>
+        </div>
+        <div style="padding:8px; border-radius:8px; background:var(--panel-2); cursor:pointer" onclick="filterAndGo('criticos')">
+          <div style="font-size:18px; font-weight:700; color:#fca5a5">🔴 ${criticos.length}</div>
+          <div class="hint">Prazos ≤ 3 dias</div>
+        </div>
+        <div style="padding:8px; border-radius:8px; background:var(--panel-2); cursor:pointer" onclick="filterAndGo('recursos')">
+          <div style="font-size:18px; font-weight:700; color:#fcd34d">🟠 ${recursosPend.length}</div>
+          <div class="hint">Recursos para preparar</div>
+        </div>
+        <div style="padding:8px; border-radius:8px; background:var(--panel-2); cursor:pointer" onclick="filterAndGo('docs')">
+          <div style="font-size:18px; font-weight:700; color:#93c5fd">📸 ${docsPend.length}</div>
+          <div class="hint">Sem documentação suficiente</div>
+        </div>
+        <div style="padding:8px; border-radius:8px; background:var(--panel-2); cursor:pointer" onclick="filterAndGo('aguardando')">
+          <div style="font-size:18px; font-weight:700">⏳ ${aguardando.length}</div>
+          <div class="hint">Aguardando CBMMG</div>
+        </div>
+        <div style="padding:8px; border-radius:8px; background:var(--panel-2); cursor:pointer" onclick="filterAndGo('novos')">
+          <div style="font-size:18px; font-weight:700; color:#ffb997">🆕 ${novos.length}</div>
+          <div class="hint">Novas autuações</div>
+        </div>
       </div>
     </div>
   `;
+}
+
+function filterAndGo(kind) {
+  const map = {
+    novos: n => isNovo(n),
+    criticos: n => prazoCritico(n),
+    recursos: n => precisaRecurso(n),
+    docs: n => docsIncompletos(n),
+    vencidos: n => prazoVencido(n),
+    aguardando: n => aguardaCBMMG(n),
+  };
+  state._dashFilter = { fn: map[kind], label: kind };
+  state.currentView = "notificacoes";
+  render();
 }
 
 function viewPrazos() {
@@ -1286,16 +1474,20 @@ function viewPrazos() {
 function viewNotificacoes() {
   const q = (state.q||"").toLowerCase();
   const statusFilter = state.statusFilter || "";
+  const dashF = state._dashFilter;
   const list = state.notificacoes.filter(n => {
     const c = clienteById(n.clienteId);
     const hay = `${c?c.nome:""} ${n.processo||""} ${n.origem||""} ${n.unidade||""} ${n.exigencias||""} ${n.emailProc||""}`.toLowerCase();
+    if (dashF && !dashF.fn(n)) return false;
     return (!q || hay.includes(q)) && (!statusFilter || n.status === statusFilter);
   }).sort((a,b) => new Date(b.criadoEm||0) - new Date(a.criadoEm||0));
+  const filterLabels = { novos:"Novas autuações", criticos:"Prazos críticos", recursos:"Recursos pendentes", docs:"Docs pendentes", vencidos:"Vencidos", aguardando:"Aguardando CBMMG" };
 
   const statusOptions = ["Autuação","Notificação inicial","Advertência Escrita aplicada","1ª Multa aplicada","2ª Multa aplicada","Cassação AVCB/CLCB aplicada","Embargo aplicado","Interdição aplicada","Defesa em elaboração","Defesa protocolada","Recurso em elaboração","Recurso protocolado","Regularizado (AVCB/CLCB emitido)","PAF encerrado"];
 
   return `
     <div class="card">
+      ${dashF ? `<div class="warn-box" style="display:flex; align-items:center; justify-content:space-between">Filtrado por <b>${escapeHtml(filterLabels[dashF.label]||dashF.label)}</b> — ${list.length} processo(s). <button class="btn sm" onclick="state._dashFilter=null; render();">Limpar filtro</button></div>` : ""}
       <div class="toolbar">
         <input type="search" placeholder="Buscar cliente, cód. processo, unidade..." value="${escapeAttr(state.q||"")}" oninput="state.q = this.value; render();" />
         <select onchange="state.statusFilter = this.value; render();">
