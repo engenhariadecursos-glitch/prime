@@ -292,7 +292,7 @@
       <h1 id="viewTitle">Dashboard</h1>
       <div class="actions">
         <button class="btn" onclick="openClientModal()">+ Cliente</button>
-        <button class="btn primary" onclick="openNotifModal()">+ Processo</button>
+        <button class="btn primary" onclick="openNotifModal()">+ Nova autuação</button>
       </div>
     </div>
     <div id="view"></div>
@@ -1305,122 +1305,154 @@ function viewDashboard() {
   const criticos = state.notificacoes.filter(prazoCritico);
   const recursosPend = state.notificacoes.filter(precisaRecurso);
   const docsPend = state.notificacoes.filter(docsIncompletos);
-  const andamento = state.notificacoes.filter(emAndamento);
-  const aguardando = state.notificacoes.filter(aguardaCBMMG);
-  const recProtocolado = state.notificacoes.filter(n => isAberto(n) && n.recursoStatus === "Protocolado");
   const vencidos = state.notificacoes.filter(prazoVencido);
 
-  // Central de atenção: processos que precisam ação
+  // Central de atenção
   const atencao = [];
   const seen = new Set();
-  const addAtencao = (n, motivo, cls) => {
+  const addAtencao = (n, motivo, cls, acao) => {
     if (seen.has(n.id)) return;
     seen.add(n.id);
-    atencao.push({ n, motivo, cls });
+    atencao.push({ n, motivo, cls, acao });
   };
-  vencidos.forEach(n => addAtencao(n, "Prazo vencido", "danger"));
-  criticos.forEach(n => addAtencao(n, "Prazo crítico (≤3d)", "danger"));
-  recursosPend.forEach(n => addAtencao(n, "Recurso pendente", "warn"));
-  state.notificacoes.filter(n => isAberto(n) && n.necessitaResposta === "Sim" && n.respondido !== "Sim").forEach(n => addAtencao(n, "Necessita resposta", "warn"));
-  docsPend.forEach(n => addAtencao(n, "Documentação incompleta", "info"));
-  novos.forEach(n => addAtencao(n, "Nova autuação", "accent"));
-
-  // ordenar por urgência do prazo
+  vencidos.forEach(n => addAtencao(n, "Prazo vencido", "danger", "ABRIR"));
+  criticos.forEach(n => addAtencao(n, "Prazo crítico", "danger", "ABRIR"));
+  recursosPend.forEach(n => addAtencao(n, "Recurso pendente", "warn", "RECURSO"));
+  state.notificacoes.filter(n => isAberto(n) && n.necessitaResposta === "Sim" && n.respondido !== "Sim").forEach(n => addAtencao(n, "Necessita resposta", "warn", "ABRIR"));
+  docsPend.forEach(n => addAtencao(n, "Faltam documentos", "info", "ANEXAR"));
+  novos.forEach(n => addAtencao(n, "Nova autuação", "accent", "ABRIR"));
   atencao.sort((a,b) => {
-    const da = diffDays(a.n.prazo);
-    const db = diffDays(b.n.prazo);
+    const da = diffDays(a.n.prazo); const db = diffDays(b.n.prazo);
     if (da === null) return 1; if (db === null) return -1;
     return da - db;
   });
 
-  const cardBtn = (n) => `<button class="btn sm" onclick="event.stopPropagation(); openNotifDetail('${n.id}')">Abrir</button>`;
+  const acaoBtn = (item) => {
+    const nid = item.n.id;
+    if (item.acao === "RECURSO") return `<button class="btn primary sm" onclick="event.stopPropagation(); openRecursoFromDash('${nid}')">RECURSO</button>`;
+    if (item.acao === "ANEXAR") return `<button class="btn sm" onclick="event.stopPropagation(); openNotifDetail('${nid}')">ANEXAR</button>`;
+    return `<button class="btn sm" onclick="event.stopPropagation(); openNotifDetail('${nid}')">ABRIR</button>`;
+  };
+
+  // Novas autuações (lista compacta)
+  const novasList = [...novos]
+    .sort((a,b) => new Date(b.criadoEm||0) - new Date(a.criadoEm||0))
+    .slice(0, 6);
+
+  // Próximos prazos
+  const proximos = [...state.notificacoes]
+    .filter(n => isAberto(n) && n.prazo)
+    .sort((a,b) => new Date(a.prazo) - new Date(b.prazo))
+    .slice(0, 6);
+
+  // Distribuição por fase (visão dos processos)
+  const buckets = [
+    { label: "Novos", n: state.notificacoes.filter(isNovo).length, color: "var(--accent)" },
+    { label: "Em análise / preparação", n: state.notificacoes.filter(emAndamento).length, color: "#93c5fd" },
+    { label: "Recursos", n: state.notificacoes.filter(n => isAberto(n) && /recurso/i.test(n.status||"")).length, color: "#fcd34d" },
+    { label: "Aguardando CBMMG", n: state.notificacoes.filter(aguardaCBMMG).length, color: "#a78bfa" },
+    { label: "Encerrados", n: state.notificacoes.filter(n => !isAberto(n)).length, color: "#86efac" },
+  ];
+  const maxBucket = Math.max(1, ...buckets.map(b => b.n));
 
   return `
-    <!-- Linha 1: 4 cards principais -->
+    <!-- Linha superior: 4 cards principais, limpos -->
     <div class="grid k-4">
-      <div class="card" style="border-color: rgba(255,90,31,.35); cursor:pointer" onclick="filterAndGo('novos')">
-        <h3>🆕 Novas autuações</h3>
-        <div class="stat" style="color:${novos.length?'#ffb997':'inherit'}">${novos.length}</div>
-        <div class="hint">Cadastradas ≤ 14d, ainda em Autuação/Notificação inicial</div>
+      <div class="card" style="cursor:pointer; text-align:center" onclick="filterAndGo('novos')">
+        <div style="font-size:11px; color:var(--muted); text-transform:uppercase; letter-spacing:.4px">🆕 Novas</div>
+        <div style="font-size:42px; font-weight:800; margin:6px 0; color:${novos.length?'#ffb997':'inherit'}">${String(novos.length).padStart(2,'0')}</div>
+        <div class="hint">autuações recentes</div>
       </div>
-      <div class="card" style="border-color: rgba(239,68,68,.35); cursor:pointer" onclick="filterAndGo('criticos')">
-        <h3>🔴 Prazos críticos</h3>
-        <div class="stat" style="color:${criticos.length?'#fca5a5':'inherit'}">${criticos.length}</div>
-        <div class="hint">Prazo vencendo em até 3 dias</div>
+      <div class="card" style="cursor:pointer; text-align:center" onclick="filterAndGo('criticos')">
+        <div style="font-size:11px; color:var(--muted); text-transform:uppercase; letter-spacing:.4px">🔴 Prazos</div>
+        <div style="font-size:42px; font-weight:800; margin:6px 0; color:${criticos.length?'#fca5a5':'inherit'}">${String(criticos.length).padStart(2,'0')}</div>
+        <div class="hint">críticos (≤ 3 dias)</div>
       </div>
-      <div class="card" style="border-color: rgba(245,158,11,.35); cursor:pointer" onclick="filterAndGo('recursos')">
-        <h3>🟠 Recursos pendentes</h3>
-        <div class="stat" style="color:${recursosPend.length?'#fcd34d':'inherit'}">${recursosPend.length}</div>
-        <div class="hint">Sanção aplicada, recurso não protocolado</div>
+      <div class="card" style="cursor:pointer; text-align:center" onclick="filterAndGo('recursos')">
+        <div style="font-size:11px; color:var(--muted); text-transform:uppercase; letter-spacing:.4px">⚖️ Recursos</div>
+        <div style="font-size:42px; font-weight:800; margin:6px 0; color:${recursosPend.length?'#fcd34d':'inherit'}">${String(recursosPend.length).padStart(2,'0')}</div>
+        <div class="hint">para preparar / protocolar</div>
       </div>
-      <div class="card" style="border-color: rgba(59,130,246,.35); cursor:pointer" onclick="filterAndGo('docs')">
-        <h3>📸 Docs pendentes</h3>
-        <div class="stat" style="color:${docsPend.length?'#93c5fd':'inherit'}">${docsPend.length}</div>
-        <div class="hint">Menos de 3 categorias de documentos anexadas</div>
+      <div class="card" style="cursor:pointer; text-align:center" onclick="filterAndGo('docs')">
+        <div style="font-size:11px; color:var(--muted); text-transform:uppercase; letter-spacing:.4px">📸 Docs</div>
+        <div style="font-size:42px; font-weight:800; margin:6px 0; color:${docsPend.length?'#93c5fd':'inherit'}">${String(docsPend.length).padStart(2,'0')}</div>
+        <div class="hint">documentação incompleta</div>
       </div>
-    </div>
-
-    <!-- Linha 2: pipeline -->
-    <div class="grid k-4" style="margin-top:14px">
-      <div class="card"><h3>Em andamento</h3><div class="stat">${andamento.length}</div><div class="hint">Análise/defesa/recurso em elaboração</div></div>
-      <div class="card"><h3>Aguardando CBMMG</h3><div class="stat">${aguardando.length}</div><div class="hint">Defesa/recurso protocolado ou vistoria</div></div>
-      <div class="card"><h3>Recurso protocolado</h3><div class="stat" style="color:${recProtocolado.length?'#86efac':'inherit'}">${recProtocolado.length}</div><div class="hint">Aguardando decisão</div></div>
-      <div class="card"><h3>Vencidos</h3><div class="stat" style="color:${vencidos.length?'#fca5a5':'inherit'}">${vencidos.length}</div><div class="hint">Ação imediata</div></div>
     </div>
 
     <!-- Central de Atenção -->
     <div class="card" style="margin-top:14px">
-      <h3>🚨 Central de atenção — ações necessárias</h3>
+      <h3>🚨 Atenção — ações necessárias</h3>
       ${atencao.length ? `
       <table class="data">
-        <thead><tr><th>Empresa</th><th>Processo</th><th>Situação</th><th>Prazo</th><th>Motivo</th><th></th></tr></thead>
         <tbody>
-        ${atencao.slice(0, 12).map(({n, motivo, cls}) => { const c = clienteById(n.clienteId); const u = urgency(n.prazo); return `
+        ${atencao.slice(0, 10).map(item => { const n = item.n; const c = clienteById(n.clienteId); const u = urgency(n.prazo); return `
           <tr data-open-notif="${n.id}" style="cursor:pointer">
-            <td><strong>${escapeHtml(c ? c.nome : "—")}</strong><div class="subline">${escapeHtml(c?.documento||"")}</div></td>
-            <td>${escapeHtml(n.processo||"—")}<div class="subline">${escapeHtml(n.unidade||"")}</div></td>
-            <td>${statusChip(n.status)}</td>
-            <td>${fmtDate(n.prazo)}<div class="subline"><span class="chip ${u.cls}">${u.label}</span></div></td>
-            <td><span class="chip ${cls}">${motivo}</span></td>
-            <td>${cardBtn(n)}</td>
+            <td style="width:16px; text-align:center; font-size:16px">${item.cls==='danger'?'🔴':item.cls==='warn'?'🟠':item.cls==='info'?'🔵':'🆕'}</td>
+            <td><strong>${escapeHtml(c ? c.nome : "—")}</strong><div class="subline">${escapeHtml(n.processo||"")}</div></td>
+            <td>${escapeHtml(item.motivo)}</td>
+            <td style="text-align:right"><strong>${u.label}</strong><div class="subline">${fmtDate(n.prazo)}</div></td>
+            <td style="text-align:right; width:120px">${acaoBtn(item)}</td>
           </tr>`;}).join("")}
         </tbody>
       </table>
-      ${atencao.length > 12 ? `<div class="hint" style="margin-top:6px">+${atencao.length-12} outras pendências. Veja em Processos.</div>` : ""}
+      ${atencao.length > 10 ? `<div class="hint" style="margin-top:6px; text-align:center">+${atencao.length-10} outras pendências</div>` : ""}
       ` : `<div class="empty">Tudo em dia. 🎉</div>`}
     </div>
 
-    <!-- Minha Fila -->
+    <!-- Duas colunas: Novas Autuações | Próximos prazos -->
+    <div class="grid k-2" style="margin-top:14px">
+      <div class="card">
+        <h3>🆕 Novas autuações</h3>
+        ${novasList.length ? `
+        <table class="data">
+          <tbody>
+          ${novasList.map(n => { const c = clienteById(n.clienteId); return `
+            <tr data-open-notif="${n.id}" style="cursor:pointer">
+              <td><strong>${escapeHtml(c? c.nome : "—")}</strong><div class="subline">${escapeHtml(n.processo||"sem cód.")} · ${escapeHtml(n.unidade||"")}</div></td>
+              <td style="text-align:right"><div class="hint">${n.criadoEm ? new Date(n.criadoEm).toLocaleDateString("pt-BR") : "—"}</div>${statusChip(n.status)}</td>
+            </tr>`;}).join("")}
+          </tbody>
+        </table>
+        ` : `<div class="empty">Nenhuma nova.</div>`}
+      </div>
+      <div class="card">
+        <h3>⏰ Próximos prazos</h3>
+        ${proximos.length ? `
+        <table class="data">
+          <tbody>
+          ${proximos.map(n => { const c = clienteById(n.clienteId); const u = urgency(n.prazo); return `
+            <tr data-open-notif="${n.id}" style="cursor:pointer">
+              <td style="width:80px"><strong>${fmtDate(n.prazo)}</strong><div class="subline"><span class="chip ${u.cls}">${u.label}</span></div></td>
+              <td><strong>${escapeHtml(c? c.nome : "—")}</strong><div class="subline">${escapeHtml(n.processo||"")}</div></td>
+            </tr>`;}).join("")}
+          </tbody>
+        </table>
+        ` : `<div class="empty">Nenhum prazo em aberto.</div>`}
+      </div>
+    </div>
+
+    <!-- Visão dos processos: barras horizontais -->
     <div class="card" style="margin-top:14px">
-      <h3>🎯 Minha fila — pendências agrupadas</h3>
-      <div class="grid k-3">
-        <div style="padding:8px; border-radius:8px; background:var(--panel-2); cursor:pointer" onclick="filterAndGo('vencidos')">
-          <div style="font-size:18px; font-weight:700; color:#fca5a5">⚫ ${vencidos.length}</div>
-          <div class="hint">Prazos vencidos</div>
-        </div>
-        <div style="padding:8px; border-radius:8px; background:var(--panel-2); cursor:pointer" onclick="filterAndGo('criticos')">
-          <div style="font-size:18px; font-weight:700; color:#fca5a5">🔴 ${criticos.length}</div>
-          <div class="hint">Prazos ≤ 3 dias</div>
-        </div>
-        <div style="padding:8px; border-radius:8px; background:var(--panel-2); cursor:pointer" onclick="filterAndGo('recursos')">
-          <div style="font-size:18px; font-weight:700; color:#fcd34d">🟠 ${recursosPend.length}</div>
-          <div class="hint">Recursos para preparar</div>
-        </div>
-        <div style="padding:8px; border-radius:8px; background:var(--panel-2); cursor:pointer" onclick="filterAndGo('docs')">
-          <div style="font-size:18px; font-weight:700; color:#93c5fd">📸 ${docsPend.length}</div>
-          <div class="hint">Sem documentação suficiente</div>
-        </div>
-        <div style="padding:8px; border-radius:8px; background:var(--panel-2); cursor:pointer" onclick="filterAndGo('aguardando')">
-          <div style="font-size:18px; font-weight:700">⏳ ${aguardando.length}</div>
-          <div class="hint">Aguardando CBMMG</div>
-        </div>
-        <div style="padding:8px; border-radius:8px; background:var(--panel-2); cursor:pointer" onclick="filterAndGo('novos')">
-          <div style="font-size:18px; font-weight:700; color:#ffb997">🆕 ${novos.length}</div>
-          <div class="hint">Novas autuações</div>
-        </div>
+      <h3>📊 Visão dos processos</h3>
+      <div style="display:flex; flex-direction:column; gap:10px; margin-top:8px">
+        ${buckets.map(b => `
+          <div style="display:grid; grid-template-columns:180px 1fr 40px; gap:10px; align-items:center; font-size:13px">
+            <div style="color:var(--muted)">${escapeHtml(b.label)}</div>
+            <div style="height:14px; background:var(--panel-2); border-radius:999px; overflow:hidden; position:relative">
+              <div style="height:100%; width:${(b.n/maxBucket*100).toFixed(0)}%; background:${b.color}; opacity:.7"></div>
+            </div>
+            <div style="text-align:right; font-weight:700">${b.n}</div>
+          </div>
+        `).join("")}
       </div>
     </div>
   `;
+}
+
+function openRecursoFromDash(id) {
+  const n = state.notificacoes.find(x => x.id === id);
+  if (n) openRecurso(n);
 }
 
 function filterAndGo(kind) {
