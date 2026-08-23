@@ -244,7 +244,7 @@
       </div>
     </div>
     <div id="authMsg"></div>
-    <form id="authForm" onsubmit="doAuth(event, 'login')">
+    <form id="authForm" onsubmit="doAuth(event)">
       <div class="form-grid" style="grid-template-columns:1fr">
         <label class="field"><span>E-mail</span>
           <input name="email" type="email" required autocomplete="email" />
@@ -253,11 +253,10 @@
           <input name="password" type="password" required minlength="6" autocomplete="current-password" />
         </label>
       </div>
-      <div style="display:flex; gap:8px; margin-top:16px">
-        <button class="btn primary" type="submit" style="flex:1">Entrar</button>
-        <button class="btn" type="button" onclick="doAuth(new Event('signup'), 'signup')" style="flex:1">Criar conta</button>
+      <div style="margin-top:16px">
+        <button class="btn primary" type="submit" style="width:100%; padding: 12px; font-size: 14px">Entrar / Criar conta</button>
       </div>
-      <p class="hint" style="margin-top:12px; text-align:center">Primeira vez? Preencha e-mail e senha acima e clique em <b>Criar conta</b>.<br/>Já tem conta? Preencha e clique em <b>Entrar</b>.</p>
+      <p class="hint" style="margin-top:12px; text-align:center">Se ainda não tem conta, ela é criada automaticamente na primeira vez.<br/>Anote sua senha — não tem "esqueci senha" ainda.</p>
     </form>
   </div>
 </div>
@@ -613,34 +612,44 @@ function setSync(text, kind) {
 }
 
 /* -------------------- Auth -------------------- */
-async function doAuth(ev, mode) {
+async function doAuth(ev) {
   if (ev && ev.preventDefault) ev.preventDefault();
   const form = document.getElementById("authForm");
   const data = Object.fromEntries(new FormData(form));
   const msg = document.getElementById("authMsg");
-  if (!data.email || !data.password) {
-    msg.innerHTML = `<div class="warn-box">Preencha e-mail e senha primeiro.</div>`;
+  const email = (data.email||"").trim();
+  const password = data.password || "";
+  if (!email || !password) {
+    msg.innerHTML = `<div class="warn-box">Preencha e-mail e senha.</div>`;
     return;
   }
-  if (data.password.length < 6) {
+  if (password.length < 6) {
     msg.innerHTML = `<div class="warn-box">A senha precisa ter pelo menos 6 caracteres.</div>`;
     return;
   }
-  msg.innerHTML = `<div class="hint">${mode === "login" ? "Entrando" : "Criando conta"}...</div>`;
-  const fn = mode === "login" ? sb.auth.signInWithPassword.bind(sb.auth) : sb.auth.signUp.bind(sb.auth);
-  const { data: res, error } = await fn({ email: data.email, password: data.password });
-  if (error) {
-    let m = error.message;
-    if (/Invalid login credentials/i.test(m)) m = "E-mail ou senha inválidos. Se ainda não tem conta, clique em Criar conta.";
-    if (/already registered/i.test(m)) m = "Este e-mail já tem conta. Use o botão Entrar.";
-    msg.innerHTML = `<div class="danger-box">${escapeHtml(m)}</div>`;
+  msg.innerHTML = `<div class="hint">Entrando...</div>`;
+
+  // 1) tenta login
+  let { data: res, error } = await sb.auth.signInWithPassword({ email, password });
+  if (!error && res?.session) { await onLoggedIn(res.session.user); return; }
+
+  // 2) se credenciais inválidas, tenta criar conta e entrar
+  if (error && /Invalid login credentials/i.test(error.message)) {
+    msg.innerHTML = `<div class="hint">Criando sua conta...</div>`;
+    const { data: up, error: upErr } = await sb.auth.signUp({ email, password });
+    if (upErr) {
+      msg.innerHTML = `<div class="danger-box">${escapeHtml(upErr.message)}</div>`;
+      return;
+    }
+    if (up.session) { await onLoggedIn(up.session.user); return; }
+    // sem sessão = precisa confirmar email; tenta login uma vez de novo por garantia
+    const retry = await sb.auth.signInWithPassword({ email, password });
+    if (!retry.error && retry.data?.session) { await onLoggedIn(retry.data.session.user); return; }
+    msg.innerHTML = `<div class="ok-box">Conta criada! Verifique seu e-mail (<b>${escapeHtml(email)}</b>) e clique no link de confirmação. Depois volte aqui e entre.</div>`;
     return;
   }
-  if (mode === "signup" && !res.session) {
-    msg.innerHTML = `<div class="ok-box">Conta criada. Verifique seu e-mail para confirmar (se solicitado) e depois clique em Entrar.</div>`;
-    return;
-  }
-  await onLoggedIn(res.session?.user || res.user);
+
+  msg.innerHTML = `<div class="danger-box">${escapeHtml(error?.message||"Erro desconhecido")}</div>`;
 }
 async function signOut() {
   if (!confirm("Sair da conta?")) return;
